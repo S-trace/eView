@@ -349,36 +349,30 @@ void start_picture_menu (panel *panel, GtkWidget *win) // Создаём мен�
   
   loop_dir_frame = gtk_frame_new (ACTION_ON_LAST_FILE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), loop_dir_frame, FALSE, TRUE, 0);
-  gtk_widget_show (loop_dir_frame);
   
   loop_dir_vbox = gtk_vbox_new (TRUE, 0);
   gtk_container_add (GTK_CONTAINER (loop_dir_frame), loop_dir_vbox);
-  gtk_widget_show (loop_dir_vbox);
   
   loop_dir_none = gtk_radio_button_new_with_label (NULL, DO_NOTHING);
   if (loop_dir == 0) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_none), TRUE);
   gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_none, TRUE, TRUE, 0);
   gtk_button_set_relief (GTK_BUTTON(loop_dir_none), GTK_RELIEF_NONE);
-  gtk_widget_show (loop_dir_none);
   
   loop_dir_loop = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (loop_dir_none), LOOP_DIRECTORY);
   if (loop_dir == 1) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_loop), TRUE);
   gtk_button_set_relief (GTK_BUTTON(loop_dir_loop), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_loop, TRUE, TRUE, 0);
-  gtk_widget_show (loop_dir_loop);
   
   loop_dir_next = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (loop_dir_none), NEXT_DIRECTORY);
   if (loop_dir == 2) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_next), TRUE);
   gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_next, TRUE, TRUE, 0);
   gtk_button_set_relief (GTK_BUTTON(loop_dir_next), GTK_RELIEF_NONE);
-  gtk_widget_show (loop_dir_next);
   
   loop_dir_exit = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (loop_dir_none), EXIT_TO_FILEMANAGER);
   if (loop_dir == 3) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_exit), TRUE);
   gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_exit, TRUE, TRUE, 0);
   gtk_button_set_relief (GTK_BUTTON(loop_dir_exit), GTK_RELIEF_NONE);
   g_signal_connect (G_OBJECT (loop_dir_none), "group-changed", G_CALLBACK (loop_dir_toggler), NULL); // Один callback на всех
-  gtk_widget_show (loop_dir_exit);
   
   preload_enabled_button = gtk_check_button_new_with_label(ALLOW_PRELOADING);
   if (preload_enable) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(preload_enabled_button), TRUE);
@@ -836,9 +830,10 @@ void start_main_menu (void)
   gtk_widget_queue_draw(GTK_DIALOG(dialog)->vbox);
   gtk_window_set_position (GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_widget_show_all (dialog);
-  g_signal_connect (GTK_DIALOG(dialog)->vbox, "map_event",
-                    G_CALLBACK (e_ink_refresh_local), NULL); // FIXME: ведёт к двойному обновлению! Исправить не хватает скиллла(((
-                      g_signal_connect (GTK_WIDGET(dialog), "key_press_event", G_CALLBACK (keys_in_main_menu), NULL);
-                      e_ink_refresh_local();
+  
+  // FIXME: ведёт к двойному обновлению! Исправить не хватает скиллла(((
+  g_signal_connect (GTK_DIALOG(dialog)->vbox, "map_event", G_CALLBACK (e_ink_refresh_local), NULL); 
+  g_signal_connect (GTK_WIDGET(dialog), "key_press_event", G_CALLBACK (keys_in_main_menu), NULL);
+  e_ink_refresh_local();
 }
 

@@ -461,13 +461,9 @@ int main (int argc, char **argv)
   if (framebuffer_descriptor == 0)
   {
     if (!QT)
-    {
       Message(ERROR, FAILED_TO_OPEN_DEV_FB0);
-    }
     else
-    {
       Qt_error_message(FAILED_TO_OPEN_DEV_FB0);
-    }
   }
   #endif
   #ifdef debug_printf
