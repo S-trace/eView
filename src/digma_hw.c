@@ -10,13 +10,15 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
+#include <stdlib.h> // atoi()
 #include <fcntl.h>
 #include <unistd.h>
 #include "digma_hw.h"
 
 int hardware_has_backlight=FALSE, hardware_has_LED=FALSE;
 char *LED_path=NULL, *backlight_path=NULL;
-int LED_state[LED_STATES];
+int LED_state[LED_STATES]; // Массив содержащий значения которые надо писать в sysfs чтобы управлять LED
+int previous_backlight_level; // Уровень подсветки перед запуском eView
 
 extern int framebuffer_descriptor;
 extern int QT;
@@ -84,15 +86,46 @@ int check_for_file (char *fpath)  // Проверка наличия файла 
     return TRUE;
 }
 
+int read_int_from_file(char *name) //Чтение числа из файла name
+{
+  FILE *file_descriptor=fopen(name,"rt");
+  if (!file_descriptor)
+  {
+    #ifdef debug_printf
+    printf("UNABLE TO OPEN %s FILE FOR READ!\n", name);
+    #endif
+    return 0;
+  }
+  else
+  {
+    char temp[256];
+    if (fgets(temp, 256, file_descriptor) == 0)
+    {
+      fclose(file_descriptor);
+      #ifdef debug_printf
+      printf("Reading from %s failed!\n", name);
+      #endif
+      return 0;
+    }
+    fclose(file_descriptor);
+    #ifdef debug_printf
+    printf("Read '%s' from %s\n", temp, name);
+    #endif
+    return (atoi (temp));    
+  }
+}
+
+
 void detect_hardware(void) // Обнаружение оборудования и его возможностей
 {  
-  hardware_has_backlight=check_for_file ("/sys/class/backlight/boeye_backlight/bl_power");
+  hardware_has_backlight=check_for_file ("/sys/class/backlight/boeye_backlight/brightness");
   if (hardware_has_backlight) 
   {
     backlight_path="/sys/class/backlight/boeye_backlight/brightness";
     #ifdef debug_printf
     printf ("Found backlight control at file %s\n", backlight_path);
     #endif
+    previous_backlight_level=read_int_from_file(backlight_path);
   }
   hardware_has_LED=check_for_file ("/sys/class/leds/charger-led/brightness");
   if (hardware_has_LED) 

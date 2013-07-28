@@ -38,7 +38,6 @@ static int table_visible; //видима нижняя панель или нет
 int width_display, height_display;
 int framebuffer_descriptor=0; // Дескриптор файла фреймбуффера (для обновления)
 int QT=FALSE; // Обнаружен ли QT (влияет на IOCTL обновления и запуск Xfbdev)
-
 void wait_state(void) // Возврат после смотрелки
 {
   update(active_panel);
@@ -380,15 +379,6 @@ void init (void)
   #endif
   // Ранняя инициализация программы
   detect_hardware();
-  char *temp_buffer;
-  read_string("/sys/class/backlight/boeye_backlight/max_brightness",&temp_buffer);
-  printf ("max_brightness=%s\n",temp_buffer);
-  read_string("/sys/class/backlight/boeye_backlight/brightness",&temp_buffer);
-  printf ("brightness=%s\n",temp_buffer);
-  read_string("/sys/class/backlight/boeye_backlight/actual_brightness",&temp_buffer);
-  printf ("actual_brightness=%s\n",temp_buffer);
-  read_string("/sys/class/backlight/boeye_backlight/bl_power",&temp_buffer);
-  printf ("brightness=%s\n",temp_buffer);
   #ifndef __amd64
   char *string, *message;
   read_string("/home/root/.GTK_parts.version", &string);
@@ -440,6 +430,7 @@ void shutdown(void)
   if (bottom_panel.selected_name != NULL) write_config_string("bottom_panel.selected_name", bottom_panel.selected_name);
   remove(top_panel.archive_list);
   remove(bottom_panel.archive_list);
+  set_brightness(previous_backlight_level);
   gtk_main_quit();
   if (QT)
   {
@@ -501,7 +492,7 @@ int main (int argc, char **argv)
     read_configuration();
   }
   //debug_msg_win (); //окно только для отладки
-  
+  set_brightness(backlight);  
   main_window = window_create(width_display, height_display, 0, VERSION, NOT_MODAL);
   g_signal_connect (G_OBJECT (main_window), "destroy", G_CALLBACK (shutdown), NULL);
   panels_vbox = gtk_vbox_new (TRUE, 0);
