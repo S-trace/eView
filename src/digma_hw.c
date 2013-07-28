@@ -87,7 +87,7 @@ void detect_hardware(void) // Обнаружение оборудования и
   hardware_has_backlight=check_for_file ("/sys/class/backlight/boeye_backlight/bl_power");
   if (hardware_has_backlight) 
   {
-    backlight_path="/sys/class/backlight/boeye_backlight/bl_power";
+    backlight_path="/sys/class/backlight/boeye_backlight/brightness";
     #ifdef debug_printf
     printf ("Found backlight control at file %s\n", backlight_path);
     #endif
@@ -119,6 +119,34 @@ void detect_hardware(void) // Обнаружение оборудования и
   #endif
 }
 
+
+void write_int_to_file(char *file, int value)
+{
+  #ifdef debug_printf
+  printf("writing %d to %s\n", value, file);
+  #endif
+  FILE *file_descriptor=fopen(file,"wt");
+  if (!file_descriptor)
+  {
+    #ifdef debug_printf
+    printf("UNABLE TO OPEN %s FILE FOR WRITING!\n", file);
+    #endif
+    return ;
+  }
+  else
+  {
+    fprintf(file_descriptor, "%d", value);
+    fclose(file_descriptor);
+  }
+}
+
+void set_brightness(int value)
+{
+  if (hardware_has_backlight)
+  {
+    write_int_to_file(backlight_path, value);
+  }
+}
 
 void set_led_state (int state)
 {

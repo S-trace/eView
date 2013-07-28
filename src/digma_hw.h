@@ -46,9 +46,9 @@ void epaperUpdatePart(void);
 #define LED_OFF 4
 #define LED_BLINK_SLOW 5
 #define LED_BLINK_FAST 6
+void set_brightness(int value);
 void set_led_state (int state);
 void detect_hardware(void);
 extern int hardware_has_backlight, hardware_has_LED;
-extern char *LED_path, *backlight_path;
 
 #endif /* _DIGMA_HW_H_ */

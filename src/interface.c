@@ -16,8 +16,8 @@
 #include "os-specific.h"
 
 static GtkWidget *create, *copy, *moving, *delete, *options, *exit_button; // Кнопки в главном меню
-static GtkWidget *fmanager, *move_chk, *clock_panel, *ink_speed, *show_hidden_files_chk, *LED_notify_checkbox, *reset_configuration, *about_program; // Пункты в настройках ФМ
-static GtkWidget *crop_image, *rotate_image, *manga_mode, *frame_image, *keepaspect_image, *double_refresh_image, *viewed, *preload_enabled_button,  *suppress_panel_button; // Чекбоксы в настройках вьювера
+static GtkWidget *fmanager, *move_chk, *clock_panel, *ink_speed, *show_hidden_files_chk, *LED_notify_checkbox, *reset_configuration, *backlight_scale, *about_program; // Пункты в настройках ФМ
+static GtkWidget *crop_image, *rotate_image, *manga_mode, *frame_image, *keepaspect_image, *double_refresh_image, *viewed, *preload_enabled_button, *suppress_panel_button; // Чекбоксы в настройках вьювера
 static GtkWidget *loop_dir_none, *loop_dir_loop, *loop_dir_next, *loop_dir_exit, *loop_dir_frame, *loop_dir_vbox; // Радиобаттон в настройках вьювера
 int need_refresh=0;
 
@@ -231,6 +231,7 @@ static void reset_statistics() // Callback для кнопки статисти�
 
 static gint keys_rotation_picture_menu (__attribute__((unused))GtkWidget *window, GdkEventKey *event) //Круговое перемещение по меню в смотрелке
 {
+  set_brightness(backlight);
   switch (event->keyval){
     case   KEY_UP:
       if (gtk_widget_is_focus (crop_image))
@@ -274,6 +275,7 @@ static void picture_menu_destroy (panel *panel, GtkWidget *dialog) // Уничт
 
 static gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, panel *panel) //задействует кнопки
 {
+  set_brightness(backlight);
   if (interface_is_locked)
   {
     #ifdef debug_printf
@@ -539,6 +541,20 @@ static void reset_configuration_callback() // Callback для кнопки сб�
   }
 }
 
+static void backlight_changed(GtkWidget *scalebutton)
+{
+  write_config_int("backlight", backlight = gtk_range_get_value(GTK_RANGE(scalebutton)));
+  set_brightness(backlight);
+  #ifdef debug_printf
+  printf("Brightness set to %d\n", backlight);
+  #endif
+}
+
+// static void led_changed(GtkWidget *scalebutton)
+// {
+//   set_led_state(gtk_range_get_value(GTK_RANGE(scalebutton)));
+// }
+
 static void about_program_callback() // Callback для кнопки информации о программе
 {
   Message(ABOUT_PROGRAM, ABOUT_PROGRAM_TEXT);
@@ -552,6 +568,7 @@ void options_destroy (GtkWidget *dialog) // Уничтожаем меню нас
 
 static gint keys_rotation_options (__attribute__((unused))GtkWidget *window, GdkEventKey *event) //Круговое перемещение по меню в ФМ
 {
+  set_brightness(backlight);
   switch (event->keyval){
     case   KEY_UP:
       if (gtk_widget_is_focus (fmanager))
@@ -578,6 +595,7 @@ static gint keys_rotation_options (__attribute__((unused))GtkWidget *window, Gdk
 
 static gint keys_in_options (GtkWidget *dialog, GdkEventKey *event) //задействует кнопки
 {
+  set_brightness(backlight);
   if (interface_is_locked)
   {
     #ifdef debug_printf
@@ -612,7 +630,7 @@ void options_menu_create(GtkWidget *main_menu) //Создание меню оп�
                                                            GTK_WINDOW(main_menu),
                                                            GTK_DIALOG_MODAL |GTK_DIALOG_DESTROY_WITH_PARENT,
                                                            NULL);
-  GtkWidget *menu_vbox = gtk_vbox_new (TRUE, 0);
+  GtkWidget *menu_vbox = gtk_vbox_new (FALSE, 0);
   
   fmanager = gtk_check_button_new_with_label (FILEMANAGER_MODE);
   if (fm_toggle) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(fmanager), TRUE);
@@ -654,6 +672,22 @@ void options_menu_create(GtkWidget *main_menu) //Создание меню оп�
   gtk_box_pack_start (GTK_BOX (menu_vbox), LED_notify_checkbox, TRUE, TRUE, 0);
   g_signal_connect (G_OBJECT (LED_notify_checkbox), "clicked", G_CALLBACK (LED_notify_callback), NULL);
   
+  if (hardware_has_backlight)
+  {
+    GtkWidget *backlight_frame = gtk_frame_new (BACKLIGHT);
+    gtk_box_pack_start (GTK_BOX (menu_vbox), backlight_frame, FALSE, TRUE, 0);
+    backlight_scale = gtk_hscale_new_with_range (0, 8, 1);
+    g_signal_connect(backlight_scale, "value-changed", G_CALLBACK(backlight_changed), NULL);
+    gtk_range_set_value (GTK_RANGE(backlight_scale), backlight);
+    gtk_container_add (GTK_CONTAINER (backlight_frame), backlight_scale);
+  }
+
+//   GtkWidget *LED_test_frame = gtk_frame_new ("LED_TEST");
+//   gtk_box_pack_start (GTK_BOX (menu_vbox), LED_test_frame, FALSE, TRUE, 0);
+//   GtkWidget *led_test_scale = gtk_hscale_new_with_range (0, 255, 1);
+//   g_signal_connect(led_test_scale, "value-changed", G_CALLBACK(led_changed), NULL);
+//   gtk_container_add (GTK_CONTAINER (LED_test_frame), led_test_scale);
+  
   reset_configuration = gtk_button_new_with_label ("   "RESET_CONFIGURATION);
   gtk_button_set_alignment (GTK_BUTTON(reset_configuration), 0.0, 0.0);
   gtk_button_set_relief (GTK_BUTTON(reset_configuration), GTK_RELIEF_NONE);
@@ -689,6 +723,7 @@ void create_folder()
 
 static gint keys_rotation_menu (__attribute__((unused))GtkWidget *window, GdkEventKey *event) //Круговое перемещение по меню в ФМ
 {
+  set_brightness(backlight);
   switch (event->keyval){
     case   KEY_UP:
       if (gtk_widget_is_focus (create))
@@ -715,6 +750,7 @@ static gint keys_rotation_menu (__attribute__((unused))GtkWidget *window, GdkEve
 
 static gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event) //задействует кнопку М в меню
 {
+  set_brightness(backlight);
   if (interface_is_locked)
   {
     #ifdef debug_printf

@@ -186,6 +186,7 @@ gboolean show_image(char *filename, panel *panel) // Показываем кар
 
 gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *event, panel *panel) //реакция на кнопки
 {
+  set_brightness(backlight);
   if (interface_is_locked)
   {
     #ifdef debug_printf

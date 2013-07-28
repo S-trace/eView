@@ -452,6 +452,7 @@ static gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventK
   #ifdef debug_printf
   printf("got %d in main\n", event->keyval);
   #endif  
+  set_brightness(backlight);
   if (interface_is_locked)
   {
     #ifdef debug_printf

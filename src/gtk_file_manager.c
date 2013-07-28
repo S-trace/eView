@@ -380,6 +380,15 @@ void init (void)
   #endif
   // Ранняя инициализация программы
   detect_hardware();
+  char *temp_buffer;
+  read_string("/sys/class/backlight/boeye_backlight/max_brightness",&temp_buffer);
+  printf ("max_brightness=%s\n",temp_buffer);
+  read_string("/sys/class/backlight/boeye_backlight/brightness",&temp_buffer);
+  printf ("brightness=%s\n",temp_buffer);
+  read_string("/sys/class/backlight/boeye_backlight/actual_brightness",&temp_buffer);
+  printf ("actual_brightness=%s\n",temp_buffer);
+  read_string("/sys/class/backlight/boeye_backlight/bl_power",&temp_buffer);
+  printf ("brightness=%s\n",temp_buffer);
   #ifndef __amd64
   char *string, *message;
   read_string("/home/root/.GTK_parts.version", &string);
