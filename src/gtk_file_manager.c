@@ -75,7 +75,8 @@ void list_fd(panel *panel) //добавление списка имен ката
         text=basename(text);
         full_name=xconcat(text,"/");
         #ifdef debug_printf
-        printf("Adding %d '%s'\n", i, text);
+        printf("Adding %d archive file '%s'\n", i, text);
+        fflush(stdout);
         #endif
         add_data_to_list(panel->list, &full_name, 1, NO_AUTOSCROLL, "dir");
         xfree(&namelist[i]);
@@ -120,6 +121,10 @@ void list_fd(panel *panel) //добавление списка имен ката
         { 
           text = xconcat_path_file(namelist[i]->d_name, "");
           panel->dirs_num++;
+          #ifdef debug_printf
+          printf("Adding %d dir '%s'\n", i, text);
+          fflush(stdout);
+          #endif
           add_data_to_list(panel->list, &text, 1, NO_AUTOSCROLL, "dir");
           xfree(&text);
         }
@@ -127,17 +132,18 @@ void list_fd(panel *panel) //добавление списка имен ката
       for( i = 0; i < n && GTK_IS_WIDGET(main_window); i++ )  // Второй обход списка - файлы
       {
         struct stat stat_p;
-        //Убрать скрытные файлы
-        if (!show_hidden_files && namelist[i]->d_name[0] == '.') {continue;}
-        text = namelist[i]->d_name;
-        #ifdef debug_printf
-        printf("Adding %d '%s'\n", i, text);
-        #endif
-        panel->files_num++;
         stat(namelist[i]->d_name, &stat_p);
         if (!S_ISDIR(stat_p.st_mode)) 
         { 
+          //Убрать скрытные файлы
+          if (!show_hidden_files && namelist[i]->d_name[0] == '.') {continue;}
+          text = namelist[i]->d_name;
+          panel->files_num++;
           fsize = get_natural_size(stat_p.st_size); //размер файла
+          #ifdef debug_printf
+          printf("Adding %d file '%s', size %s\n", i, text, fsize);
+          fflush(stdout);
+          #endif
           add_data_to_list(panel->list, &text, 1, NO_AUTOSCROLL, fsize);
         }
         xfree(&namelist[i]);

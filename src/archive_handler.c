@@ -82,7 +82,7 @@ static int file_type_of(char *fname)
   return -1;
 }
 
-static void get_archive_list(char *archive, char *list_file) // Создание списка файлов в архиве
+static int get_archive_list(char *archive, char *list_file) // Создание списка файлов в архиве
 {
   char *command = NULL;
   switch (file_type_of(archive)) // Архивно-зависимая часть
@@ -94,6 +94,7 @@ static void get_archive_list(char *archive, char *list_file) // Создание
       asprintf(&command, "zipinfo -1 \"%s\" | %s > %s", archive, SORT_COMMAND, list_file);
       xsystem(command);
       xfree(&command);
+      return TRUE;
       break;
     case RAR_FILE:
       #ifdef debug_printf
@@ -104,12 +105,13 @@ static void get_archive_list(char *archive, char *list_file) // Создание
       xfree(&command);
       remove("/tmp/rarlist");
       remove("/tmp/list");
+      return TRUE;
       break;
     default:
       #ifdef debug_printf
       printf("Unknown file type:%s\n", archive);
       #endif
-      return;
+      return FALSE;
   }
 }    
 
@@ -186,25 +188,27 @@ void archive_extract_file(char *archive, char *file, char *to)
 void enter_archive(char *name, panel *panel, int update_config)
 {
   char *saved_work_dir=xgetcwd(NULL);
-  chdir(panel->path); // Переходим в каталог где лежит архив
-  if(update_config)
-  {
-    panel->archive_depth++;
-    strcpy(panel->archive_stack[panel->archive_depth], name);
-    if ( panel == &top_panel )
-      write_archive_stack("top_panel.archive_stack", &top_panel);
-    else
-      write_archive_stack("bottom_panel.archive_stack", &bottom_panel);
-    chdir(saved_work_dir); // Переходим в каталог откуда нас дёрнули
-    xfree(&saved_work_dir);
-  }
   #ifdef debug_printf
-  printf("Entering into '%s'\n",panel->archive_stack[panel->archive_depth]);
+  printf("Entering into '%s'\n", name);
   #endif
-  get_archive_list(panel->archive_stack[panel->archive_depth], panel->archive_list);
-  update(panel); // Строим список
-  move_selection("1", panel); // Переходим на первый же файл в списке, чтобы не прокручивать
-  gtk_label_set_text (GTK_LABEL(panel->path_label), xconcat_path_file(panel->archive_stack[panel->archive_depth],panel->archive_cwd)); // Пишем имя архива с путём в поле снизу
+  chdir(panel->path); // Переходим в каталог где лежит архив
+  if (get_archive_list(name, panel->archive_list))
+  {
+    if(update_config)
+    {
+      panel->archive_depth++;
+      strcpy(panel->archive_stack[panel->archive_depth], name);
+      if ( panel == &top_panel )
+        write_archive_stack("top_panel.archive_stack", &top_panel);
+      else
+        write_archive_stack("bottom_panel.archive_stack", &bottom_panel);
+      chdir(saved_work_dir); // Переходим в каталог откуда нас дёрнули
+      xfree(&saved_work_dir);
+    }
+    update(panel); // Строим список
+    move_selection("1", panel); // Переходим на первый же файл в списке, чтобы не прокручивать
+    gtk_label_set_text (GTK_LABEL(panel->path_label), xconcat_path_file(panel->archive_stack[panel->archive_depth],panel->archive_cwd)); // Пишем имя архива с путём в поле снизу
+  }
 }
 
 void enter_subarchive(char *name, panel *panel) // Вход во вложенный архив - принимает полный путь к архиву
@@ -241,6 +245,9 @@ void leave_archive(panel *panel)
     update(panel); // Обновляем список файлов
     gtk_label_set_text (GTK_LABEL(panel->path_label), panel->path); // Пишем текущий каталог в поле снизу
   }
+  #ifdef debug_printf
+  printf("move_selection call '%s'\n",panel->archive_stack[panel->archive_depth+1]);
+  #endif
   move_selection(iter_from_filename (panel->archive_stack[panel->archive_depth+1], panel), panel); // И выбираем файл архива курсором FIXME: Сработает только если покинутый вложенный архив в корне родительского архива, или же при покидании архива в реальную ФС.
   panel->archive_stack[panel->archive_depth+1][0]='\0'; //Затираем имя покидаемого архива в стеке
   if (panel == &top_panel)
