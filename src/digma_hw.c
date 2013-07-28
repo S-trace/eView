@@ -36,7 +36,7 @@ static void epaperUpdate(int ioctl_call, int mode)
   {
     if (QT)
       usleep(205000);
-      ioctl(framebuffer_descriptor, ioctl_call, &mode);
+    ioctl(framebuffer_descriptor, ioctl_call, &mode);
   }
   #endif
 }
@@ -77,13 +77,9 @@ void epaperUpdatePart(void)
 int check_for_file (char *fpath)  // Проверка наличия файла в файловой системе
 {
   if (access(fpath, F_OK))  // F_OK просто проверяет существование файла
-  {  
     return FALSE;
-  }
   else
-  {
     return TRUE;
-  }
 }
 
 void detect_hardware(void) // Обнаружение оборудования и его возможностей
@@ -117,13 +113,9 @@ void detect_hardware(void) // Обнаружение оборудования и
   }
   #ifdef debug_printf
   if (! LED_notify)
-  {
     printf ("LED control not found\n");
-  }
   if (! hardware_has_backlight)
-  {
     printf ("Backlight control not found\n");
-  }
   #endif
 }
 

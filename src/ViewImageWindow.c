@@ -29,7 +29,6 @@ static GtkWidget *gimage;
 static GdkPixbuf *pixbuf_image;
 static GdkPixbuf *pixbuf_key;//промежуточный
 static GdkPixbuf *pixbuf_rotate;//промежуточный для вращения
-// static GtkWidget *menu_box;
 static int shift_val; //на сколько сдвигать картинку
 static int fr;    //количество найденых кадров
 static double ar; //aspect rate
@@ -52,9 +51,7 @@ void die_viewer_window (void)
   reset_preloaded_image(); // Очищаем предзагруженные данные
   gtk_widget_destroy(win);
   if (suppress_panel == 1 && ! QT)
-  {
     start_panel();
-  }
   enable_refresh=0;
   wait_state();
   enable_refresh=1;
@@ -114,14 +111,6 @@ static void preload_image(char *new_file, panel *panel)
   #endif
   return;
 }
-
-// gboolean show_next_page(char *current_file)
-// {
-//   static int current_page=0;
-//   static char *last_name=NULL;
-//   if (manga)
-//     return 0;
-// }
 
 gboolean show_image(char *filename, panel *panel) // Показываем картинку
 {
@@ -185,11 +174,10 @@ gboolean show_image(char *filename, panel *panel) // Показываем кар
   }
   write_config_int("viewed_pages", ++viewed_pages); // Сохраняем на диск счётчик страниц
   panel->last_name=strdup(filename);
-  if (panel == &top_panel){
+  if (panel == &top_panel)
     write_config_string("top_panel.last_name", panel->last_name); // И имена просмотренных страниц
-  }else{
+  else
     write_config_string("bottom_panel.last_name", panel->last_name);
-  }
   move_selection(iter_from_filename (basename(panel->last_name), panel), panel);
   gtk_window_set_title(GTK_WINDOW(win), filename);
   wait_for_draw(); // Ожидаем отрисовки всего
@@ -287,26 +275,19 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
       if (frame && fr >= 2) 
         move_left_to_left = 1;
       if (manga == 1) // Если включен режим манги
-      {
         gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), R_SHIFT);
-      }
       else
-      {
         gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), L_SHIFT);
-      }
       if (move_left_to_left) move_left_to_left = 0;
       wait_for_draw(); // Ожидаем отрисовки всего
-      if (panel == &top_panel){
+      if (panel == &top_panel)
         write_config_string("top_panel.last_name", panel->selected_name); // Сохраняем конфиги
-      }else{
-          write_config_string("bottom_panel.last_name", panel->selected_name);
-      }
-        if (double_refresh) e_ink_refresh_local();
-        e_ink_refresh_full ();
+      else
+        write_config_string("bottom_panel.last_name", panel->selected_name);
+      if (double_refresh) e_ink_refresh_local();
+      e_ink_refresh_full ();
       if(preload_enable) // Предзагрузка
-      {
         preload_image(next_image (panel->selected_name, FALSE, panel), panel);
-      }
       interface_is_locked=FALSE; // Снимаем блокировку интерфейса
       return FALSE;
       break;
@@ -370,13 +351,9 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
         }
         show_image (panel->selected_name, panel);
         if (manga == 1) // Если включен режим манги
-        {
           gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), L_SHIFT);
-        }
         else
-        {
           gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), R_SHIFT);
-        }
         
         if (frame)
         {
@@ -390,38 +367,36 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
         if (panel == &top_panel){
           write_config_string("top_panel.last_name", panel->selected_name); // Сохраняем конфиги
         }else{
-            write_config_string("bottom_panel.last_name", panel->selected_name);}
+          write_config_string("bottom_panel.last_name", panel->selected_name);}
           if(preload_enable) // Предзагрузка
-          {
             preload_image(next_image (panel->selected_name, FALSE, panel), panel);
-          }
           interface_is_locked=FALSE; // Снимаем блокировку интерфейса
           return FALSE;
-        break;
-        
-        case KEY_BACK://GDK_x:
-          die_viewer_window();
-          return FALSE;
           break;
           
-        case   GDK_m:
-        case   KEY_MENU:
-        case   KEY_MENU_LIBROII:
-        case   KEY_MENU_QT:
-          start_picture_menu (panel, win); // открываем меню картинки
-          return FALSE;
-          break;
-          
-        case   KEY_REFRESH_LIBROII:
-        case   KEY_REFRESH_QT:
-          e_ink_refresh_full();
-          return FALSE;
-          
-        default:
-          #ifdef debug_printf
-          printf("got unknown keycode %d in main\n", event->keyval);
-          #endif  
-          return FALSE;
+          case KEY_BACK://GDK_x:
+            die_viewer_window();
+            return FALSE;
+            break;
+            
+          case   GDK_m:
+          case   KEY_MENU:
+          case   KEY_MENU_LIBROII:
+          case   KEY_MENU_QT:
+            start_picture_menu (panel, win); // открываем меню картинки
+            return FALSE;
+            break;
+            
+          case   KEY_REFRESH_LIBROII:
+          case   KEY_REFRESH_QT:
+            e_ink_refresh_full();
+            return FALSE;
+            
+          default:
+            #ifdef debug_printf
+            printf("got unknown keycode %d in main\n", event->keyval);
+            #endif  
+            return FALSE;
   }
 }
 
@@ -551,12 +526,10 @@ void ViewImageWindow(char *file, panel *panel) //создание изображ
   // Убираем хэндлер с обработки фокуса фэйлменеджером
   //   g_signal_handlers_disconnect_by_func( window, focus_in_callback, NULL );
   //   g_signal_handlers_disconnect_by_func( window, focus_out_callback, NULL );
-//   focus_in_processed=0;
+  //   focus_in_processed=0;
   
   if (suppress_panel == 1 && ! QT)
-  {
     kill_panel();
-  }
   preloaded.name=strdup("");
   
   panel->selected_name=strdup(file);

@@ -20,10 +20,10 @@ enum
 };
 
 typedef struct {
-  int     offs;           /* Offset to the signature */
-  unsigned int len;                    /* Signature length */
-  int type;                   /* One of ZIP_FILE, RAR_FILE */
-  char    *sign;          /* Signature to compare to */
+  int     offs;           /* Offset to the signature   */
+  unsigned int len;       /* Signature length          */
+  int type;               /* One of ZIP_FILE, RAR_FILE */
+  char    *sign;          /* Signature to compare to   */
 } magic_sign;
 
 static char *escape(char *input) // Экранирование нежелательных символов для грепа (прежде всего квадратных скобок)
@@ -38,7 +38,7 @@ static char *escape(char *input) // Экранирование нежелате�
       case '[': case ']':
       case '{': case '}':
       case '"':
-        escaped[i++] = '\\'; // Вставляем перед ними точку
+        escaped[i++] = '\\'; // Вставляем перед ними backslash
     };
     escaped[i++] = input[idx]; // И копируем собственно символ
   }
@@ -51,7 +51,7 @@ static char *escape(char *input) // Экранирование нежелате�
 
 magic_sign magic[ARCH_TYPES] = {
   { 0, 4, ZIP_FILE, "PK\003\004"}, /* Classic ZIP files */
-  { 0, 4, RAR_FILE, "Rar!"      }, /* RAR archives */
+  { 0, 4, RAR_FILE, "Rar!"      }, /* RAR archives      */
 };
 
 static int file_type_of(char *fname)
@@ -65,15 +65,14 @@ static int file_type_of(char *fname)
   
   for (nr = 0; nr < ARCH_TYPES; nr++) {
     if (fseek(f, magic[nr].offs, SEEK_SET) || fread(sign, 1, magic[nr].len, f) != magic[nr].len)
-    {
       break;
-    }
     
     /* If the read went well, we need to compare the characters */
     /* strstr works here, but only if no \0's are in the string */
     /* and if we first terminate the string read too */
     sign[magic[nr].len] = '\0';
-    if (strcmp(sign, magic[nr].sign) == 0){
+    if (strcmp(sign, magic[nr].sign) == 0)
+    {
       fclose(f);
       return magic[nr].type;
     }

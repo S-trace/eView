@@ -1,8 +1,8 @@
 #define L_SHIFT 0   //смещение левой части изображения к левому краю экрана
 #ifdef __amd64
-  #define R_SHIFT (width_display + 2) //смещение правой части изображения к правому краю
+#define R_SHIFT (width_display + 2) //смещение правой части изображения к правому краю
 #else
-  #define R_SHIFT (width_display) //смещение правой части изображения к правому краю // ЯХЕЗ какого гхыра, но на ARM возвращается ширина экрана полностью! =_="
+#define R_SHIFT (width_display) //смещение правой части изображения к правому краю // ЯХЕЗ какого гхыра, но на ARM возвращается ширина экрана полностью! =_="
 #endif
 gint which_key_press (GtkWidget *, GdkEventKey *, panel *panel);
 void image_resize (int mode_rotate, int mode_crop, int keep_aspect);

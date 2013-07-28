@@ -237,13 +237,9 @@ void read_panel_configuration(panel *panel)
 {
   char *name_prefix;
   if (panel == &top_panel)
-  {
     name_prefix = "top";
-  }
   else
-  {
     name_prefix = "bottom";
-  }
   #ifdef debug_printf
   printf("Reading %s panel configuration\n", name_prefix);
   #endif    
@@ -282,9 +278,9 @@ void read_configuration ()
 
 void reset_config(void)
 {
-#ifdef debug_printf
-  printf("Removing %s \n", cfg_directory);
-#endif
+  #ifdef debug_printf
+  printf("Removing '%s'\n", cfg_directory);
+  #endif
   char *command;
   asprintf(&command, "rm -rf \"%s\"", cfg_directory);
   xsystem (command);

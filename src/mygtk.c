@@ -80,6 +80,21 @@ gint confirm_request(char *title, char *confirm_button, char *reject_button)
 //   focus_in_processed = 0; // Чтобы не выстреливать focus_in_callback когда попало
 //   return FALSE;
 // }
+//           asprintf(&command, "dbus-send  --type=method_call --dest=com.test.reader /reader/registry com.test.reader.registry.input string:\"%s%s\"",panel->path, panel->selected_name); 
+// signal sender=:1.1 -> dest=(null destination) serial=131 path=/PowerManager; interface=com.sibrary.Service.PowerManager; member=requestSuspend
+
+/* DBUS-вызовы на Qt прошивке: 
+ * method call sender=:1.3 -> dest=com.sibrary.BoeyeServer serial=47 path=/StartupSplash; interface=com.sibrary.Service.StartupSplash; member=closeSplash
+ * dbus-send --type=method_call --dest=com.sibrary.BoeyeServer /StartupSplash com.sibrary.Service.StartupSplash.showSplash
+ * dbus-send --type=method_call --dest=com.sibrary.BoeyeServer /StartupSplash com.sibrary.Service.StartupSplash.closeSplash
+ * 
+ * dbus-send --type=method_call --dest=com.test.reader /reader/registry com.test.reader.registry.input string:"/path/file.txt"
+ * method call sender=:1.2 -> dest=com.test.reader serial=113 path=/reader/registry; interface=com.test.reader.registry; member=input ; string "/media/mmcblk0p1/passwd.txt"
+ * 
+ * dbus-send /PowerManager com.sibrary.Service.PowerManager.requestSuspend
+ * signal sender=:1.1  -> dest=(null destination) serial=151 path=/PowerManager; interface=com.sibrary.Service.PowerManager; member=requestSuspend
+ * 
+ */
 
 void Qt_error_message(char *message)
 {
@@ -150,23 +165,16 @@ char *get_current_iter (panel *panel) //возвращает итератор т
 {
   GtkTreeIter iter;
   GtkTreeModel *model;
-  //   static char *selection_row;
   char *inlist;
   GtkTreeSelection *selection;
-  //   GtkTreePath *path;
   selection = gtk_tree_view_get_selection (panel->list);
   model = gtk_tree_view_get_model (panel->list);
   gtk_tree_selection_get_selected (selection, &model, &iter);
-  //   gtk_tree_model_get_iter (model, &iter, path);
   inlist =  gtk_tree_model_get_string_from_iter (model, &iter);
   if (inlist == NULL)
-  {
     return (strdup("0"));
-  }
   else
-  {
     return (inlist);
-  }
 }
 
 gboolean e_ink_refresh_part(void)
@@ -174,7 +182,7 @@ gboolean e_ink_refresh_part(void)
   #ifdef __amd64
   printf("Updating eINK (part)\n");
   #endif
-  while (gtk_events_pending ())    gtk_main_iteration ();
+  wait_for_draw();
   epaperUpdatePart();
   return FALSE;
 }
@@ -184,7 +192,7 @@ gboolean e_ink_refresh_local(void)
   #ifdef __amd64
   printf("Updating eINK (local)\n");
   #endif
-  while (gtk_events_pending ())    gtk_main_iteration ();
+  wait_for_draw();
   epaperUpdateLocal();
   return FALSE;
 }
@@ -194,15 +202,17 @@ gboolean e_ink_refresh_full(void)
   #ifdef __amd64
   printf("Updating eINK (full)\n");
   #endif
-  while (gtk_events_pending ())    gtk_main_iteration ();
+  wait_for_draw();
   epaperUpdateFull();
   return FALSE;
 }
 
 gboolean e_ink_refresh_default(void) // Рефреш экрана по умолчанию (из настроек)
 {
-  if (speed_toggle) e_ink_refresh_local();
-  else e_ink_refresh_part ();
+  if (speed_toggle) 
+    e_ink_refresh_local();
+  else 
+    e_ink_refresh_part ();
   return FALSE;
 }
 
@@ -210,9 +220,7 @@ void enter_subdir(char *name, panel *panel)// Переход на уровень
 {
   enable_refresh=0;
   if (panel->archive_depth > 0) // Если мы в архиве
-  {
     archive_enter_subdir (name, panel); // - дёргаем архивную функцию
-  }
   else
   {
     char *path=xconcat_path_file(panel->path, name);
@@ -257,7 +265,8 @@ void dirlist_select(GtkWidget *widget, panel *panel) // Что происход�
     selection_row = iter_from_filename (panel->selected_name, panel);
     path = gtk_tree_path_new_from_string (selection_row);
     //поведение курсора у краев списка
-    if (gtk_tree_view_get_visible_range (panel->list, &start_path, &end_path)) {
+    if (gtk_tree_view_get_visible_range (panel->list, &start_path, &end_path)) 
+    {
       if (strcmp(gtk_tree_path_to_string (end_path), selection_row) ==0 && atoi(panel->selected_iter) != (panel->files_num + panel->dirs_num-1)) 
       {
         gtk_tree_view_scroll_to_cell (panel->list, path, NULL, TRUE, 0.0, 0.0);
@@ -282,18 +291,12 @@ void dirlist_select(GtkWidget *widget, panel *panel) // Что происход�
 void after_dirlist_select(void) // Что происходит при перемещении выделенной строки по списку (часть 2)
 {
   if (interface_is_locked) // Чтобы не дёргалось при просмотре изображений (каждый раз, приводя к двойному обновлению)
-  {
     return;
-  }
   
   if (need_full_refresh)
-  {
     e_ink_refresh_full();
-  }
   else 
-  {
     e_ink_refresh_default();
-  }
 }
 
 static void panel_focussed(panel *panel)
@@ -435,21 +438,6 @@ static void actions(panel *panel) //выбор что делать по клик
       else
       {
         asprintf(&command, "/usr/bin/fbreader '%s'", panel->selected_name); 
-        //           asprintf(&command, "dbus-send  --type=method_call --dest=com.test.reader /reader/registry com.test.reader.registry.input string:\"%s%s\"",panel->path, panel->selected_name); 
-        // signal sender=:1.1 -> dest=(null destination) serial=131 path=/PowerManager; interface=com.sibrary.Service.PowerManager; member=requestSuspend
-        
-        /*
-         * method call sender=:1.3 -> dest=com.sibrary.BoeyeServer serial=47 path=/StartupSplash; interface=com.sibrary.Service.StartupSplash; member=closeSplash
-         * dbus-send --type=method_call --dest=com.sibrary.BoeyeServer /StartupSplash com.sibrary.Service.StartupSplash.showSplash
-         * dbus-send --type=method_call --dest=com.sibrary.BoeyeServer /StartupSplash com.sibrary.Service.StartupSplash.closeSplash
-         * 
-         * dbus-send --type=method_call --dest=com.test.reader /reader/registry com.test.reader.registry.input string:"/path/file.txt"
-         * method call sender=:1.2 -> dest=com.test.reader serial=113 path=/reader/registry; interface=com.test.reader.registry; member=input ; string "/media/mmcblk0p1/passwd.txt"
-         * 
-         * dbus-send /PowerManager com.sibrary.Service.PowerManager.requestSuspend
-         * signal sender=:1.1  -> dest=(null destination) serial=151 path=/PowerManager; interface=com.sibrary.Service.PowerManager; member=requestSuspend
-         * 
-         */
         xsystem(command);
         xfree (&command);
       }
@@ -557,7 +545,7 @@ static gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventK
 
 void create_panel (panel *panel)
 {
-//   GtkWidget *vbox = gtk_vbox_new (FALSE, 0);
+  //   GtkWidget *vbox = gtk_vbox_new (FALSE, 0);
   panel->table = gtk_table_new(30, 1, TRUE);
   gtk_table_set_homogeneous(GTK_TABLE(panel->table ), HOMOGENEUS);
   gtk_box_pack_start (GTK_BOX (panels_vbox), panel->table , TRUE, TRUE, 0);
@@ -579,9 +567,8 @@ void create_panel (panel *panel)
   g_signal_connect_swapped (G_OBJECT (panel->list), "focus_in_event", G_CALLBACK (panel_focussed), panel);
 }
 
-// ****************** Standard window widget********************************/
-GtkWidget *window_create(int x, int y, int border, const char *title,
-                         int modal)
+// ****************** Standard window widget********************************
+GtkWidget *window_create(int x, int y, int border, const char *title, int modal)
 {
   #ifdef debug_printf
   printf("constructing window %dx%d\n",x,y);

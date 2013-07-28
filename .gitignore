@@ -15,3 +15,9 @@
 *.exe
 *.out
 *.app
+
+# Deps
+*.d
+
+# Kate temp files
+*.kate-swp

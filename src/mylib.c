@@ -139,9 +139,7 @@ char *trim_line(char *input_line) // Удаляет последний симв�
     return input_line;
   }
   else
-  {
     return input_line;
-  }
 }
 
 char *find_first_picture_name(panel *panel) 
@@ -161,9 +159,7 @@ char *find_first_picture_name(panel *panel)
     current_position_name = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
     xfree(&tmp);
     if (is_picture(current_position_name))
-    {
       return current_position_name;
-    }
     valid = gtk_tree_model_iter_next (model, &iter);
   }
   return NULL;
@@ -188,9 +184,7 @@ char *find_next_picture_name(panel *panel)
     current_position_name = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
     xfree(&tmp);
     if (is_picture(current_position_name))
-    {
       return current_position_name;
-    }
     valid = gtk_tree_model_iter_next (model, &iter);
   }
   return NULL;
@@ -215,14 +209,9 @@ char *find_prev_picture_name(panel *panel)
     if (is_picture(current_position_name))
     {
       if (strcmp(current_position_name, panel->selected_name) == 0)
-      {
         return last_found_image;
-      }
       else
-      {
-        //         xfree(&last_found_image);
         last_found_image=strdup(current_position_name);
-      }
     }
     valid = gtk_tree_model_iter_next (model, &iter);
   }
@@ -246,9 +235,7 @@ char *find_last_picture_name(panel *panel)
     current_position_name = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
     xfree(&tmp);
     if (is_picture(current_position_name))
-    {
       last_found_image=strdup(current_position_name);
-    }
     valid = gtk_tree_model_iter_next (model, &iter);
   }
   return last_found_image;
@@ -436,13 +423,9 @@ char *prev_image (char *input_name, int allow_actions, panel *panel) //выбо�
   #endif
   prev_name=find_prev_picture_name(panel);
   if (prev_name == NULL) 
-  {
     prev_number=0;
-  }
   else
-  {
     prev_number=atoi(iter_from_filename(prev_name, panel));
-  }
   
   if (prev_number == 0) // При достижении начала списка
   {
@@ -530,7 +513,7 @@ char *prev_image (char *input_name, int allow_actions, panel *panel) //выбо�
 int is_picture(char *name) // Является ли изображением
 {
   int n = strlen(name) - 4; // Позиция начала расширения
-  if     (strcasecmp((name+n), ".jpg") != 0 &&
+  if(strcasecmp((name+n), ".jpg") != 0 &&
     strcasecmp((name+n), "jpeg") != 0 &&
     strcasecmp((name+n), ".bmp") != 0 &&
     strcasecmp((name+n), ".png") != 0 &&
@@ -599,7 +582,7 @@ void xfree(void *ptr)
   /*	 sets the pointer to NULL
    *	after it has been freed.*/
   #ifdef debug_printf
-//   printf("called xfree\n");
+  //   printf("called xfree\n");
   #endif
   
   void **pp = (void **)ptr;
@@ -650,17 +633,11 @@ char *xconcat_path_file(const char *path,char *filename)
   
   char *buffer;
   if (!path) 
-  {
     path = "";
-  }
   if (path[strlen(path)-1] == '/')
-  {
     asprintf(&buffer, "%s%s", path, filename);  
-  }
   else
-  {
     asprintf(&buffer, "%s%s%s", path, "/", filename);  
-  }
   return buffer;
 }
 
@@ -671,9 +648,8 @@ char *itoa(int i)
   int cp_i = i; /* copy of i, used for counting the digits */
   
   /* if the number is negative, we'll need to store space for the '-' */
-  if(i < 0) {
+  if(i < 0)
     digits++;
-  }
   
   /* while the copy of i has more than one digit */
   /* incrememnt the digit count, and divide copy of i by ten */
