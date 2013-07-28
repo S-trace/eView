@@ -122,7 +122,7 @@ void detect_hardware(void) // Обнаружение оборудования и
 
 void set_led_state (int state)
 {
-  if (LED_notify)
+  if (LED_notify && hardware_has_LED)
   {
     #ifdef debug_printf
     printf("writing %d to %s\n", state, LED_path);
