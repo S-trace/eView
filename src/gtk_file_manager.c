@@ -402,7 +402,8 @@ void init (void)
     printf ("X is down! Assuming QT\nTrying to start Xfbdev\n");
     #endif
     xsystem("Xfbdev :0 -br -pn -hide-cursor -dpi 150 -rgba vrgb & ");
-    xsystem("sleep 1 && matchbox-window-manager -theme Sato -use_desktop_mode decorated");
+    usleep(1000000);
+    xsystem("matchbox-window-manager -theme Sato -use_desktop_mode decorated &");
     if (!hardware_has_backlight)
     {
       usleep(2000000);
