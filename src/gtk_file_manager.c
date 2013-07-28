@@ -362,18 +362,13 @@ void second_panel_show(void)
 
 void init (void)
 {
+  #ifndef __amd64
   #ifdef debug_printf
-#ifdef __amd64
-  char *name="eView_debug_log.txt";
-  #else
   char *name="/media/mmcblk0p1/eView_debug_log.txt";
-#endif
   printf("Trying to open '%s' for writing log\n", name);
   int file_descriptor=creat(name,O_CREAT|O_SYNC|O_TRUNC);
   if (file_descriptor < 0)
-  {
     printf("UNABLE TO OPEN %s FILE FOR WRITING!\n", name);
-  }
   else
   {
     printf("'%s' opened for writing log as %d fd, will now write it into this file!\n", name, file_descriptor);
@@ -381,7 +376,7 @@ void init (void)
     dup2 (file_descriptor, 1);
     dup2 (file_descriptor, 2);
   }
-  
+  #endif
   #endif
   // Ранняя инициализация программы
   detect_hardware();
