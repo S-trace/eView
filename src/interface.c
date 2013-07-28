@@ -420,8 +420,8 @@ void start_picture_menu (panel *panel, GtkWidget *win) // Создаём мен�
   gtk_window_set_position (GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_widget_show_all (dialog);
   
-  g_signal_connect (G_OBJECT (dialog), "map-event", G_CALLBACK (e_ink_refresh_local), NULL);
   g_signal_connect (G_OBJECT (dialog), "key_press_event", G_CALLBACK (keys_in_picture_menu), panel);
+  e_ink_refresh_local();
 }
 
 
@@ -681,8 +681,8 @@ void options_menu_create(GtkWidget *main_menu) //Создание меню оп�
   gtk_window_set_position (GTK_WINDOW(options_dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_widget_show_all (options_dialog);
   
-  g_signal_connect (G_OBJECT (options_dialog), "map-event", G_CALLBACK (e_ink_refresh_local), NULL);
   g_signal_connect (G_OBJECT (options_dialog), "key_press_event", G_CALLBACK (keys_in_options), NULL);
+  e_ink_refresh_local();
 }  
 
 
@@ -812,8 +812,6 @@ void start_main_menu (void)
   gtk_window_set_position (GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_widget_show_all (dialog);
   
-  // FIXME: ведёт к двойному обновлению! Исправить не хватает скиллла(((
-  g_signal_connect (GTK_DIALOG(dialog)->vbox, "map_event", G_CALLBACK (e_ink_refresh_local), NULL); 
   g_signal_connect (GTK_WIDGET(dialog), "key_press_event", G_CALLBACK (keys_in_main_menu), NULL);
   e_ink_refresh_local();
 }
