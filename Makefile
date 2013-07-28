@@ -42,14 +42,14 @@ cleanup:
 	done
 
 clean:
-	-rm -f $(EXE) $(name) $(name)$(version)_* $(OBJ) $(EXE).sh $(EXE).tar.gz $(OBJ:.o=.d)  src/*~
+	-rm -f $(EXE) $(name) $(name)$(version)_* $(OBJ) $(EXE).sh $(name)$(version)_$(lang).tar.gz $(OBJ:.o=.d)  src/*~
 
 installer:
 	cp installer.head.sh $(name)$(version)_$(lang)-installer.sh
 	cp $(EXE) $(name)
 	tar -czf ./$(EXE).tar.gz ./$(name) ./desktop_$(name).png desktop_picture.png
-	cat ./$(EXE).tar.gz >> $(EXE)-installer.sh
-	chmod +x $(EXE)-installer.sh
+	cat ./$(EXE).tar.gz >> $(name)$(version)_$(lang)-installer.sh
+	chmod +x $(name)$(version)_$(lang)-installer.sh
 
 release:
 	mkdir $(name)$(version)
