@@ -1,5 +1,4 @@
 name ?= eView
-prev_version ?= 061
 version ?= 062
 lang ?= russian
 DFLAGS = -MD
@@ -22,7 +21,7 @@ SOURCE_PATH=src
 
 OBJS = gtk_file_manager.o mylib.o mygtk.o ViewImageWindow.o digma_hw.o crop.o cfg.o debug_msg_win.o frames_search.o shift.o archive_handler.o interface.o
 OBJ = $(addprefix src/, $(OBJS))
-EXE = $(name)$(version)_$(lang)
+EXE = $(name)$(version)_$(lang).app
 
 
 .PHONY: all	arm
@@ -46,31 +45,36 @@ clean:
 	-rm -f $(EXE) $(name) $(name)$(version)_* $(OBJ) $(EXE).sh $(EXE).tar.gz $(OBJ:.o=.d)  src/*~
 
 installer:
-	cp installer.head.sh $(EXE)-installer.sh
+	cp installer.head.sh $(name)$(version)_$(lang)-installer.sh
 	cp $(EXE) $(name)
 	tar -czf ./$(EXE).tar.gz ./$(name) ./desktop_$(name).png desktop_picture.png
 	cat ./$(EXE).tar.gz >> $(EXE)-installer.sh
 	chmod +x $(EXE)-installer.sh
 
 release:
+	mkdir $(name)$(version)
 	make clean
-	rm -rf .eView/
-	cd ../../; diff -ru eView$(prev_version)/ eView$(version) > eView$(version)/eView$(prev_version)-$(version).diff || true
-	cd -
 	make debug
-	mv $(name)$(version)_russian ../$(name)$(version)_russian-debug
+	mv $(name)$(version)_russian.app $(name)$(version)/$(name)$(version)_russian-debug.app
 	make clean
 	make arm
-	cp $(name)$(version)_russian ../
+	cp $(name)$(version)_russian.app $(name)$(version)/
 	make installer
-	mv $(name)$(version)_russian-installer.sh ../
+	mv $(name)$(version)_russian-installer.sh $(name)$(version)/
 	make clean
 	lang=english make debug
-	mv $(name)$(version)_english ../$(name)$(version)_english-debug
+	mv $(name)$(version)_english.app $(name)$(version)/$(name)$(version)_english-debug.app
 	make clean
 	lang=english make arm
-	cp $(name)$(version)_english ../
+	cp $(name)$(version)_english.app $(name)$(version)/
 	lang=english make installer
-	mv $(name)$(version)_english-installer.sh ../
+	mv $(name)$(version)_english-installer.sh $(name)$(version)/
 	make clean
-	cd ../../; zip -r eView$(version).zip eView$(version)/;cd -
+	cp $(name)_remover.sh $(name)$(version)/
+	cp $(name)_reset_configuration.sh $(name)$(version)/
+	cp readme.txt $(name)$(version)/
+	cp S-trace-changelog.txt $(name)$(version)/
+	cp LICENSE $(name)$(version)/
+	zip -r $(name)$(version).zip $(name)$(version)/
+	mv $(name)$(version).zip $(name)$(version)/
+	
