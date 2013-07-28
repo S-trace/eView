@@ -41,14 +41,18 @@
 void epaperUpdateFull(void);
 void epaperUpdateLocal(void);
 void epaperUpdatePart(void);
-
-#define LED_ON 3
-#define LED_OFF 4
-#define LED_BLINK_SLOW 5
-#define LED_BLINK_FAST 6
 void set_brightness(int value);
 void set_led_state (int state);
 void detect_hardware(void);
 extern int hardware_has_backlight, hardware_has_LED;
+enum
+{
+  LED_OFF,
+  LED_BLINK_SLOW,
+  LED_BLINK_FAST,
+  LED_ON,
+  LED_STATES
+};
+extern int LED_state[LED_STATES]; // Состояния светодиода
 
 #endif /* _DIGMA_HW_H_ */

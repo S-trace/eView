@@ -16,6 +16,8 @@
 
 int hardware_has_backlight=FALSE, hardware_has_LED=FALSE;
 char *LED_path=NULL, *backlight_path=NULL;
+int LED_state[LED_STATES];
+
 extern int framebuffer_descriptor;
 extern int QT;
 extern int enable_refresh;//Принудительно запретить обновлять экран в особых случаях
@@ -99,6 +101,10 @@ void detect_hardware(void) // Обнаружение оборудования и
     #ifdef debug_printf
     printf ("Found LED control at file %s\n", LED_path);
     #endif
+    LED_state[LED_ON]=2; // Неверно!
+    LED_state[LED_OFF]=0;
+    LED_state[LED_BLINK_SLOW]=1;
+    LED_state[LED_BLINK_FAST]=4;
   }
   else
   {
@@ -106,6 +112,10 @@ void detect_hardware(void) // Обнаружение оборудования и
     if (hardware_has_LED) 
     {
       LED_path="/sys/class/leds/axp192-led-classdev/brightness";
+      LED_state[LED_ON]=3;
+      LED_state[LED_OFF]=4;
+      LED_state[LED_BLINK_SLOW]=5;
+      LED_state[LED_BLINK_FAST]=6;
       #ifdef debug_printf
       printf ("Found LED control at file %s\n", LED_path);
       #endif
@@ -152,21 +162,6 @@ void set_led_state (int state)
 {
   if (LED_notify && hardware_has_LED)
   {
-    #ifdef debug_printf
-    printf("writing %d to %s\n", state, LED_path);
-    #endif
-    FILE *file_descriptor=fopen(LED_path,"wt");
-    if (!file_descriptor)
-    {
-      #ifdef debug_printf
-      printf("UNABLE TO OPEN %s FILE FOR WRITING!\n", LED_path);
-      #endif
-      return ;
-    }
-    else
-    {
-      fprintf(file_descriptor, "%d", state);
-      fclose(file_descriptor);
-    }
+    write_int_to_file(LED_path, state);
   }
 }

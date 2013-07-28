@@ -186,7 +186,7 @@ void update(panel *panel) //обновление списка
   GtkTreeModel *model;
   gboolean valid = TRUE;
   char *title;
-  set_led_state (LED_BLINK_FAST); // Индикация активности
+  set_led_state (LED_state[LED_BLINK_FAST]); // Индикация активности
   panel->files_num=0; // Обнуляем число файлов в просмотрщике
   clear_list(panel->list);
   #ifdef debug_printf
@@ -217,7 +217,7 @@ void update(panel *panel) //обновление списка
     gtk_label_set_text (GTK_LABEL(panel->path_label), panel->path);
   }
   move_selection(iter_from_filename (panel->selected_name, panel), panel);
-  set_led_state (LED_OFF); // Индикация активности
+  set_led_state (LED_state[LED_OFF]); // Индикация активности
 }
 
 void move_selection(char *move_to, panel *panel) // сдвигает курсор на заданную строку в символьном виде
@@ -397,7 +397,7 @@ void init (void)
     asprintf(&message, GTK_PARTS_IS_OUTDATED, string, NEEDED_GTK_PARTS_VERSION);
     Qt_error_message(message);
   }
-  set_led_state (LED_ON);
+  set_led_state (LED_state[LED_ON]);
   if (XOpenDisplay(NULL))
   {
     #ifdef debug_printf
@@ -457,7 +457,7 @@ int main (int argc, char **argv)
 {
   init();
   gtk_init (&argc, &argv);
-  set_led_state (LED_BLINK_SLOW);
+  set_led_state (LED_state[LED_BLINK_SLOW]);
   #ifdef __amd64
   width_display = 570 ;
   height_display = 762 ; // Для отладки на ПК
@@ -583,7 +583,7 @@ int main (int argc, char **argv)
   //   g_signal_connect (G_OBJECT (window), "show", G_CALLBACK (e_ink_refresh_full), NULL);
   //   g_signal_connect_after (current_panel->list, "move_cursor", G_CALLBACK (e_ink_refresh_default), NULL ); // Обновление экрана при сдвиге выделения
   interface_is_locked=FALSE; // Снимаем блокировку интерфейса
-  set_led_state (LED_OFF);
+  set_led_state (LED_state[LED_OFF]);
   gtk_main ();
   return 0;
 }
