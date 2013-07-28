@@ -530,6 +530,8 @@ static gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventK
       break;
       
     case KEY_POWER_QT:
+    case KEY_PGDOWN:
+    case KEY_PGUP:
       return FALSE; 
       break;
       
