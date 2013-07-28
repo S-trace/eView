@@ -190,9 +190,7 @@ void update(panel *panel) //обновление списка
   clear_list(panel->list);
   #ifdef debug_printf
   if (panel->archive_depth > 0)
-  {
     printf ("We are now IN ARCHIVE!\n");
-  }
   #endif
   list_fd(panel);
   
@@ -200,21 +198,15 @@ void update(panel *panel) //обновление списка
   model = gtk_tree_view_get_model (panel->list);
   gtk_tree_model_get_iter_first (model, &iter);
   while (valid) 
-  {
     valid = gtk_tree_model_iter_next (model, &iter);
-  }
   //инфа о числе папок и файлов в загловок окна
   asprintf(&title, "Dirs: %d  Files: %d %s", panel->dirs_num-1, panel->files_num, "    "VERSION);
   gtk_window_set_title(GTK_WINDOW(main_window), title);
   xfree (&title);
   if (panel->archive_depth > 0)
-  {
     gtk_label_set_text (GTK_LABEL(panel->path_label), xconcat_path_file(panel->archive_stack[panel->archive_depth], panel->archive_cwd)); // Пишем имя архива с путём в поле снизу
-  }
   else
-  {
     gtk_label_set_text (GTK_LABEL(panel->path_label), panel->path);
-  }
   move_selection(iter_from_filename (panel->selected_name, panel), panel);
   set_led_state (LED_state[LED_OFF]); // Индикация активности
 }
@@ -236,8 +228,7 @@ void second_panel_hide(void)
   #endif
   gtk_widget_destroy (bottom_panel.table);
   gtk_widget_destroy (bottom_panel.path_label);
-//   table_visible = 0;
-  top_panel_active = 1;
+  top_panel_active = TRUE;
   active_panel=&top_panel;
   inactive_panel=NULL;
   panel_selector(active_panel);
@@ -290,7 +281,7 @@ void delete_dir_or_file (void)
 
 void move_dir_or_file (void)
 {
-  if (!table_visible) return;
+  if (!fm_toggle) return;
   if ((!move_toggle) || (move_toggle && confirm_request(MOVE_CONFIRM, MOVE, GTK_STOCK_CANCEL)))
   {
     if (!strcmp (active_panel->selected_name, "../")) return;
@@ -327,9 +318,7 @@ void copy_dir_or_file (void)
 void panel_selector (panel *focus_to) // Принимает указатель на panel - &top_panel, &bottom_panel или inactive_panel
 {
   if GTK_IS_WIDGET(GTK_WIDGET(focus_to->list)) // Если таблица на которую мы собираемся переключиться существует
-  {
     gtk_widget_grab_focus (GTK_WIDGET(focus_to->list)); // То фокуссируемся на ней
-  }
   else // А иначе исходим из того, что верхняя панель существует всегда
   {
     if GTK_IS_WIDGET(GTK_WIDGET(top_panel.list))
@@ -353,7 +342,6 @@ void second_panel_show(void)
   chdir (bottom_panel.path);
   create_panel(&bottom_panel);
   move_selection(iter_from_filename (bottom_panel.selected_name, &bottom_panel), &bottom_panel); // Восстанавливаем позицию указателя
-  table_visible = 1;
   gtk_widget_show_all (main_window);
   g_signal_connect_swapped (G_OBJECT (bottom_panel.table), "destroy", G_CALLBACK (panel_selector), &top_panel);
   e_ink_refresh_local();
@@ -469,7 +457,6 @@ int main (int argc, char **argv)
   #ifdef debug_printf
   printf ("Starting eView in directory '%s'\n", xgetcwd(NULL));
   #endif
-  
   Message(EVIEW_IS_STARTING, PLEASE_WAIT);
   top_panel.path = cfg_file_path (); // Получаем месторасположения конфига (текущий каталог в момент запуска) - на книге это /home/root/
   FILE *fp;
@@ -496,18 +483,14 @@ int main (int argc, char **argv)
   gtk_container_add (GTK_CONTAINER (main_window), panels_vbox);
   create_panel(&top_panel);
   if (top_panel.archive_depth > 0 )
-  {
-    enable_refresh=0;
-  }
+    enable_refresh=FALSE;
   else
-  {
     update(&top_panel);
-  }
   
-  if ( fm_toggle == 1 )
+  if ( fm_toggle)
   {
     second_panel_show();
-    if ( top_panel_active == 1 )
+    if ( top_panel_active)
     {
       active_panel=&top_panel;
       inactive_panel=&bottom_panel;
@@ -532,7 +515,7 @@ int main (int argc, char **argv)
   }  
   if (active_panel->archive_depth > 0 || (inactive_panel != NULL && inactive_panel->archive_depth > 0) )
   {
-    enable_refresh=0;
+    enable_refresh=FALSE;
     if ( active_panel->archive_depth > 0 )
     {
       enter_archive(active_panel->archive_stack[active_panel->archive_depth], active_panel, FALSE);
@@ -543,30 +526,25 @@ int main (int argc, char **argv)
       enter_archive(inactive_panel->archive_stack[inactive_panel->archive_depth], inactive_panel, FALSE);
       move_selection(iter_from_filename (inactive_panel->selected_name, inactive_panel), inactive_panel); // Восстанавливаем состояние выбранных элементов в списке файлов
     }
-    enable_refresh=1;
+    enable_refresh=TRUE;
   }
   update(active_panel); // Наполняем список каталогов
   #ifndef __amd64
-  if (clock_toggle) {
+  if (clock_toggle)
     gtk_window_unfullscreen  (GTK_WINDOW(main_window)); // Показываем часики
-  } else {
+  else
     gtk_window_fullscreen  (GTK_WINDOW(main_window)); // Скрываем их
-  }
   #endif
   panel_selector (active_panel); // Переключаемся в активную панель!
   gtk_widget_destroy(MessageWindow);
   gtk_widget_show_all(main_window); // Рисуем интерфейс
-  enable_refresh=0;
+  enable_refresh=FALSE;
   wait_for_draw();// Ожидаем отрисовки всего
-  enable_refresh=1;
+  enable_refresh=TRUE;
   if (is_picture(active_panel->last_name) )
-  {
     ViewImageWindow (active_panel->last_name, active_panel); // Открываем последнюю отображённую картинку
-  }
   else
-  {
     e_ink_refresh_full();
-  }
   //   g_signal_connect (G_OBJECT (window), "show", G_CALLBACK (e_ink_refresh_full), NULL);
   //   g_signal_connect_after (current_panel->list, "move_cursor", G_CALLBACK (e_ink_refresh_default), NULL ); // Обновление экрана при сдвиге выделения
   interface_is_locked=FALSE; // Снимаем блокировку интерфейса

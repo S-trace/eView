@@ -113,11 +113,9 @@ int left_way_fc () //ветвление
 void frame_map_clear()
 {
   int i, ii;
-  for (i=0; i <= 1; i++){
-    for (ii=0; ii <= 13; ii++){
+  for (i=0; i <= 1; i++)
+    for (ii=0; ii <= 13; ii++)
       frame_map[i][ii] = -1;
-    }
-  }
 }
 
 //здесь определяется, что является разделителем
@@ -139,9 +137,8 @@ int line_separator ()
     blue = p[2];
 
     //цветной пиксель или нет
-    if (red != green || red != blue || green != blue) {
+    if (red != green || red != blue || green != blue)
       rp++;
-    }
 
     //черный или белый пиксель
     if (red < BLACK && green<BLACK && blue < BLACK) b_color = 1;

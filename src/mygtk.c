@@ -218,7 +218,7 @@ gboolean e_ink_refresh_default(void) // Рефреш экрана по умол�
 
 void enter_subdir(char *name, panel *panel)// Переход на уровень вниз в дереве panel->list
 {
-  enable_refresh=0;
+  enable_refresh=FALSE;
   if (panel->archive_depth > 0) // Если мы в архиве
     archive_enter_subdir (name, panel); // - дёргаем архивную функцию
   else
@@ -242,7 +242,7 @@ void enter_subdir(char *name, panel *panel)// Переход на уровень
     }
   }
   gtk_widget_queue_draw(GTK_WIDGET(panel->list)); // Заставляем GTK перерисовать список каталогов
-  enable_refresh=1;
+  enable_refresh=TRUE;
 }
 
 void dirlist_select(GtkWidget *widget, panel *panel) // Что происходит при перемещении выделенной строки по списку
@@ -313,21 +313,21 @@ static void panel_focussed(panel *panel)
     active_panel=&top_panel;
     inactive_panel=&bottom_panel;
     chdir(top_panel.path);
-    write_config_int("top_panel_active", top_panel_active=1);
+    write_config_int("top_panel_active", top_panel_active=TRUE);
   }
   else
   {
     active_panel=&bottom_panel;
     inactive_panel=&top_panel;
     chdir(bottom_panel.path);
-    write_config_int("top_panel_active", top_panel_active=0);
+    write_config_int("top_panel_active", top_panel_active=FALSE);
   }
   e_ink_refresh_local();
 }
 
 static void go_upper(panel *panel) // Переход на уровень вверх в дереве
 {
-  enable_refresh=0;
+  enable_refresh=FALSE;
   if (panel->archive_depth > 0) // Если мы в архиве
     archive_go_upper(panel);
   else
@@ -359,7 +359,7 @@ static void go_upper(panel *panel) // Переход на уровень вве�
   }
   gtk_widget_queue_draw(GTK_WIDGET(panel->list)); // Заставляем GTK перерисовать список каталогов
   wait_for_draw();
-  enable_refresh=1;
+  enable_refresh=TRUE;
 }
 
 static void actions(panel *panel) //выбор что делать по клику переход или запуск
@@ -402,9 +402,9 @@ static void actions(panel *panel) //выбор что делать по клик
         write_config_string("bottom_panel.last_name", bottom_panel.last_name="");
       if (panel->archive_depth == 0)
       {
-        enable_refresh=0;
+        enable_refresh=FALSE;
         enter_archive(panel->selected_name, panel, TRUE); // Вход в архив, если не в архиве
-        enable_refresh=1;
+        enable_refresh=TRUE;
         e_ink_refresh_full();
       }
       else
@@ -680,9 +680,8 @@ GtkTreeView *string_list_create_on_table(int num,
   gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_window), GTK_SHADOW_ETCHED_IN);
   
   types = (GType *) xmalloc(num * sizeof(GType));
-  for (i = 0; i < num; i++) {
+  for (i = 0; i < num; i++)
     types[i] = G_TYPE_STRING;
-  }
   store = gtk_list_store_newv(num, types);
   xfree(&types);
   
@@ -700,9 +699,8 @@ GtkTreeView *string_list_create_on_table(int num,
   //                   G_CALLBACK (print_adjust), NULL);
   
   gtk_container_add(GTK_CONTAINER(scrolled_window), GTK_WIDGET(tree));
-  if (table) {
+  if (table)
     gtk_table_attach_defaults(GTK_TABLE(table), GTK_WIDGET(scrolled_window), start_col, end_col, start_row, end_row);
-  }
   
   /* The view now holds a reference.  We can get rid of our own reference */
   g_object_unref(G_OBJECT(store));

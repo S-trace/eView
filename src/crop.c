@@ -72,11 +72,10 @@ void find_x_crop (int height)
     return;
   }
   
-  if (b_color <= w_color) {
+  if (b_color <= w_color)
     w_color= 1;
-  }  else {
+  else
     w_color =0;
-  }
   
   ///////////////////////////////////////////определение толщины бордюра
   if (w_color == 1){
@@ -154,11 +153,10 @@ void find_y_crop (int width)
     return;
   }
   
-  if (b_color <= w_color) {
+  if (b_color <= w_color)
     w_color= 1;
-  }  else {
+  else
     w_color =0;
-  }
   //g_print ("%d\n", w_color);
   ///////////////////////////////////////////определение толщины бордюра
   if (w_color == 1){
@@ -234,11 +232,10 @@ void find_width_crop (int width, int height)
     return;
   }
   
-  if (b_color <= w_color) {
+  if (b_color <= w_color)
     w_color= 1;
-  }  else {
+  else
     w_color =0;
-  }
   //g_print ("%d\n", w_color);
   ///////////////////////////////////////////определение толщины бордюра
   if (w_color == 1){
@@ -314,11 +311,10 @@ void find_height_crop (int width, int height)
     height_crop = height;
     return;
   }
-  if (b_color <= w_color) {
+  if (b_color <= w_color)
     w_color= 1;
-  }  else {
+  else
     w_color =0;
-  }
   
   ///////////////////////////////////////////определение толщины бордюра
   if (w_color == 1){

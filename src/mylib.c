@@ -324,7 +324,7 @@ char *next_image (char *input_name, int allow_actions, panel *panel) //выбо�
   
   if (panel->files_num == next_number) // При достижении конца списка
   {
-    if (loop_dir == 0) // Если ничего не делать
+    if (loop_dir == LOOP_NONE)
     {
       #ifdef debug_printf
       printf("Already on last file!\n");
@@ -333,7 +333,7 @@ char *next_image (char *input_name, int allow_actions, panel *panel) //выбо�
         Message (INFORMATION,LAST_FILE_REACHED);
       return panel->selected_name;
     }
-    if (loop_dir == 1) // Если установлено "зациклить директорию"
+    if (loop_dir == LOOP_LOOP)
     {
       #ifdef debug_printf
       printf("Loop reached for forward\n");
@@ -342,7 +342,7 @@ char *next_image (char *input_name, int allow_actions, panel *panel) //выбо�
         Message (INFORMATION,LAST_FILE_REACHED_LOOP);
       return find_first_picture_name(panel);
     }
-    if (loop_dir == 2) // Если установлено "перейти в следующую директорию"
+    if (loop_dir == LOOP_NEXT)
     {
       if (allow_actions) // Предзагрузка не будет срабатывать на границе директорий - ну и гхыр с ней!
       {
@@ -394,7 +394,7 @@ char *next_image (char *input_name, int allow_actions, panel *panel) //выбо�
         return NULL;
       }
     }
-    if (loop_dir == 3) // Если установлено "выйти в ФМ"
+    if (loop_dir == LOOP_EXIT)
     {
       #ifdef debug_printf
       printf("Got last image, exiting\n");
@@ -402,9 +402,9 @@ char *next_image (char *input_name, int allow_actions, panel *panel) //выбо�
       if (allow_actions) 
       {
         Message (INFORMATION,LAST_FILE_REACHED_EXIT);
-        enable_refresh=0;
+        enable_refresh=FALSE;
         die_viewer_window(); // Если действия разрешены
-        enable_refresh=1;
+        enable_refresh=TRUE;
       }
       return panel->selected_name;
     }
@@ -429,7 +429,7 @@ char *prev_image (char *input_name, int allow_actions, panel *panel) //выбо�
   
   if (prev_number == 0) // При достижении начала списка
   {
-    if (loop_dir == 0) // Если установлено "ничего не делать"
+    if (loop_dir == LOOP_NONE)
     {
       #ifdef debug_printf
       printf("Already on first image!\n");
@@ -438,7 +438,7 @@ char *prev_image (char *input_name, int allow_actions, panel *panel) //выбо�
         Message (INFORMATION,FIRST_FILE_REACHED);
       return find_first_picture_name(panel);
     }
-    if (loop_dir == 1) // Если установлено "зациклить директорию"
+    if (loop_dir == LOOP_LOOP)
     {
       #ifdef debug_printf
       printf("Loop reached for backward\n");
@@ -447,7 +447,7 @@ char *prev_image (char *input_name, int allow_actions, panel *panel) //выбо�
         Message (INFORMATION,FIRST_FILE_REACHED_LOOP);
       return find_last_picture_name(panel);
     }
-    if (loop_dir == 2) // Если установлено "перейти в следующую директорию"
+    if (loop_dir == LOOP_NEXT)
     {
       #ifdef debug_printf
       printf("Finding previous directory\n");
@@ -490,7 +490,7 @@ char *prev_image (char *input_name, int allow_actions, panel *panel) //выбо�
       else
         return find_last_picture_name(panel);
     }
-    if (loop_dir == 3) // Если установлено "выйти в ФМ"
+    if (loop_dir == LOOP_EXIT)
     {
       #ifdef debug_printf
       printf("Got first image, exiting\n");

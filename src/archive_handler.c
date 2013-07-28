@@ -192,13 +192,9 @@ void enter_archive(char *name, panel *panel, int update_config)
     panel->archive_depth++;
     strcpy(panel->archive_stack[panel->archive_depth], name);
     if ( panel == &top_panel )
-    {
       write_archive_stack("top_panel.archive_stack", &top_panel);
-    }
     else
-    {
       write_archive_stack("bottom_panel.archive_stack", &bottom_panel);
-    }
     chdir(saved_work_dir); // Переходим в каталог откуда нас дёрнули
     xfree(&saved_work_dir);
   }
@@ -267,13 +263,9 @@ int find_prev_archive_directory(panel *panel)
   trim_line(up_dir); // Удяляем последний символ (слэш) из текущего имени
   char *a=strrchr(up_dir, '/'); // Ищем последний слэш в пути
   if (a==NULL) // Если значение пути вырождается в NULL (слэша больше не оказалось)
-  {
     up_dir="\0"; // То делаем archive_cwd нулевой строкой
-  }
   else
-  {
     *(a+1)='\0'; // А иначе просто обрезаем путь в архиве на один уровень
-  }
   directories_list=archive_get_directories_list(panel, up_dir);
   int n=(int)sizeof(directories_list);
   #ifdef debug_printf
@@ -286,7 +278,7 @@ int find_prev_archive_directory(panel *panel)
     #endif
     if (strcmp (directories_list[i], panel->archive_cwd) == 0) // Сравниваем строку с текущим каталогом
     {
-      if (i == 0) // Если i=0
+      if (i == 0)
       {
         #ifdef debug_printf
         printf ("Matched dirname '%s', stay here\n", directories_list[i]);
@@ -324,20 +316,14 @@ int find_next_archive_directory(panel *panel)
   trim_line(up_dir); // Удяляем последний символ (слэш) из текущего имени
   char *a=strrchr(up_dir, '/'); // Ищем последний слэш в пути
   if (a==NULL) // Если значение пути вырождается в NULL (слэша больше не оказалось)
-  {
     up_dir="\0"; // То делаем archive_cwd нулевой строкой
-  }
   else
-  {
     *(a+1)='\0'; // А иначе просто обрезаем путь в архиве на один уровень
-  }
   directories_list=archive_get_directories_list(panel, up_dir);
   while (TRUE)
   {
     if (directories_list[i]==NULL) 
-    {
       return FALSE; // Если достигли конца списка
-    }
     else
     {
       #ifdef debug_printf
@@ -382,22 +368,16 @@ int find_next_archive_directory(panel *panel)
 void archive_go_upper(panel *panel) // Переходим на уровень выше внутри архива
 {
   if (panel->archive_cwd[0] == '\0') // Если на верхнем уровне архива
-  {
     leave_archive(panel); // То покидаем его
-  }
   else // А если нет -
   {
     trim_line(panel->archive_cwd); // Удяляем последний символ (слэш) из текущего имени
     archive_cwd_prev=xconcat(basename(panel->archive_cwd),"/");
     char *a=strrchr(panel->archive_cwd, '/'); // Ищем последний слэш в пути
     if (a==NULL) // Если значение пути вырождается в NULL (слэша больше не оказалось)
-    {
       panel->archive_cwd="\0"; // То делаем archive_cwd нулевой строкой
-    }
     else
-    {
       *(a+1)='\0'; // А иначе просто обрезаем путь в архиве на один уровень
-    }
     
     if (panel == &top_panel)
     {

@@ -19,7 +19,7 @@ static GtkWidget *create, *copy, *moving, *delete, *options, *exit_button; // К
 static GtkWidget *fmanager, *move_chk, *clock_panel, *ink_speed, *show_hidden_files_chk, *LED_notify_checkbox, *reset_configuration, *backlight_scale, *about_program; // Пункты в настройках ФМ
 static GtkWidget *crop_image, *rotate_image, *manga_mode, *frame_image, *keepaspect_image, *double_refresh_image, *viewed, *preload_enabled_button, *suppress_panel_button; // Чекбоксы в настройках вьювера
 static GtkWidget *loop_dir_none, *loop_dir_loop, *loop_dir_next, *loop_dir_exit, *loop_dir_frame, *loop_dir_vbox; // Радиобаттон в настройках вьювера
-int need_refresh=0;
+int need_refresh=FALSE;
 
 
 // **************************************************  Picture menu  ***********************************************************
@@ -87,117 +87,101 @@ static void power_information(void)
 
 static void crop_image_toggler () // Callback для галки обрезки полей
 {
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(crop_image))) // Если галка активируется
-    crop = 1; // Включаем обрезку полей
-  else // Если галка снимается
-    crop = 0; // Отключаем обрезку полей
-  write_config_int("crop", crop); // Сохраняем конфиги
-  need_refresh=1;
+  write_config_int("crop", crop=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(crop_image)));
+  need_refresh=TRUE;
   e_ink_refresh_part ();
 }
 
 static void rotate_image_toggler () // Callback для галки поворота
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rotate_image))) { // Если галка активируется
-    rotate = 1; // Включаем поворот
+    rotate = TRUE; // Включаем поворот
     gtk_widget_set_sensitive(frame_image, TRUE); // И включаем галку умного листания
     gtk_widget_set_sensitive(manga_mode, TRUE); // И включаем галку режима манги
   } else { // Если галка снимается
-    rotate = 0; // Отключаем поворот
+    rotate = FALSE; // Отключаем поворот
     
-    write_config_int("frame", frame=0);
+    write_config_int("frame", frame=FALSE);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(frame_image), FALSE); // Отключаем с ним умное листание
     gtk_widget_set_sensitive(frame_image, FALSE); // И блокируем его
     
-    write_config_int("manga", manga=0); // Отключаем режим манги
+    write_config_int("manga", manga=FALSE); // Отключаем режим манги
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(manga_mode), FALSE); // Отключаем с ним режим манги
     gtk_widget_set_sensitive(manga_mode, FALSE); // И блокируем его
   }
   write_config_int("rotate", rotate); // Сохраняем конфиги
-  need_refresh=1;
+  need_refresh=TRUE;
   e_ink_refresh_part ();
 }
 
 static void frame_image_toggler () // Callback для галки умного листания
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(frame_image))) { // Если галка активируется
-    frame = 1; // Включаем умное листание
-    crop = 1; // И обрезку полей
+    frame = TRUE; // Включаем умное листание
+    crop = TRUE; // И обрезку полей
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(crop_image), TRUE); // Принудительно активируем галку обрезки полей на экране (для красоты)
     gtk_widget_set_sensitive(crop_image, FALSE); // А затем отключаем выключатели обрезки полей
     gtk_widget_set_sensitive(rotate_image, FALSE); // Поворота
     gtk_widget_set_sensitive(manga_mode, FALSE); // И режима манги
   } else { // Если галка снимается
-    frame = 0; // Отключаем умное листание
+    frame = FALSE; // Отключаем умное листание
     gtk_widget_set_sensitive(crop_image, TRUE); // А затем включаем выключатели обрезки полей
     gtk_widget_set_sensitive(rotate_image, TRUE); // Поворота
     gtk_widget_set_sensitive(manga_mode, TRUE); // И режима манги
   }
   write_config_int("crop", crop);   // Сохраняем конфиги
   write_config_int("frame", frame); // Сохраняем конфиги
-  need_refresh=1;
+  need_refresh=TRUE;
   e_ink_refresh_part ();
 }
 
 static void manga_mode_toggler () // Callback для галки просмотра как манги
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(manga_mode))) { // Если галка активируется
-    manga = 1; // Включаем режим манги
-    crop = 1; // И обрезку полей
+    manga = TRUE; // Включаем режим манги
+    crop = TRUE; // И обрезку полей
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(crop_image), TRUE); // Принудительно активируем галку обрезки полей на экране (для красоты)
     gtk_widget_set_sensitive(crop_image, FALSE); // А затем отключаем выключатели обрезки полей
     gtk_widget_set_sensitive(rotate_image, FALSE); // Поворота
     gtk_widget_set_sensitive(frame_image, FALSE); // И умного просмотра
   } else { // Если галка снимается
-    manga = 0; // Отключаем листание манги
+    manga = FALSE; // Отключаем листание манги
     gtk_widget_set_sensitive(crop_image, TRUE); // А затем включаем выключатели обрезки полей
     gtk_widget_set_sensitive(rotate_image, TRUE); // Поворота
     gtk_widget_set_sensitive(frame_image, TRUE); // И умного просмотра
   }
   write_config_int("crop", crop);   // Сохраняем конфиги
   write_config_int("manga", manga); // Сохраняем конфиги
-  need_refresh=1;
+  need_refresh=TRUE;
   e_ink_refresh_part ();
 }
 
 static void keepaspect_image_toggler () // Callback для галки сохранения пропорций
 {
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(keepaspect_image))) // Если галка активируется
-    keepaspect = 1; // Включаем сохранение пропорций
-  else // Если галка снимается
-    keepaspect = 0; // Отключаем сохранение пропорций
-  write_config_int("keepaspect", keepaspect); // Сохраняем конфиги
-  need_refresh=1;
+  write_config_int("keepaspect", keepaspect = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(keepaspect_image)));
+  need_refresh=TRUE;
   e_ink_refresh_part ();
 }
 
 static void double_refresh_toggler () // Callback для галки двойного обновления
 {
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(double_refresh_image))) // Если галка активируется
-    double_refresh = 1; // Включаем двойное обновление
-  else // Если галка снимается
-    double_refresh = 0; // Отключаем двойное обновление
-  write_config_int("double_refresh", double_refresh); // Сохраняем конфиги
+  write_config_int("double_refresh", double_refresh=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(double_refresh_image)));
   e_ink_refresh_part ();
 }
 
 static void preload_toggler () // Callback для галки включения предзагрузки
 {
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(preload_enabled_button))) // Если галка активируется
-    preload_enable = 1; // Включаем двойное обновление
-  else // Если галка снимается
-    preload_enable = 0; // Отключаем двойное обновление
-  write_config_int("preload_enable", preload_enable); // Сохраняем конфиги
+  write_config_int("preload_enable", preload_enable=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(preload_enabled_button)));
   e_ink_refresh_part ();
 }
 
 static void suppress_panel_callback () // Callback для галки подавления панели
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(suppress_panel_button))) { // Если галка активируется
-    suppress_panel = 1; // Включаем подавление
+    suppress_panel = TRUE; // Включаем подавление
     kill_panel();
   } else { // Если галка снимается
-    suppress_panel = 0; // Отключаем подавление
+    suppress_panel = FALSE; // Отключаем подавление
     start_panel();
   }
   write_config_int("suppress_panel", suppress_panel); // Сохраняем конфиги
@@ -206,11 +190,11 @@ static void suppress_panel_callback () // Callback для галки подав�
 
 static void loop_dir_toggler () // Callback для радиобаттона по действию при окончании каталога
 {
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_none))) loop_dir = 0; // Если радиобаттон по ничего не делать включился
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_loop))) loop_dir = 1; // Если радиобаттон по зацикливанию включился
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_next))) loop_dir = 2; // Если радиобаттон по "следующий каталог" включился
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_exit))) loop_dir = 3; // Если радиобаттон по переходу в файлменеджер включился
-  write_config_int("loop_dir", loop_dir); // Сохраняем конфиги
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_none))) loop_dir = LOOP_NONE; 
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_loop))) loop_dir = LOOP_LOOP; 
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_next))) loop_dir = LOOP_NEXT; 
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_exit))) loop_dir = LOOP_EXIT; 
+  write_config_int("loop_dir", loop_dir);
   e_ink_refresh_part ();
 }
 
@@ -226,8 +210,6 @@ static void reset_statistics() // Callback для кнопки статисти�
     e_ink_refresh_part();
   }
 }
-
-
 
 static gint keys_rotation_picture_menu (__attribute__((unused))GtkWidget *window, GdkEventKey *event) //Круговое перемещение по меню в смотрелке
 {
@@ -258,16 +240,16 @@ static gint keys_rotation_picture_menu (__attribute__((unused))GtkWidget *window
 
 static void picture_menu_destroy (panel *panel, GtkWidget *dialog) // Уничтожаем меню настроек отображения
 {
-  enable_refresh=0;
+  enable_refresh=FALSE;
   gtk_widget_destroy(dialog);
   //   gtk_widget_grab_focus (win);
   reset_preloaded_image(); // Cбрасываем предзагрузку - всё равно она не сработает сейчас
-  if (need_refresh==1)
+  if (need_refresh)
   {
     show_image(panel->selected_name, panel); // Повторно показываем картинку для учёта изменений
     viewed_pages--; // Откатываем назад счётчик страниц - после открытия-закрытия меню он не должен изменяться
   }
-  enable_refresh=1;
+  enable_refresh=TRUE;
   e_ink_refresh_local();
   //   g_signal_handlers_unblock_by_func( win, focus_in_callback, NULL );
   //   g_signal_handlers_unblock_by_func( win, focus_out_callback, NULL );
@@ -306,7 +288,7 @@ static gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, panel *
 
 void start_picture_menu (panel *panel, GtkWidget *win) // Создаём меню настроек картинки
 {
-  need_refresh=0;
+  need_refresh=FALSE;
   
   GtkWidget *menu_vbox = gtk_vbox_new (FALSE, 0);
   
@@ -354,22 +336,22 @@ void start_picture_menu (panel *panel, GtkWidget *win) // Создаём мен�
   gtk_container_add (GTK_CONTAINER (loop_dir_frame), loop_dir_vbox);
   
   loop_dir_none = gtk_radio_button_new_with_label (NULL, DO_NOTHING);
-  if (loop_dir == 0) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_none), TRUE);
+  if (loop_dir == LOOP_NONE) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_none), TRUE);
   gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_none, TRUE, TRUE, 0);
   gtk_button_set_relief (GTK_BUTTON(loop_dir_none), GTK_RELIEF_NONE);
   
   loop_dir_loop = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (loop_dir_none), LOOP_DIRECTORY);
-  if (loop_dir == 1) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_loop), TRUE);
+  if (loop_dir == LOOP_LOOP) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_loop), TRUE);
   gtk_button_set_relief (GTK_BUTTON(loop_dir_loop), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_loop, TRUE, TRUE, 0);
   
   loop_dir_next = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (loop_dir_none), NEXT_DIRECTORY);
-  if (loop_dir == 2) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_next), TRUE);
+  if (loop_dir == LOOP_NEXT) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_next), TRUE);
   gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_next, TRUE, TRUE, 0);
   gtk_button_set_relief (GTK_BUTTON(loop_dir_next), GTK_RELIEF_NONE);
   
   loop_dir_exit = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (loop_dir_none), EXIT_TO_FILEMANAGER);
-  if (loop_dir == 3) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_exit), TRUE);
+  if (loop_dir == LOOP_EXIT) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_exit), TRUE);
   gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_exit, TRUE, TRUE, 0);
   gtk_button_set_relief (GTK_BUTTON(loop_dir_exit), GTK_RELIEF_NONE);
   g_signal_connect (G_OBJECT (loop_dir_none), "group-changed", G_CALLBACK (loop_dir_toggler), NULL); // Один callback на всех
@@ -410,13 +392,13 @@ void start_picture_menu (panel *panel, GtkWidget *win) // Создаём мен�
   xfree(&viewed_text);
   
   if (!rotate) { // Если поворот отключен
-    frame = 0; // Отключаем умное листание
+    frame = FALSE; // Отключаем умное листание
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(frame_image), FALSE); // Выключаем галку умного листания
     gtk_widget_set_sensitive(frame_image, FALSE); // И блокируем её
-    write_config_int("frame", frame=0); // Сохраняем конфиги
+    write_config_int("frame", frame=FALSE); // Сохраняем конфиги
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(manga_mode), FALSE); // Выключаем галку режима манги
     gtk_widget_set_sensitive(manga_mode, FALSE); // И блокируем её
-    write_config_int("manga", manga=0); // Сохраняем конфиги
+    write_config_int("manga", manga=FALSE); // Сохраняем конфиги
   }
   
   if (frame) { // Если включено умное листание
@@ -448,7 +430,7 @@ void start_picture_menu (panel *panel, GtkWidget *win) // Создаём мен�
 static void fm_start () // Callback для галки включения ФМ в настройках
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(fmanager))) {
-    fm_toggle = 1;
+    fm_toggle = TRUE;
     second_panel_show();
     gtk_widget_set_sensitive(create, TRUE);
     gtk_widget_set_sensitive(copy, TRUE);
@@ -456,8 +438,8 @@ static void fm_start () // Callback для галки включения ФМ в
     write_config_int ("fm_toggle", fm_toggle);
     e_ink_refresh_part ();
   } else {
-    fm_toggle = 0;
-    top_panel_active=1;
+    fm_toggle = FALSE;
+    top_panel_active=TRUE;
     second_panel_hide();
     gtk_widget_set_sensitive(create, FALSE);
     gtk_widget_set_sensitive(copy, FALSE);
@@ -469,21 +451,17 @@ static void fm_start () // Callback для галки включения ФМ в
 
 static void move_confirm ()
 {
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(move_chk)))
-    move_toggle = 1;
-  else
-    move_toggle = 0;
-  write_config_int("move_toggle", move_toggle);
+  write_config_int("move_toggle", move_toggle=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(move_chk)));
   e_ink_refresh_part ();
 }
 
 static void clock_panel_toggler ()
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(clock_panel))) {
-    clock_toggle = 1;
+    clock_toggle = FALSE;
     gtk_window_unfullscreen  (GTK_WINDOW(main_window));
   } else {
-    clock_toggle = 0;
+    clock_toggle = TRUE;
     gtk_window_fullscreen  (GTK_WINDOW(main_window));
   }
   write_config_int("clock_toggle", clock_toggle);
@@ -492,34 +470,22 @@ static void clock_panel_toggler ()
 
 static void type_refresh ()
 {
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ink_speed)))
-    speed_toggle = 0;
-  else
-    speed_toggle = 1;
-  write_config_int("speed_toggle", speed_toggle);
+  write_config_int("speed_toggle", speed_toggle=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ink_speed)));
   e_ink_refresh_part ();
 }
 
 static void show_hidden_files_callback ()
 {
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(show_hidden_files_chk)))
-    show_hidden_files = 1;
-  else 
-    show_hidden_files = 0;
-  write_config_int("show_hidden_files", show_hidden_files);
+  write_config_int("show_hidden_files", show_hidden_files=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(show_hidden_files_chk)));
   update(active_panel);
-  if (fm_toggle== 1) 
+  if (fm_toggle) 
     update(&bottom_panel);
   e_ink_refresh_part ();
 }
 
 static void LED_notify_callback ()
 {
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(LED_notify_checkbox))) 
-    LED_notify = TRUE;
-  else
-    LED_notify = FALSE;
-  write_config_int("LED_notify", LED_notify);
+  write_config_int("LED_notify", LED_notify = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(LED_notify_checkbox)));
   e_ink_refresh_part ();
 }
 
@@ -582,6 +548,19 @@ static gint keys_rotation_options (__attribute__((unused))GtkWidget *window, Gdk
       else
         return FALSE;
       
+    default:
+      return FALSE;
+  }
+}
+
+static gint keys_updown_options (__attribute__((unused))GtkWidget *window, GdkEventKey *event) // Для возможности переключаться из регулятора подсветки вверх-вниз
+{
+  switch (event->keyval){
+    case   KEY_UP:
+        gtk_widget_grab_focus (LED_notify_checkbox);
+        return TRUE;      
+    case   KEY_DOWN:
+      gtk_widget_grab_focus (reset_configuration);
     default:
       return FALSE;
   }
@@ -674,6 +653,8 @@ void options_menu_create(GtkWidget *main_menu) //Создание меню оп�
     g_signal_connect(backlight_scale, "value-changed", G_CALLBACK(backlight_changed), NULL);
     gtk_range_set_value (GTK_RANGE(backlight_scale), backlight);
     gtk_container_add (GTK_CONTAINER (backlight_frame), backlight_scale);
+    g_signal_connect (G_OBJECT (backlight_frame), "key_press_event", G_CALLBACK (keys_updown_options), NULL);
+    
   }
 
 //   GtkWidget *LED_test_frame = gtk_frame_new ("LED_TEST");

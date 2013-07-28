@@ -28,3 +28,15 @@ extern int suppress_panel;//Подавлять ли панель и сообще
 extern int show_hidden_files;//Показывать ли в файл-менеджере скрытные каталоги и файлы
 extern int LED_notify; // Оповещение светодиодом об обновлении панелей и загрузке
 extern int backlight; // Уровень яркости подсветки
+
+#ifndef _loop_dir
+#define _loop_dir
+enum
+{
+  LOOP_NONE,
+  LOOP_LOOP,
+  LOOP_NEXT,
+  LOOP_EXIT,
+  LOOP_DIRECTORY
+};
+#endif

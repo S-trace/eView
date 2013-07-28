@@ -155,7 +155,7 @@ void detect_hardware(void) // Обнаружение оборудования и
     }
   }
   #ifdef debug_printf
-  if (! LED_notify)
+  if (! hardware_has_LED)
     printf ("LED control not found\n");
   if (! hardware_has_backlight)
     printf ("Backlight control not found\n");
@@ -186,15 +186,11 @@ void write_int_to_file(char *file, int value)
 void set_brightness(int value)
 {
   if (hardware_has_backlight)
-  {
     write_int_to_file(backlight_path, value);
-  }
 }
 
 void set_led_state (int state)
 {
   if (LED_notify && hardware_has_LED)
-  {
     write_int_to_file(LED_path, state);
-  }
 }

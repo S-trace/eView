@@ -10,7 +10,7 @@
 #include "cfg.h"
 
 static char *cfg_directory = NULL; //путь к файлу с настройками
-int crop, rotate, frame, keepaspect, fm_toggle, move_toggle, speed_toggle, clock_toggle, top_panel_active, loop_dir, double_refresh, viewed_pages, preload_enable, suppress_panel, show_hidden_files, manga, LED_notify=1, backlight;
+int crop, rotate, frame, keepaspect, fm_toggle, move_toggle, speed_toggle, clock_toggle, top_panel_active, loop_dir, double_refresh, viewed_pages, preload_enable, suppress_panel, show_hidden_files, manga, LED_notify=TRUE, backlight;
 
 char *cfg_file_path (void)
 {
@@ -199,25 +199,25 @@ void create_cfg ()  //создание файлов настроек по умо
     #endif
   }
   char *current_dir = get_current_dir_name();
-  write_config_int("crop", 1);
-  write_config_int("rotate", 0);
-  write_config_int("frame", 0);
-  write_config_int("manga", 1);
-  write_config_int("keepaspect", 1);
-  write_config_int("fm_toggle", 0);
-  write_config_int("move_toggle", 1);
-  write_config_int("speed_toggle", 0);
-  write_config_int("clock_toggle", 1);
-  write_config_int("top_panel_active", 1);
-  write_config_int("loop_dir", 0);
-  write_config_int("double_refresh", 0);
-  write_config_int("in_archive", 0);
+  write_config_int("crop", TRUE);
+  write_config_int("rotate", FALSE);
+  write_config_int("frame", FALSE);
+  write_config_int("manga", FALSE);
+  write_config_int("keepaspect", TRUE);
+  write_config_int("fm_toggle", FALSE);
+  write_config_int("move_toggle", TRUE);
+  write_config_int("speed_toggle", FALSE);
+  write_config_int("clock_toggle", TRUE);
+  write_config_int("top_panel_active", TRUE);
+  write_config_int("loop_dir", LOOP_NONE);
+  write_config_int("double_refresh", FALSE);
+  write_config_int("in_archive", FALSE);
   write_config_int("viewed_pages", 0);
-  write_config_int("preload_enable", 1);
-  write_config_int("suppress_panel", 1);
-  write_config_int("show_hidden_files", 0);
-  write_config_int("LED_notify", 1);
-  write_config_int("backlight", 0);
+  write_config_int("preload_enable", TRUE);
+  write_config_int("suppress_panel", FALSE);
+  write_config_int("show_hidden_files", FALSE);
+  write_config_int("LED_notify", TRUE);
+  write_config_int("backlight", FALSE);
   write_config_string("top_panel.path", "/");
   write_config_string("top_panel.selected_name", "../");
   write_config_string("top_panel.archive_cwd", "");
