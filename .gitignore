@@ -21,3 +21,6 @@
 
 # Kate temp files
 *.kate-swp
+
+# Configuration
+.eView
