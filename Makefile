@@ -1,5 +1,5 @@
 name ?= eView
-version ?= 062
+version ?= 063
 lang ?= russian
 DFLAGS = -MD
 ifeq ($(MAKECMDGOALS), arm)
