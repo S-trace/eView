@@ -91,16 +91,18 @@ static int get_archive_list(char *archive, char *list_file) // Создание 
       #ifdef debug_printf
       printf("File type ZIP: '%s'\n", archive);
       #endif
-      asprintf(&command, "zipinfo -1 \"%s\" | %s > %s", archive, SORT_COMMAND, list_file);
-      xsystem(command);
-      xfree(&command);
+      asprintf(&command, "zipinfo -1 \"%s\" | %s > /tmp/ziplist; xargs -n1 dirname < /tmp/ziplist | uniq | sed '/^.$/d;s $ / g' > /tmp/list ; grep -v /$ /tmp/ziplist >> /tmp/list ; %s < /tmp/list > %s", archive, SORT_COMMAND, SORT_COMMAND, list_file); // Злоебучая команда, потому как бывают архивы, которые не содержат каталогов, только файлы (каталоги в каноничном списке необходимы!)
+      xsystem(command); // Получаем список каталогов и файлов в каноничном формате (каталоги должны завершаться слэшем)
+      xfree(&command);      
+      remove("/tmp/ziplist");
+      remove("/tmp/list");      
       return TRUE;
       break;
     case RAR_FILE:
       #ifdef debug_printf
       printf("File type RAR: '%s'\n", archive);
       #endif
-      asprintf(&command, "unrar vt \"%s\" > /tmp/rarlist ; grep -B1 -- 'd[r-][w-][x-][r-][w-][x-][r-][w-][x-]\\|\\.D\\.' /tmp/rarlist | grep -v '^--$\\|d[r-][w-][x-][r-][w-][x-][r-][w-][x-]\\|\\.D\\.'  | cut -c 2- | sed 's $ / g' > /tmp/list ; grep -B1 -- '-[r-][w-][x-][r-][w-][x-][r-][w-][x-]\\|\\.*A\\.' /tmp/rarlist | grep -v '^--$\\|-[r-][w-][x-][r-][w-][x-][r-][w-][x-]\\|\\.*A\\.'  | sed '1d;$d'| cut -c 2- >> /tmp/list; %s < /tmp/list > %s", archive, SORT_COMMAND, list_file); // Злоебучая команда, ага. Но зато экономим аж три дорогущих вызова system() в сравнении с тем, что было.
+      asprintf(&command, "unrar vt \"%s\" > /tmp/rarlist ; grep -B1 -- 'd[r-][w-][x-][r-][w-][x-][r-][w-][x-]\\|\\.D\\.' /tmp/rarlist | grep -v '^--$\\|d[r-][w-][x-][r-][w-][x-][r-][w-][x-]\\|\\.D\\.'  | cut -c 2- | sed 's $ / g' > /tmp/list ; grep -B1 -- '-[r-][w-][x-][r-][w-][x-][r-][w-][x-]\\|\\.*A\\.' /tmp/rarlist | grep -v '^--$\\|-[r-][w-][x-][r-][w-][x-][r-][w-][x-]\\|\\.*A\\.'  | sed '1d;$d'| cut -c 2- >> /tmp/list; %s < /tmp/list > %s", archive, SORT_COMMAND, list_file); // Злоебучая команда, ага. Но зато экономим аж три дорогущих вызова system()
       xsystem(command); // Получаем список каталогов и файлов в каноничном формате (каталоги должны завершаться слэшем)
       xfree(&command);
       remove("/tmp/rarlist");
