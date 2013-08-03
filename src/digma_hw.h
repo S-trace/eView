@@ -55,5 +55,5 @@ enum
 };
 extern int LED_state[LED_STATES]; // Состояния светодиода
 extern int previous_backlight_level; // Уровень подсветки перед запуском eView
-
+void enter_suspend(void);
 #endif /* _DIGMA_HW_H_ */

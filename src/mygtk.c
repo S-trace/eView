@@ -89,6 +89,12 @@ gint confirm_request(char *title, char *confirm_button, char *reject_button)
  * dbus-send --type=method_call --dest=com.sibrary.BoeyeServer /StartupSplash com.sibrary.Service.StartupSplash.closeSplash
  * 
  * dbus-send --type=method_call --dest=com.test.reader /reader/registry com.test.reader.registry.input string:"/path/file.txt"
+ 
+dbus-send --print-reply --type=method_call --dest=com.sibrary.BoeyeServer /PowerManager com.sibrary.Service.PowerManager.getSuspendTime|cut -d ' ' -f 5|tail -n 1
+dbus-send --print-reply --type=method_call --dest=com.sibrary.BoeyeServer /PowerManager com.sibrary.Service.PowerManager.setSuspendTime int32:1024
+
+cat /home/root/Settings/boeye/boeyeserver.conf|grep ScreenSaver | cut -d = -f 2|tr -d ' '| tr ',' '\n' - список файлов для заставки
+
  * method call sender=:1.2 -> dest=com.test.reader serial=113 path=/reader/registry; interface=com.test.reader.registry; member=input ; string "/media/mmcblk0p1/passwd.txt"
  * 
  * dbus-send /PowerManager com.sibrary.Service.PowerManager.requestSuspend
@@ -533,6 +539,9 @@ static gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventK
       break;
       
     case KEY_POWER_QT:
+      enter_suspend();
+      break;
+      
     case KEY_PGDOWN:
     case KEY_PGUP:
       return FALSE; 

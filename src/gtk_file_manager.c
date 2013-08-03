@@ -366,8 +366,8 @@ void init (void)
   {
     printf("'%s' opened for writing log as %d fd, will now write it into this file!\n", name, file_descriptor);
     dup2 (file_descriptor, 0);
-    dup2 (file_descriptor, 1);
-    dup2 (file_descriptor, 2);
+//     dup2 (file_descriptor, 1);
+//     dup2 (file_descriptor, 2);
   }
   #endif
   #endif

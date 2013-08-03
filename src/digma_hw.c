@@ -13,7 +13,9 @@
 #include <stdlib.h> // atoi()
 #include <fcntl.h>
 #include <unistd.h>
+#include "gtk_file_manager.h" // Инклюдить первой среди своих, ибо typedef panel!
 #include "digma_hw.h"
+#include "mylib.h"
 
 int hardware_has_backlight=FALSE, hardware_has_LED=FALSE;
 char *LED_path=NULL, *backlight_path=NULL;
@@ -183,6 +185,26 @@ void write_int_to_file(char *file, int value)
   }
 }
 
+void write_string_to_file(char *file, char *value)
+{
+  #ifdef debug_printf
+  printf("writing %s to %s\n", value, file);
+  #endif
+  FILE *file_descriptor=fopen(file,"wt");
+  if (!file_descriptor)
+  {
+    #ifdef debug_printf
+    printf("UNABLE TO OPEN %s FILE FOR WRITING!\n", file);
+    #endif
+    return ;
+  }
+  else
+  {
+    fprintf(file_descriptor, "%s", value);
+    fclose(file_descriptor);
+  }
+}
+
 void set_brightness(int value)
 {
   if (hardware_has_backlight)
@@ -193,4 +215,59 @@ void set_led_state (int state)
 {
   if (LED_notify && hardware_has_LED)
     write_int_to_file(LED_path, state);
+}
+
+void enter_suspend(void)
+{
+  #ifdef debug_printf
+  printf("Entering suspend\n");
+  #endif
+//   FILE *list_of_screensavers=popen("cat /home/root/Settings/boeye/boeyeserver.conf|grep ScreenSaver | cut -d = -f 2|tr -d ' '| tr ',' '\n'","rt");
+//   #ifdef debug_printf
+//   printf("Process opened\n");
+//   fflush (stdout);
+//   #endif
+//   int screensavers_count=0;
+//   char screensavers_array[16][256];
+//   while(!feof(list_of_screensavers) && screensavers_count <= 16 )
+//   {
+//     #ifdef debug_printf
+//     printf("loop\n");
+//     fflush (stdout);
+//     #endif
+//     fgets(screensavers_array[screensavers_count], 255, list_of_screensavers);
+//     #ifdef debug_printf
+//     printf("fgets\n");fflush (stdout);
+//     #endif
+//     trim_line(screensavers_array[screensavers_count]);
+//     #ifdef debug_printf
+//     printf("trim_line\n");fflush (stdout);
+//     #endif
+//     
+//     #ifdef debug_printf
+//     printf("read %s\n", screensavers_array[screensavers_count]);fflush (stdout);
+//     #endif
+//     screensavers_count++;
+//   }
+//   #ifdef debug_printf
+//   printf("loop done\n");fflush (stdout);
+//   #endif
+//   pclose(list_of_screensavers);
+//   #ifdef debug_printf
+//   printf("Process closed\n");
+//   #endif
+  xsystem("dbus-send /PowerManager com.sibrary.Service.PowerManager.requestSuspend");
+  #ifdef debug_printf
+  printf("DBUS sent\n");
+  #endif
+  
+  usleep(10000000);  
+  #ifdef debug_printf
+  printf("Suspend strat\n");
+  #endif
+  write_string_to_file("/sys/power/state","mem");
+  #ifdef debug_printf
+  printf("Suspend done\n");
+  #endif
+  
 }
