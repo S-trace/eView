@@ -23,7 +23,7 @@ rm temp.tar
 #mkdir -p /userdata/application_data/$PRGNAME
 
 mv $PRGNAME /usr/bin/
-echo '[Desktop Entry]
+desktop_GTK='[Desktop Entry]
 Name=eView
 Name[ru]=eView
 Comment=Enhached manga viewer and filemanager
@@ -35,15 +35,19 @@ Categories=Root
 StartupNotify=false
 Match=
 NoDisplay=false
-' > /usr/share/applications/${PRGNAME}.desktop
-echo '[Desktop Entry]
+'
+echo "$desktop_GTK" > /usr/share/applications/${PRGNAME}.desktop
+echo "$desktop_GTK" > /userdata/applications/${PRGNAME}.desktop
+
+desktop_Qt='[Desktop Entry]
 Name=eView
 GenericName=eView
 Exec=eView
 Type=Application
 Icon=eView
 Name[ru_RU]=eView
-' > /usr/local/share/applications/manual.desktop
+'
+echo "$desktop_Qt" > /usr/local/share/applications/manual.desktop
 cp *.png /usr/share/filemanager/pixmaps/
 cp desktop_${PRGNAME}.png /usr/local/share/desktop/icons/${PRGNAME}.png
 # if ! grep eView /usr/local/share/applications/entry.order; then
