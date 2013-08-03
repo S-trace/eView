@@ -120,31 +120,39 @@ int read_int_from_file(char *name) //Чтение числа из файла nam
 
 void detect_hardware(void) // Обнаружение оборудования и его возможностей
 {  
-  hardware_has_backlight=check_for_file ("/sys/class/backlight/boeye_backlight/brightness");
-  if (hardware_has_backlight) 
-  {
-    backlight_path="/sys/class/backlight/boeye_backlight/brightness";
-    #ifdef debug_printf
-    printf ("Found backlight control at file %s\n", backlight_path);
-    #endif
-    previous_backlight_level=read_int_from_file(backlight_path);
+  if (!hardware_has_backlight) // Digma R60G/GMini C6LHD (Qt)
+  {    
+    hardware_has_backlight=check_for_file ("/sys/class/backlight/boeye_backlight/brightness");
+    if (hardware_has_backlight) 
+    {
+      backlight_path="/sys/class/backlight/boeye_backlight/brightness";
+      #ifdef debug_printf
+      printf ("Found backlight control at file %s\n", backlight_path);
+      #endif
+      previous_backlight_level=read_int_from_file(backlight_path);
+    }
   }
-  hardware_has_LED=check_for_file ("/sys/class/leds/charger-led/brightness");
-  if (hardware_has_LED) 
+  
+  if (!hardware_has_LED) // Digma R60G/GMini C6LHD (Qt)
   {
-    LED_path="/sys/class/leds/charger-led/brightness";
-    #ifdef debug_printf
-    printf ("Found LED control at file %s\n", LED_path);
-    #endif
-    LED_state[LED_ON]=2; // Неверно!
-    LED_state[LED_OFF]=0;
-    LED_state[LED_BLINK_SLOW]=1;
-    LED_state[LED_BLINK_FAST]=4;
+    hardware_has_LED=check_for_file ("/sys/class/leds/charger-led/brightness");
+    if (hardware_has_LED) 
+    {
+      LED_path="/sys/class/leds/charger-led/brightness";
+      #ifdef debug_printf
+      printf ("Found LED control at file %s\n", LED_path);
+      #endif
+      LED_state[LED_ON]=2; // Неверно!
+      LED_state[LED_OFF]=0;
+      LED_state[LED_BLINK_SLOW]=1;
+      LED_state[LED_BLINK_FAST]=4;
+    }
   }
-  else
+  
+  if (!hardware_has_LED) // Ritmix RBK700HD GTK/Qt
   {
     hardware_has_LED=check_for_file ("/sys/class/leds/axp192-led-classdev/brightness");
-    if (hardware_has_LED) 
+    if (hardware_has_LED)
     {
       LED_path="/sys/class/leds/axp192-led-classdev/brightness";
       LED_state[LED_ON]=3;
@@ -156,6 +164,23 @@ void detect_hardware(void) // Обнаружение оборудования и
       #endif
     }
   }
+
+  if (!hardware_has_LED) // Digma E600 GTK
+  {
+    hardware_has_LED=check_for_file ("/sys/devices/platform/boeye-leds/leds/da9030_led/brightness");
+    if (hardware_has_LED)
+    {
+      LED_path="/sys/devices/platform/boeye-leds/leds/da9030_led/brightness";
+      LED_state[LED_ON]=3; // Проверить!
+      LED_state[LED_OFF]=4;
+      LED_state[LED_BLINK_SLOW]=5;
+      LED_state[LED_BLINK_FAST]=6;
+      #ifdef debug_printf
+      printf ("Found LED control at file %s\n", LED_path);
+      #endif
+    }
+  }
+  
   #ifdef debug_printf
   if (! hardware_has_LED)
     printf ("LED control not found\n");
