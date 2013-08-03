@@ -471,9 +471,10 @@ int main (int argc, char **argv)
   {
     create_cfg ();
     read_configuration();
-    chdir("/media/mmcblk0p1/");
-    top_panel.path = xgetcwd(top_panel.path);
-    write_config_string("top_panel.path", top_panel.path);
+    chdir("/media/mmcblk0p1/"); // Для новых книг
+    chdir("/userdata/media/mmcblk0p1/"); // Для старых книг
+    // Неизвестно, где мы оказались после предыдущих двух переходов (сработал только один): 
+    write_config_string("top_panel.path", top_panel.path = xgetcwd(top_panel.path)); 
   }
   else 
   {
