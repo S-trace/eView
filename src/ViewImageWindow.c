@@ -41,7 +41,7 @@ static int move_left_to_left; //флаг слайдера, нужен тольк
 // g_print("      изменение значения adjust %f\n", gtk_adjustment_get_value         (GTK_ADJUSTMENT(adjust)));
 // }
 
-static void pixbuf_unref(GdkPixbuf *pixbuf)
+void pixbuf_unref(GdkPixbuf *pixbuf)
 {
   if (G_IS_OBJECT(pixbuf)) g_object_unref(pixbuf);
 }
@@ -68,7 +68,7 @@ void reset_preloaded_image(void)
   pixbuf_unref(preloaded.pixbuf);
 }
 
-static void preload_image(char *new_file, panel *panel)
+void preload_image(char *new_file, panel *panel)
 {
   GdkPixbuf *pixbuf_saved;
   if (new_file==NULL) return;

@@ -227,5 +227,5 @@ void update_topcwd(void);
 int top_str_iter (void);
 void list_f(panel *panel);
 void list_fd(panel *panel);
-void shutdown(void);
+void shutdown(int exit_code);
 #endif /* _HAVE_GTK_FILE_MANAGER_ */

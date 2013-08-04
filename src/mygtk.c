@@ -114,7 +114,7 @@ void Qt_error_message(char *message)
     #ifdef debug_printf
     printf("UNABLE TO OPEN %s FILE FOR WRITING!\n", name);
     #endif
-    shutdown();
+    shutdown(EXIT_FAILURE);
     return ;
   }
   else
@@ -122,7 +122,7 @@ void Qt_error_message(char *message)
     fprintf(file_descriptor, "%s", message);
     fclose(file_descriptor);
     xsystem("dbus-send --type=method_call --dest=com.test.reader /reader/registry com.test.reader.registry.input string:\"/tmp/eView_error_message.txt\"");
-    shutdown();
+    shutdown(EXIT_FAILURE);
   }
 }
 
@@ -305,7 +305,7 @@ void after_dirlist_select(void) // Что происходит при перем
     e_ink_refresh_default();
 }
 
-static void panel_focussed(panel *panel)
+void panel_focussed(panel *panel)
 {
   if (interface_is_locked) // Чтобы игнорировать сигнал о фокуссировке на верхней панели во время инициализации программы
   {
@@ -331,7 +331,7 @@ static void panel_focussed(panel *panel)
   e_ink_refresh_local();
 }
 
-static void go_upper(panel *panel) // Переход на уровень вверх в дереве
+void go_upper(panel *panel) // Переход на уровень вверх в дереве
 {
   enable_refresh=FALSE;
   if (panel->archive_depth > 0) // Если мы в архиве
@@ -368,7 +368,7 @@ static void go_upper(panel *panel) // Переход на уровень вве�
   enable_refresh=TRUE;
 }
 
-static void actions(panel *panel) //выбор что делать по клику переход или запуск
+void actions(panel *panel) //выбор что делать по клику переход или запуск
 {
   #ifdef debug_printf
   printf("CWD=%s\n", panel->path);
@@ -453,7 +453,7 @@ static void actions(panel *panel) //выбор что делать по клик
   }
 }
 
-static gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *event, panel *panel) //реакция на кнопки
+gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *event, panel *panel) //реакция на кнопки
 {
   #ifdef debug_printf
   printf("got %d in main\n", event->keyval);

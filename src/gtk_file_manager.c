@@ -19,6 +19,11 @@
 #include <assert.h>
 #include <fcntl.h> //open()
 #include <X11/Xlib.h> //XOpenDisplay()
+#include <signal.h> //signal()
+
+#ifdef debug_printf
+#include <execinfo.h> //backtrace()
+#endif
 
 #include "gtk_file_manager.h" // Инклюдить первой среди своих, ибо typedef panel!
 #include "mylib.h"
@@ -38,6 +43,7 @@ static int table_visible; //видима нижняя панель или нет
 int width_display, height_display;
 int framebuffer_descriptor=0; // Дескриптор файла фреймбуффера (для обновления)
 int QT=FALSE; // Обнаружен ли QT (влияет на IOCTL обновления и запуск Xfbdev)
+
 void wait_state(void) // Возврат после смотрелки
 {
   update(active_panel);
@@ -415,7 +421,7 @@ void init (void)
   #endif
 }
 
-void shutdown(void)
+void shutdown(int exit_code)
 {
   #ifdef debug_printf
   printf("Shutting down eView\n");
@@ -436,10 +442,24 @@ void shutdown(void)
   #ifdef debug_printf
   printf("\n\neView shutudown done. Bye! =^_^=/~\n");
   #endif
+  exit (exit_code);
+}
+
+void sigsegv_handler(void) // Обработчик для вывода Backtrace сегфолта
+{
+  #ifdef debug_printf
+  printf("got sigsegv_handler\n");
+  void *backtrace_buffer[1024];
+  int depth=backtrace(backtrace_buffer, 1023);
+  printf("got backtrace\n\nBacktrace:\n");
+  backtrace_symbols_fd(backtrace_buffer, depth, 2);
+  #endif
+  shutdown(EXIT_FAILURE);
 }
 
 int main (int argc, char **argv)
 {
+  signal(SIGSEGV, (__sighandler_t)sigsegv_handler);
   init();
   gtk_init (&argc, &argv);
   set_led_state (LED_state[LED_BLINK_SLOW]);

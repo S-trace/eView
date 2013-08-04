@@ -241,7 +241,7 @@ char *find_last_picture_name(panel *panel)
   return last_found_image;
 }
 
-static char *find_next_directory(panel *panel) // Поиск следующей директории в списке TODO: Переписать с обработкой не через system() а через список
+char *find_next_directory(panel *panel) // Поиск следующей директории в списке TODO: Переписать с обработкой не через system() а через список
 {
   FILE *fp; // Указатель на файл
   static char *command; 
@@ -268,7 +268,7 @@ static char *find_next_directory(panel *panel) // Поиск следующей 
   return panel->path; // И возвращаем значение текущего каталога
 }
 
-static char *find_prev_directory(panel *panel) // Поиск предыдущей директории в списке TODO: Переписать с обработкой не через system() а через список
+char *find_prev_directory(panel *panel) // Поиск предыдущей директории в списке TODO: Переписать с обработкой не через system() а через список
 {
   FILE *fp; // Указатель на файл
   char next_line[PATHSIZE+1]; // Строка для следующего каталога

@@ -23,7 +23,7 @@ int need_refresh=FALSE;
 
 
 // **************************************************  Picture menu  ***********************************************************
-static void power_information(void)
+void power_information(void)
 {
   char *label_text, *battery_capacity, *battery_chip_temp, *battery_chip_volt, *battery_current, *power_supplier, *battery_status, *battery_temp, *battery_voltage, *battery_time_to_empty, *battery_time_to_full, *usb_current, *usb_voltage, *ac_current, *ac_voltage;
   /* Создаём виджеты */
@@ -85,14 +85,14 @@ static void power_information(void)
   e_ink_refresh_full();
 }
 
-static void crop_image_toggler () // Callback для галки обрезки полей
+void crop_image_toggler () // Callback для галки обрезки полей
 {
   write_config_int("crop", crop=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(crop_image)));
   need_refresh=TRUE;
   e_ink_refresh_part ();
 }
 
-static void rotate_image_toggler () // Callback для галки поворота
+void rotate_image_toggler () // Callback для галки поворота
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rotate_image))) { // Если галка активируется
     rotate = TRUE; // Включаем поворот
@@ -114,7 +114,7 @@ static void rotate_image_toggler () // Callback для галки поворот
   e_ink_refresh_part ();
 }
 
-static void frame_image_toggler () // Callback для галки умного листания
+void frame_image_toggler () // Callback для галки умного листания
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(frame_image))) { // Если галка активируется
     frame = TRUE; // Включаем умное листание
@@ -135,7 +135,7 @@ static void frame_image_toggler () // Callback для галки умного л
   e_ink_refresh_part ();
 }
 
-static void manga_mode_toggler () // Callback для галки просмотра как манги
+void manga_mode_toggler () // Callback для галки просмотра как манги
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(manga_mode))) { // Если галка активируется
     manga = TRUE; // Включаем режим манги
@@ -156,26 +156,26 @@ static void manga_mode_toggler () // Callback для галки просмотр
   e_ink_refresh_part ();
 }
 
-static void keepaspect_image_toggler () // Callback для галки сохранения пропорций
+void keepaspect_image_toggler () // Callback для галки сохранения пропорций
 {
   write_config_int("keepaspect", keepaspect = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(keepaspect_image)));
   need_refresh=TRUE;
   e_ink_refresh_part ();
 }
 
-static void double_refresh_toggler () // Callback для галки двойного обновления
+void double_refresh_toggler () // Callback для галки двойного обновления
 {
   write_config_int("double_refresh", double_refresh=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(double_refresh_image)));
   e_ink_refresh_part ();
 }
 
-static void preload_toggler () // Callback для галки включения предзагрузки
+void preload_toggler () // Callback для галки включения предзагрузки
 {
   write_config_int("preload_enable", preload_enable=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(preload_enabled_button)));
   e_ink_refresh_part ();
 }
 
-static void suppress_panel_callback () // Callback для галки подавления панели
+void suppress_panel_callback () // Callback для галки подавления панели
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(suppress_panel_button))) { // Если галка активируется
     suppress_panel = TRUE; // Включаем подавление
@@ -188,7 +188,7 @@ static void suppress_panel_callback () // Callback для галки подав�
   e_ink_refresh_part ();
 }
 
-static void loop_dir_toggler () // Callback для радиобаттона по действию при окончании каталога
+void loop_dir_toggler () // Callback для радиобаттона по действию при окончании каталога
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_none))) loop_dir = LOOP_NONE; 
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_loop))) loop_dir = LOOP_LOOP; 
@@ -198,7 +198,7 @@ static void loop_dir_toggler () // Callback для радиобаттона по
   e_ink_refresh_part ();
 }
 
-static void reset_statistics() // Callback для кнопки статистики (сбросс)
+void reset_statistics() // Callback для кнопки статистики (сбросс)
 {
   if(confirm_request(RESET_VIEWED_PAGES, GTK_STOCK_OK, GTK_STOCK_CANCEL))
   {
@@ -211,7 +211,7 @@ static void reset_statistics() // Callback для кнопки статисти�
   }
 }
 
-static gint keys_rotation_picture_menu (__attribute__((unused))GtkWidget *window, GdkEventKey *event) //Круговое перемещение по меню в смотрелке
+gint keys_rotation_picture_menu (__attribute__((unused))GtkWidget *window, GdkEventKey *event) //Круговое перемещение по меню в смотрелке
 {
   set_brightness(backlight);
   switch (event->keyval){
@@ -238,7 +238,7 @@ static gint keys_rotation_picture_menu (__attribute__((unused))GtkWidget *window
   }
 }
 
-static void picture_menu_destroy (panel *panel, GtkWidget *dialog) // Уничтожаем меню настроек отображения
+void picture_menu_destroy (panel *panel, GtkWidget *dialog) // Уничтожаем меню настроек отображения
 {
   enable_refresh=FALSE;
   gtk_widget_destroy(dialog);
@@ -255,7 +255,7 @@ static void picture_menu_destroy (panel *panel, GtkWidget *dialog) // Уничт
   //   g_signal_handlers_unblock_by_func( win, focus_out_callback, NULL );
 }
 
-static gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, panel *panel) //задействует кнопки
+gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, panel *panel) //задействует кнопки
 {
   set_brightness(backlight);
   if (interface_is_locked)
@@ -427,7 +427,7 @@ void start_picture_menu (panel *panel, GtkWidget *win) // Создаём мен�
 
 // **************************************************  Options menu  ***********************************************************
 
-static void fm_start () // Callback для галки включения ФМ в настройках
+void fm_start () // Callback для галки включения ФМ в настройках
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(fmanager))) {
     fm_toggle = TRUE;
@@ -449,13 +449,13 @@ static void fm_start () // Callback для галки включения ФМ в
   e_ink_refresh_part ();
 }
 
-static void move_confirm ()
+void move_confirm ()
 {
   write_config_int("move_toggle", move_toggle=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(move_chk)));
   e_ink_refresh_part ();
 }
 
-static void clock_panel_toggler ()
+void clock_panel_toggler ()
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(clock_panel))) {
     clock_toggle = FALSE;
@@ -468,13 +468,13 @@ static void clock_panel_toggler ()
   e_ink_refresh_part ();
 }
 
-static void type_refresh ()
+void type_refresh ()
 {
   write_config_int("speed_toggle", speed_toggle=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ink_speed)));
   e_ink_refresh_part ();
 }
 
-static void show_hidden_files_callback ()
+void show_hidden_files_callback ()
 {
   write_config_int("show_hidden_files", show_hidden_files=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(show_hidden_files_chk)));
   update(active_panel);
@@ -483,13 +483,13 @@ static void show_hidden_files_callback ()
   e_ink_refresh_part ();
 }
 
-static void LED_notify_callback ()
+void LED_notify_callback ()
 {
   write_config_int("LED_notify", LED_notify = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(LED_notify_checkbox)));
   e_ink_refresh_part ();
 }
 
-static void reset_configuration_callback() // Callback для кнопки сброса конфигов
+void reset_configuration_callback() // Callback для кнопки сброса конфигов
 {
   if(confirm_request(RESET_CONFIGURATION"?", GTK_STOCK_OK, GTK_STOCK_CANCEL))
   {
@@ -501,7 +501,7 @@ static void reset_configuration_callback() // Callback для кнопки сб�
   }
 }
 
-static void backlight_changed(GtkWidget *scalebutton)
+void backlight_changed(GtkWidget *scalebutton)
 {
   write_config_int("backlight", backlight = gtk_range_get_value(GTK_RANGE(scalebutton)));
   set_brightness(backlight);
@@ -515,7 +515,7 @@ static void backlight_changed(GtkWidget *scalebutton)
 //   set_led_state(gtk_range_get_value(GTK_RANGE(scalebutton)));
 // }
 
-static void about_program_callback() // Callback для кнопки информации о программе
+void about_program_callback() // Callback для кнопки информации о программе
 {
   Message(ABOUT_PROGRAM, ABOUT_PROGRAM_TEXT);
 }
@@ -526,7 +526,7 @@ void options_destroy (GtkWidget *dialog) // Уничтожаем меню нас
   e_ink_refresh_local();
 }
 
-static gint keys_rotation_options (__attribute__((unused))GtkWidget *window, GdkEventKey *event) //Круговое перемещение по меню в ФМ
+gint keys_rotation_options (__attribute__((unused))GtkWidget *window, GdkEventKey *event) //Круговое перемещение по меню в ФМ
 {
   set_brightness(backlight);
   switch (event->keyval){
@@ -553,7 +553,7 @@ static gint keys_rotation_options (__attribute__((unused))GtkWidget *window, Gdk
   }
 }
 
-static gint keys_updown_options (__attribute__((unused))GtkWidget *window, GdkEventKey *event) // Для возможности переключаться из регулятора подсветки вверх-вниз
+gint keys_updown_options (__attribute__((unused))GtkWidget *window, GdkEventKey *event) // Для возможности переключаться из регулятора подсветки вверх-вниз
 {
   switch (event->keyval){
     case   KEY_UP:
@@ -566,7 +566,7 @@ static gint keys_updown_options (__attribute__((unused))GtkWidget *window, GdkEv
   }
 }
 
-static gint keys_in_options (GtkWidget *dialog, GdkEventKey *event) //задействует кнопки
+gint keys_in_options (GtkWidget *dialog, GdkEventKey *event) //задействует кнопки
 {
   set_brightness(backlight);
   if (interface_is_locked)
@@ -696,7 +696,7 @@ void create_folder()
   e_ink_refresh_local ();
 }
 
-static gint keys_rotation_menu (__attribute__((unused))GtkWidget *window, GdkEventKey *event) //Круговое перемещение по меню в ФМ
+gint keys_rotation_menu (__attribute__((unused))GtkWidget *window, GdkEventKey *event) //Круговое перемещение по меню в ФМ
 {
   set_brightness(backlight);
   switch (event->keyval){
@@ -723,7 +723,7 @@ static gint keys_rotation_menu (__attribute__((unused))GtkWidget *window, GdkEve
   }
 }
 
-static gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event) //задействует кнопку М в меню
+gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event) //задействует кнопку М в меню
 {
   set_brightness(backlight);
   if (interface_is_locked)

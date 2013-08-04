@@ -28,7 +28,7 @@ extern int enable_refresh;//Принудительно запретить обн
 extern int LED_notify; // Оповещение светодиодом об обновлении панелей и загрузке
 
 /* Helper FB update function */
-static void epaperUpdate(int ioctl_call, int mode)
+void epaperUpdate(int ioctl_call, int mode)
 {
   if (! enable_refresh)
   {

@@ -26,7 +26,7 @@ typedef struct {
   char    *sign;          /* Signature to compare to   */
 } magic_sign;
 
-static char *escape(char *input) // Экранирование нежелательных символов для грепа (прежде всего квадратных скобок)
+char *escape(char *input) // Экранирование нежелательных символов для грепа (прежде всего квадратных скобок)
 {
   int i=0;
   unsigned int idx;
@@ -54,7 +54,7 @@ magic_sign magic[ARCH_TYPES] = {
   { 0, 4, RAR_FILE, "Rar!"      }, /* RAR archives      */
 };
 
-static int file_type_of(char *fname)
+int file_type_of(char *fname)
 {
   FILE *f;
   char sign[20];
@@ -82,7 +82,7 @@ static int file_type_of(char *fname)
   return -1;
 }
 
-static int get_archive_list(char *archive, char *list_file) // Создание списка файлов в архиве
+int get_archive_list(char *archive, char *list_file) // Создание списка файлов в архиве
 {
   char *command = NULL;
   switch (file_type_of(archive)) // Архивно-зависимая часть

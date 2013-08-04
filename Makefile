@@ -15,6 +15,7 @@ ifeq ($(MAKECMDGOALS), debug)
 include libro.mk
 T_ARCH=ARM
 CFLAGS += -Ddebug_printf 
+LDFLAGS += -rdynamic
 endif
 
 SOURCE_PATH=src
