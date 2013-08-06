@@ -1,0 +1,390 @@
+# Sato GTK+ theme
+
+# Colours:
+#   green: 66cc33
+#   dark gray: cbccc9
+#   light gray: eeeeec
+
+gtk_button_images = 0
+gtk_menu_images = 0
+
+gtk_color_scheme = "bg_color:#ffffff;fg_color:#000000;text_color:#000000;base_color:#fff;selected_bg_color:#000;selected_fg_color:#ffffff"
+
+style "default"
+{
+	engine "hcengine"
+	{
+		edge_thickness = 1
+		#Work around for Indicator Size bug
+		cell_indicator_size = 18
+	}
+
+	xthickness = 3
+	ythickness = 3
+
+	GtkRange::trough_border = 0 
+	GtkScrollbar::slider_width = 10
+	GtkScrollbar::stepper_size = 10
+	GtkScale::slider_length = 24
+	GtkScale::slider_width = 12
+
+	GtkProgressBar::xspacing = 0
+	GtkProgressBar::yspacing = 0
+	
+	GtkWidget::focus_line_width = 2
+	GtkWidget::focus_padding = 5
+	
+	GtkButton::default_border = {0, 0, 0, 0}
+
+	GtkToolbar::internal_padding = 2
+
+	GtkCheckButton::indicator_size = 18
+	GtkCheckMenuItem::indicator_size = 18
+
+
+	GtkWidget::link-color = "#F0F0F0"
+	GtkWidget::visited-link-color = "#FFCCFF"
+#	GtkWidget::focus-line-pattern = "\10\3"
+	GtkWidget::focus-line-pattern = "\0"
+	GtkWidget::interior_focus = 1
+	GtkWidget::focus-padding = 2
+	GtkWidget::focus-line-width = 1
+#	GtkWidget::cursor_aspect_ratio = 0.1
+	GtkHSV::focus-line-pattern = "\1"
+	GtkRange::slider_width = 8
+	GtkPaned::handle-size = 10
+	GtkEntry::cursor_color    = "#000000"
+	GtkEntry::cursor_aspect_ratio = 0.1
+	GtkTreeView::expander_size = 20
+	GtkTreeView::grid-line-width = 2
+	GtkTextView::cursor_aspect_ratio = 0.1
+	GtkTextView::cursor_color    = "#000000"
+	EelEditableLabel::cursor_color    = "#000000"
+	EelEditableLabel::cursor_aspect_ratio = 0.1
+	GtkCheckButton::indicator_size = 18
+	GtkCheckMenuItem::indicator_size = 18
+	NautilusIconContainer::frame_text = 1
+	GtkExpander::expander-size = 24
+	GtkExpander::expander-spacing = 8
+	GtkTreeView::expander-size = 24
+	PanelToplevel::arrow-size = 18
+	GtkRange::stepper-size = 20
+
+
+	fg [NORMAL] = "#000000"
+	fg [PRELIGHT] = "#000000"
+	fg [ACTIVE] = "#000000"
+	fg [INSENSITIVE] = "#a0a0a0"
+	fg [SELECTED] = "#000000"
+
+	bg [NORMAL] = "#ffffff"
+	bg [PRELIGHT] = "#ffffff"
+	bg [ACTIVE] = "#ffffff"
+	bg [INSENSITIVE] = "#ffffff"
+	bg [SELECTED] = "#ffffff"
+
+	text [NORMAL] = "#000000"
+	text [PRELIGHT] = "#000000"
+	text [SELECTED] = "#000000"
+	text [ACTIVE] = "#ffffff"
+	text [INSENSITIVE] = "#a0a0a0"
+
+	base [NORMAL] = "#ffffff"
+	base [PRELIGHT] = "#ffffff"
+	base [SELECTED] = "#ffffff"
+	base [ACTIVE] = "#000000"
+	base [INSENSITIVE] = "#ffffff"
+
+#	engine "sato-engine" {}
+}
+class "GtkWidget" style "default"
+
+style "boeye-entry"
+{
+	text [SELECTED] = "#ffffff"
+	base [SELECTED] = "#000000"
+}
+class "GtkEntry" style "boeye-entry"
+
+style "checkbutton"
+{
+	fg [NORMAL] = @fg_color
+	fg [PRELIGHT] = @fg_color
+	fg [ACTIVE] = @fg_color
+
+	bg [NORMAL] = @bg_color
+	bg [PRELIGHT] = @bg_color
+}
+widget_class "*CheckButton*" style "checkbutton"
+widget_class "*RadioButton*" style "checkbutton"
+widget_class "*ToolButton*" style "checkbutton"
+
+style "file_button"
+{
+	GtkWidget::focus-line-width = 0
+}
+widget "*file_button" style "file_button"
+
+style "desktop_calendar"                                                        
+{                                                                               
+        fg [ACTIVE] = "#ffffff"                                                 
+        fg [INSENSITIVE] = "#000000"                                            
+                                                                                
+        bg [ACTIVE] = "#000000"                                                 
+        bg [INSENSITIVE] = "#ffffff"                                            
+                                                                                
+        text [ACTIVE] = "#000000"                                               
+        text [INSENSITIVE] = "#000000"                                          
+                                                   
+        base [ACTIVE] = "#a0a0a0"                  
+        base [INSENSITIVE] = "#ffffff"             
+}                                                  
+widget "*desktop_calendar" style "desktop_calendar"
+
+style "menu_dialog"                                                        
+{                                                                               
+        fg [ACTIVE] = "#ffffff"                                                 
+        fg [INSENSITIVE] = "#404040"                                            
+                                                                                
+        bg [ACTIVE] = "#000000"                                                 
+        bg [INSENSITIVE] = "#ffffff"                                            
+                                                                                
+        text [ACTIVE] = "#ffffff"                                               
+        text [INSENSITIVE] = "#404040"                                          
+                                                   
+        base [ACTIVE] = "#000000"                  
+        base [INSENSITIVE] = "#ffffff"             
+}                                                  
+widget "*menu_dialog" style "menu_dialog"
+
+style "menuitem"
+{
+	fg[PRELIGHT] = @selected_fg_color
+	bg[PRELIGHT] = @selected_bg_color
+}
+widget_class "*MenuItem*" style "menuitem"
+
+style "menu"
+{
+	bg[NORMAL] = lighter (@bg_color)
+}
+class "GtkMenu" style "menu"
+
+style "progressbar"
+{
+	xthickness = 0
+	ythickness = 0
+	bg[NORMAL] = darker (@bg_color)
+	bg[PRELIGHT] = @selected_bg_color
+}
+class "GtkProgressBar" style "progressbar"
+
+style "scrollbar"
+{
+	bg[NORMAL] = @selected_bg_color
+	bg[PRELIGHT] = @selected_bg_color
+#	bg[ACTIVE] = darker (@bg_color)
+	bg[ACTIVE] = @bg_color
+	bg[SELECTED] = @fg_color
+
+	engine "pixmap" 
+	{
+        # Sliders background
+        #=============================
+		image 
+		{
+			function		= BOX
+			recolorable		= TRUE
+			detail			= "trough"
+			file			= "Images/Scrollbars/trough-scrollbar-horiz.png"
+			border			= { 3, 3, 2, 2 }
+			stretch			= TRUE
+			orientation		= HORIZONTAL
+		}
+		image 
+		{
+			function		= BOX
+			recolorable		= TRUE
+			detail			= "trough"
+			file			= "Images/Scrollbars/trough-scrollbar-vert.png"
+			border			= { 2, 2, 3, 3}
+			stretch			= TRUE
+			orientation		= VERTICAL
+		}
+
+		#Steppers - up
+        #=============================
+        image 
+        {
+                function			= STEPPER
+                recolorable			= TRUE
+                state				= NORMAL
+                file				= "Images/Scrollbars/stepper.png"
+                border				= { 5, 5, 5, 5 }
+                stretch				= TRUE
+                arrow_direction	    = UP
+        }
+        image 
+        {
+                function			= STEPPER
+                recolorable			= TRUE
+                state				= INSENSITIVE
+                file				= "Images/Scrollbars/stepper-insens.png"
+                stretch				= TRUE
+                arrow_direction		= UP
+        }
+        # Steppers - down
+        #=============================
+        image 
+        {
+                function			= STEPPER
+                recolorable			= TRUE
+                state				= NORMAL
+                file				= "Images/Scrollbars/stepper.png"
+                border				= { 5, 5, 5, 5 }
+                stretch				= TRUE
+                arrow_direction	    = DOWN
+        }
+        image 
+        {
+                function			= STEPPER
+                recolorable			= TRUE
+                state				= INSENSITIVE
+                file				= "Images/Scrollbars/stepper-insens.png"
+                stretch				= TRUE
+                arrow_direction		= DOWN
+        }
+        # Steppers - left
+        #=============================
+        image 
+        {
+                function			= STEPPER
+                recolorable			= TRUE
+                state				= NORMAL
+                file				= "Images/Scrollbars/stepper.png"
+                border				= { 5, 5, 5, 5 }
+                stretch				= TRUE
+                arrow_direction	    = LEFT
+        }
+        image 
+        {
+                function			= STEPPER
+                recolorable			= TRUE
+                state				= INSENSITIVE
+                file				= "Images/Scrollbars/stepper-insens.png"
+                stretch				= TRUE
+                arrow_direction		= LEFT
+        }
+        # Steppers - right
+        #=============================
+        image 
+        {
+                function			= STEPPER
+                recolorable			= TRUE
+                state				= NORMAL
+                file				= "Images/Scrollbars/stepper.png"
+                border				= { 5, 5, 5, 5 }
+                stretch				= TRUE
+                arrow_direction	    = RIGHT
+        }
+        image 
+        {
+                function			= STEPPER
+                recolorable			= TRUE
+                state				= INSENSITIVE
+                file				= "Images/Scrollbars/stepper-insens.png"
+                stretch				= TRUE
+                arrow_direction		= RIGHT
+        }
+
+	}
+}
+class "GtkScrollbar" style "scrollbar"
+class "GtkScale" style "scrollbar"
+
+style "treeview_headers"
+{
+	bg[NORMAL] = @bg_color
+	fg[NORMAL] = @fg_color
+}
+widget_class "*.GtkTreeView.GtkButton*" style "treeview_headers"
+
+style "notebook_tab"
+{
+	fg[ACTIVE] = @fg_color
+}
+widget "*GtkNotebook*" style "notebook_tab"
+
+style "notebook"
+{
+	bg[NORMAL] = @bg_color
+	bg[ACTIVE] = @bg_color
+
+	fg[NORMAL] = @fg_color
+	fg[ACTIVE] = @fg_color
+}
+class "GtkNotebook" style "notebook"
+
+#
+# Panel
+#
+
+style "matchbox-panel" 
+{
+	engine "pixmap" {}
+	bg_pixmap[NORMAL] = "Images/Titlebar/titlebar-panel-background.png"
+}
+widget "MatchboxPanel" style "matchbox-panel"
+
+style "matchbox-panel-horizontal"
+{
+	engine "pixmap" {}
+#	xthickness = 8
+	ythickness = 0
+}
+widget "MatchboxPanelFrameHorizontal" style "matchbox-panel-horizontal"
+
+style "matchbox-panel-vertical"
+{
+	engine "pixmap" {}
+	xthickness = 0
+#	ythickness = 8
+}
+widget "MatchboxPanelFrameVertical" style "matchbox-panel-vertical"
+
+#
+# Panel applets.  This is for applets that don't handle painting correctly.
+#
+style "matchbox-panel-applet-background"
+{
+	engine "pixmap" {}
+	bg_pixmap[NORMAL] = "Images/Titlebar/titlebar-panel-applet-background.png"
+}
+widget "MatchboxPanelSystemTray" style "matchbox-panel-applet-background"
+
+
+#
+# Desktop
+#
+
+style "matchbox-desktop"
+{
+	engine "pixmap" {}
+#	The desktop needs custom colour settings for the focused tiles.  When we
+#	require GTK+ 2.10, use blend here.
+	bg[PRELIGHT] = "#ffffff"
+	fg[PRELIGHT] = "#000000"
+
+	fg[ACTIVE] = "#000000"
+}
+widget "TakuWindow.*" style "matchbox-desktop"
+
+style "matchbox-desktop-navigation"
+{
+	engine "pixmap" {}
+	fg[NORMAL]="#000000"
+	text[NORMAL]="#000000"
+}
+# TODO: use named widgets
+widget "TakuWindow.*.GtkArrow" style "matchbox-desktop-navigation"
+widget "TakuWindow.*.GtkLabel" style "matchbox-desktop-navigation"

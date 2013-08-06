@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+<theme name="Clearlooks" author="Matthew Allum - mallum@handhelds.org"
+       desc="A version of clearlooks for mb" version="1.0" engine_version="1" >
+
+<color id="white" def="#ffffff" />
+<color id="black" def="#000000" />
+
+<color id="text" def="#000000" />
+<color id="base" def="#ffffff" />
+<color id="dia-border" def="#000000" />
+
+<font id="titlefont" def="FreeSans, 32px" />
+<font id="menufont" def="FreeSans, 24px" />
+
+<pixmap id="titlebar-left-edge" filename="titlebar-left-edge.png" />
+<pixmap id="titlebar-right-edge" filename="titlebar-right-edge.png" />  
+<pixmap id="titlebar-tile" filename="titlebar-tile.png" />
+<pixmap id="close-button" filename="close-button.png" />
+<pixmap id="close-button-active" filename="close-button-active.png" />
+<pixmap id="dia-left-edge" filename="dia-left-edge.png" />
+<pixmap id="dia-right-edge" filename="dia-right-edge.png" />  
+<pixmap id="dia-tile" filename="dia-tile.png" />
+<pixmap id="arrow-down" filename="arrow-down.png" />
+<pixmap id="arrow-down-active" filename="arrow-down-active.png" />
+
+
+<frame id="main" height="36">
+
+  <layer x="0" y="0" w="100%"  h="100%" 
+   type="plain" color="base" />
+
+  <layer x="36" y="0" w="100%-96"  h="36" 
+   type="pixmap" pixmap="titlebar-tile" />
+
+  <layer x="0" y="0" w="100%"  h="36" 
+   type="pixmap" pixmap="titlebar-left-edge" />
+
+  <layer x="100%-36" y="0" w="36"  h="36" 
+   type="pixmap" pixmap="titlebar-right-edge" />
+
+  <button x="8" y="2" w="32" h="16" action="custom">
+      <active pixmap="arrow-down-active"/>
+      <inactive pixmap="arrow-down"/>
+  </button>
+
+  <layer x="20" y="1" w="100%-300" h="32" 
+   type="label" color="text" justify="left" font="titlefont" />
+
+  <button x="40" y="0" w="100%-340" h="36" action="custom" options="inputonly"/>
+
+  <button x="100%-36" y="2" w="32" h="31" action="close" >
+   <active pixmap="close-button-active"/>
+   <inactive pixmap="close-button"  />
+  </button>
+
+   <panel x="100%-260" y="0" w="260" h="31" />
+
+</frame>
+
+<frame id="main-west"  width="0" >
+</frame>
+
+<frame id="main-east"  width="0" >
+</frame>
+
+<frame id="main-south" height="0" >
+</frame>
+
+<frame id="dialog" height="48" options="shaped">
+  <layer x="12" y="0" w="100%-24"  h="48" 
+   type="pixmap" pixmap="dia-tile" />
+
+  <layer x="0" y="0" w="12"  h="48" 
+   type="pixmap" pixmap="dia-left-edge" />
+
+  <layer x="100%-12" y="0" w="12"  h="48" 
+   type="pixmap" pixmap="dia-right-edge" />
+
+  <layer x="12" y="8" w="100%-100" h="32" 
+   type="label" color="black" justify="left" font="titlefont" />
+
+  <button x="100%-48" y="8" w="32" h="32" action="close" >
+   <active pixmap="close-button-active" />
+   <inactive pixmap="close-button"  />
+  </button>
+</frame>
+
+<frame id="dialog-north" height="1" options="shaped">
+  <layer x="0" y="0" w="100%"  h="100%" 
+   type="plain" color="dia-border" />
+</frame>
+
+<frame id="dialog-east" width="1" >
+  <layer x="0" y="0" w="100%"  h="100%" 
+   type="plain" color="dia-border" />
+</frame>
+
+<frame id="dialog-west" width="1" >
+  <layer x="0" y="0" w="100%"  h="100%" 
+   type="plain" color="dia-border" />
+</frame>
+
+<frame id="dialog-south" height="1" >
+  <layer x="0" y="0" w="100%"  h="100%" 
+   type="plain" color="dia-border" />
+
+</frame>
+
+</theme>
