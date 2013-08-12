@@ -1,4 +1,4 @@
-#define VERSION "eView 0.63 03.aug.2013"
+#define VERSION "eView 0.63rc1 12.aug.2013"
 #ifdef language_russian
 #define EVIEW_IS_STARTING "eView запускается"
 #define PLEASE_WAIT " Пожалуйста, подождите! " 

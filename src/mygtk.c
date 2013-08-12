@@ -14,7 +14,7 @@
 #include "mygtk.h"
 #include "mylib.h"
 #include "digma_hw.h"
-#include "ViewImageWindow.h"/*reset_preloaded_image*/
+#include "ViewImageWindow.h" /*reset_preloaded_image*/
 #include "os-specific.h"
 #include "translations.h"
 #include "archive_handler.h"
@@ -338,8 +338,8 @@ void go_upper(panel *panel) // Переход на уровень вверх в 
     archive_go_upper(panel);
   else
   {
-    if (strcmp (panel->path, "/") == 0)
-      return;
+//     if (strcmp (panel->path, "/") == 0)
+//       return;
     char *saved_path=xconcat_path_file(strrchr(trim_line(panel->path),'/')+1, ""); // Сохраняем текущий каталог
     #ifdef debug_printf
     printf("saved_path=%s\n", saved_path);
@@ -398,7 +398,7 @@ void actions(panel *panel) //выбор что делать по клику пе
   }
   else // Если кликнули на файл - проверкa по типу файла
   {
-    if (is_picture(panel->selected_name)) ViewImageWindow(panel->selected_name, panel);// Если картинка - пуск смотрелки
+    if (is_picture(panel->selected_name)) ViewImageWindow(panel->selected_name, panel, TRUE);// Если картинка - пуск смотрелки
     //после отработки смотрелки возврат  идет не сюда, а в wait_state
     if (is_archive(panel->selected_name))
     {
@@ -458,6 +458,13 @@ gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
   #ifdef debug_printf
   printf("got %d in main\n", event->keyval);
   #endif  
+  if (suspended)
+  {
+    #ifdef debug_printf
+    printf("Program is suspended, keypress in filemanager ignored (should never happends)!\n");
+    #endif
+    return TRUE;
+  }
   set_brightness(backlight);
   if (interface_is_locked)
   {
@@ -471,7 +478,7 @@ gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
     case   KEY_MENU:
     case   KEY_MENU_LIBROII:
     case   KEY_MENU_QT:
-      start_main_menu ();
+      start_main_menu (panel);
       return FALSE;
       break;
       
@@ -539,7 +546,7 @@ gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
       break;
       
     case KEY_POWER_QT:
-      enter_suspend();
+      enter_suspend(panel);
       break;
       
     case KEY_PGDOWN:
@@ -743,4 +750,79 @@ GtkTreeView *string_list_create_on_table(int num,
   }
   va_end(titles);
   return tree;
+}
+
+void enter_suspend(panel *panel)
+{
+  static int suspend_count=-1; // Счётчик засыпаний книги - для выбора номера заставки
+  #ifdef debug_printf
+  printf("Entering suspend\n");
+  #endif
+  #ifdef __amd64
+  FILE *list_of_screensavers=popen("cat boeyeserver.conf|grep ScreenSaver | cut -d = -f 2|tr -d ' '| tr ',' '\n'","r");
+  #else
+  FILE *list_of_screensavers=popen("cat /home/root/Settings/boeye/boeyeserver.conf|grep ScreenSaver | cut -d = -f 2|tr -d ' '| tr ',' '\n'","r");
+  #endif
+  #ifdef debug_printf
+  printf("Process opened\n");
+  #endif
+  int screensavers_count=0;
+  char screensavers_array[16][256], temp_buffer[256];
+  while(screensavers_count <= 16 )
+  {
+    fgets(temp_buffer, 255, list_of_screensavers);
+    if (feof(list_of_screensavers))
+    {
+      pclose(list_of_screensavers);
+      #ifdef debug_printf
+      printf("Process closed\n");
+      #endif
+      break;
+    }
+    trim_line(temp_buffer);
+    #ifdef debug_printf
+    printf("read %s\n", temp_buffer);
+    #endif
+    strcpy(screensavers_array[screensavers_count], temp_buffer);
+    screensavers_count++;
+  }
+  #ifdef debug_printf
+  printf("loop done\n");fflush (stdout);
+  #endif
+  xsystem("dbus-send /PowerManager com.sibrary.Service.PowerManager.requestSuspend");
+  #ifdef debug_printf
+  printf("DBUS sent\n");
+  #endif
+  
+  if (++suspend_count==screensavers_count-1) // Закольцовываем список картинок для скринсейвера. Последняя запись - фигня! 
+    suspend_count=0;
+  
+  // сохраняем предыдущие настройки
+  int saved_crop=crop;
+  int saved_rotate=rotate;
+  int saved_frame=frame;
+  int saved_preload_enable=preload_enable;
+  int saved_keepaspect=keepaspect;
+  crop=rotate=frame=preload_enable=FALSE; // Грязно перенастраиваем смотрелку
+  suspended=keepaspect=TRUE;
+  if (in_picture_viewer)
+  {
+    load_image(screensavers_array[suspend_count], active_panel, FALSE, &screensaver);
+    show_image(&screensaver, panel, FALSE);
+    e_ink_refresh_full();
+    was_in_picture_viewer=in_picture_viewer;
+  }
+  else  
+    ViewImageWindow(screensavers_array[suspend_count], active_panel, FALSE);
+  
+  // Восстанавливаем предыдущие настройки
+  crop=saved_crop;
+  rotate=saved_rotate;
+  frame=saved_frame;
+  preload_enable=saved_preload_enable;
+  keepaspect=saved_keepaspect;
+  suspend_hardware();  
+  #ifdef debug_printf
+  printf("Suspend done\n");
+  #endif
 }

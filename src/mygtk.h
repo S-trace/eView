@@ -220,9 +220,7 @@ void read_from_stream_and_display_text(GtkWidget *text, FILE *fd, unsigned long 
 void clear_the_buffer(GtkWidget *text, int *text_modified);
 
 
-/************** Create a Image Viewer Window  *************************/
-void ViewImageWindow(char *filename, panel *panel);
-void wait_state(void);
+void wait_state(GtkWidget *window);
 /************** Create a Image Viewer Window  *************************/
 /************** Create a Pack box  ************************************/
 
@@ -258,3 +256,4 @@ gint confirm_request(char *title, char *confirm_button, char *reject_button);
 void create_panel (panel *panel);
 char *get_current_iter (panel *panel); //возвращает итератор текущего файла из списка
 void Qt_error_message(char *message); // Функция открывает на прошивках Qt сообщение об ошибке в стандартной читалке
+void enter_suspend(panel *panel); // Показывает скринсейвер и усыпляет железо

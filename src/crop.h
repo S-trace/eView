@@ -11,5 +11,5 @@ void find_x_crop (int height);
 void find_y_crop (int width);
 void find_width_crop (int width, int height);
 void find_height_crop (int width, int height);
-void crop_image (GdkPixbuf *pixbuf, int width, int height);
+void find_crop_image_coords (image *target);
 int return_crop_coord (int i);

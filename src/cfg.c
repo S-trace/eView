@@ -253,7 +253,7 @@ void read_panel_configuration(panel *panel)
   read_archive_stack(xconcat(name_prefix, "_panel.archive_stack"), panel);
 }
 
-void read_configuration ()
+void read_configuration (void)
 {
   crop=read_config_int("crop");
   rotate=read_config_int("rotate");

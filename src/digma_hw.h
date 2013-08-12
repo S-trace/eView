@@ -37,6 +37,7 @@
 #define KEY_MENU_QT  65475
 #define KEY_OPTIONS_QT  65476
 #define KEY_POWER_QT  65299
+// #define KEY_POWER_QT 1741 // русская М - для тестирования
 
 void epaperUpdateFull(void);
 void epaperUpdateLocal(void);
@@ -55,5 +56,7 @@ enum
 };
 extern int LED_state[LED_STATES]; // Состояния светодиода
 extern int previous_backlight_level; // Уровень подсветки перед запуском eView
-void enter_suspend(void);
+extern int suspended; // Текущее состояние книги
+extern int was_in_picture_viewer; // Находились ли мы в смотрелке перед вызовом усыплятора
+void suspend_hardware(void); // Тупо усыпляет железяку (проснётся от любого нажатия клавиши и отработает его, словно и не спала вовсе)
 #endif /* _DIGMA_HW_H_ */

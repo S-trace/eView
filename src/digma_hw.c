@@ -13,19 +13,24 @@
 #include <stdlib.h> // atoi()
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
+#include <dlfcn.h> // dlopen()
 #include "gtk_file_manager.h" // Инклюдить первой среди своих, ибо typedef panel!
 #include "digma_hw.h"
 #include "mylib.h"
 
-int hardware_has_backlight=FALSE, hardware_has_LED=FALSE;
-char *LED_path=NULL, *backlight_path=NULL;
+int hardware_has_backlight=FALSE, hardware_has_LED=FALSE, hardware_has_APM=FALSE, hardware_has_sysfs_sleep=FALSE;
+char *LED_path=NULL, *backlight_path=NULL, *sysfs_sleep_path=NULL;
 int LED_state[LED_STATES]; // Массив содержащий значения которые надо писать в sysfs чтобы управлять LED
 int previous_backlight_level; // Уровень подсветки перед запуском eView
-
+int suspended=FALSE; // Текущее состояние книги
+int was_in_picture_viewer=FALSE;
 extern int framebuffer_descriptor;
 extern int QT;
 extern int enable_refresh;//Принудительно запретить обновлять экран в особых случаях
 extern int LED_notify; // Оповещение светодиодом об обновлении панелей и загрузке
+
+int (*apm_suspend)(int fd); // Функция из libapm.so, загружается через dlopen
 
 /* Helper FB update function */
 void epaperUpdate(int ioctl_call, int mode)
@@ -41,7 +46,7 @@ void epaperUpdate(int ioctl_call, int mode)
   if (framebuffer_descriptor >= 0)
   {
     if (QT)
-      usleep(205000);
+      usleep(245000); // Иначе запись в видеопамять не успевает завершиться и получаем верхний левый угол новой картинки и нижний правый - прежней.
     ioctl(framebuffer_descriptor, ioctl_call, &mode);
   }
   #endif
@@ -117,7 +122,6 @@ int read_int_from_file(char *name) //Чтение числа из файла nam
   }
 }
 
-
 void detect_hardware(void) // Обнаружение оборудования и его возможностей
 {  
   if (!hardware_has_backlight) // Digma R60G/GMini C6LHD (Qt)
@@ -181,14 +185,56 @@ void detect_hardware(void) // Обнаружение оборудования и
     }
   }
   
+  if (!hardware_has_APM)
+  {
+    hardware_has_APM=check_for_file ("/dev/apm_bios");
+    if (hardware_has_APM)
+    {      
+      dlerror();    /* Clear any existing error */
+      void *libapm_handle=dlopen("libapm.so", RTLD_NOW);
+      char *error;
+      if ((error = dlerror()) != 0)  
+      {
+        #ifdef debug_printf
+        printf("dlopen failed because %s\n", error);
+        #endif
+        hardware_has_APM=FALSE; // Не можем управлять через APM, хотя существование файла в /dev/ даёт робкую надежду
+      }
+      dlerror();
+      apm_suspend=dlsym(libapm_handle,"apm_suspend");
+      if ((error = dlerror()) != NULL)  
+      {
+        #ifdef debug_printf
+        printf("dlsym failed because %s\n", error);
+        #endif
+        hardware_has_APM=FALSE;
+      }
+    }
+    
+    if (!hardware_has_sysfs_sleep) 
+    {    
+      hardware_has_sysfs_sleep=check_for_file ("/sys/power/state");
+      if (hardware_has_sysfs_sleep) 
+      {
+        sysfs_sleep_path="/sys/power/state";
+        #ifdef debug_printf
+        printf ("Found sysfs sleep trigger at file %s\n", sysfs_sleep_path);
+        #endif
+      }
+    }
+  }
+  
   #ifdef debug_printf
   if (! hardware_has_LED)
     printf ("LED control not found\n");
   if (! hardware_has_backlight)
     printf ("Backlight control not found\n");
+  if (! hardware_has_APM)
+    printf ("APM not found\n");
+  if (! hardware_has_sysfs_sleep)
+    printf ("Sysfs sleep trigger not found\n");
   #endif
 }
-
 
 void write_int_to_file(char *file, int value)
 {
@@ -201,7 +247,7 @@ void write_int_to_file(char *file, int value)
     #ifdef debug_printf
     printf("UNABLE TO OPEN %s FILE FOR WRITING!\n", file);
     #endif
-    return ;
+    return;
   }
   else
   {
@@ -242,57 +288,69 @@ void set_led_state (int state)
     write_int_to_file(LED_path, state);
 }
 
-void enter_suspend(void)
+void suspend_hardware(void)
 {
+  fflush (stdout);
+  sync();
   #ifdef debug_printf
-  printf("Entering suspend\n");
+  printf("Suspending hardware\n");
   #endif
-//   FILE *list_of_screensavers=popen("cat /home/root/Settings/boeye/boeyeserver.conf|grep ScreenSaver | cut -d = -f 2|tr -d ' '| tr ',' '\n'","rt");
-//   #ifdef debug_printf
-//   printf("Process opened\n");
-//   fflush (stdout);
-//   #endif
-//   int screensavers_count=0;
-//   char screensavers_array[16][256];
-//   while(!feof(list_of_screensavers) && screensavers_count <= 16 )
-//   {
-//     #ifdef debug_printf
-//     printf("loop\n");
-//     fflush (stdout);
-//     #endif
-//     fgets(screensavers_array[screensavers_count], 255, list_of_screensavers);
-//     #ifdef debug_printf
-//     printf("fgets\n");fflush (stdout);
-//     #endif
-//     trim_line(screensavers_array[screensavers_count]);
-//     #ifdef debug_printf
-//     printf("trim_line\n");fflush (stdout);
-//     #endif
-//     
-//     #ifdef debug_printf
-//     printf("read %s\n", screensavers_array[screensavers_count]);fflush (stdout);
-//     #endif
-//     screensavers_count++;
-//   }
-//   #ifdef debug_printf
-//   printf("loop done\n");fflush (stdout);
-//   #endif
-//   pclose(list_of_screensavers);
-//   #ifdef debug_printf
-//   printf("Process closed\n");
-//   #endif
-  xsystem("dbus-send /PowerManager com.sibrary.Service.PowerManager.requestSuspend");
-  #ifdef debug_printf
-  printf("DBUS sent\n");
-  #endif
-  
-  usleep(10000000);  
-  #ifdef debug_printf
-  printf("Suspend strat\n");
-  #endif
-  write_string_to_file("/sys/power/state","mem");
-  #ifdef debug_printf
-  printf("Suspend done\n");
-  #endif
-  
+  int count=0;
+  do
+  {
+    set_led_state(LED_ON);
+    time_t startTime = time(NULL);
+    if (hardware_has_APM)
+    {
+      #ifdef debug_printf
+      printf("Using APM\n");
+      #endif
+      int apm_bios=open("/dev/apm_bios", O_RDWR);
+      (*apm_suspend) (apm_bios);
+      close(apm_bios);
+    }
+    else if (hardware_has_sysfs_sleep)
+    {
+      #ifdef debug_printf
+      printf("Using sysfs trigger\n");
+      #endif
+      write_string_to_file (sysfs_sleep_path,"mem");
+    }
+    else
+    {
+      #ifdef debug_printf
+      printf("Unable to suspend hardware - no ways to suspend!\n");
+      #endif
+      break;
+    }
+    time_t endTime = time(NULL);
+    double duration = difftime(endTime, startTime);
+    if ((int) duration <= 1)
+    {
+      #ifdef debug_printf
+      printf("failed\n");
+      #endif
+    }
+    else 
+    {
+      #ifdef debug_printf
+      printf("successed after %d attempts (sleeped %4.0f seconds)\n", count, duration);
+      set_led_state(LED_OFF);
+      #endif
+      break;
+    }
+    #ifdef debug_printf
+    set_led_state(LED_OFF);
+    #endif
+    if (count++>128)
+    {
+      #ifdef debug_printf
+      printf("Too many failed attempts, break\n");
+      break;
+      #endif
+    }
+    usleep(100000);  
+  }
+  while (TRUE);
+  sync();
 }

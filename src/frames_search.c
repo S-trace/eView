@@ -2,6 +2,8 @@
  *FRAME_FIND_MODE*/
 //определение координат "кадров" на изображении, pixbuf на входе
 //надо сказать, этот код излишне переусложнен, особенно где ветвления...
+#include "gtk_file_manager.h" // Инклюдить первой среди своих, ибо typedef panel!
+#include "ViewImageWindow.h"
 #include "frames_search.h"
 
 #define FRAME_SIZE 160 /*минимально возможный размер кадра в пикселах*/
@@ -23,19 +25,19 @@ static int y;
 static int wh, ht;
 
 //воозвращает количество кадров и сохраняет их соординаты в frame_map[][]
-int frames_search (GdkPixbuf *pixbuf, int width, int height)
-{
+int frames_search (image *target)
+{  
   y = FRAME_SIZE;
   f_num = 0;
-  ht = height;
-  wh = width;
+  ht = gdk_pixbuf_get_height (target->pixbuf);
+  wh = gdk_pixbuf_get_width  (target->pixbuf);
   int f = 0; //флаг разрыва цикла
   f_count = 0;
   s_count = 0;
 
-  n_channels = gdk_pixbuf_get_n_channels (pixbuf);
-  rowstride = gdk_pixbuf_get_rowstride (pixbuf);
-  pixels = gdk_pixbuf_get_pixels (pixbuf);
+  n_channels = gdk_pixbuf_get_n_channels (target->pixbuf);
+  rowstride = gdk_pixbuf_get_rowstride (target->pixbuf);
+  pixels = gdk_pixbuf_get_pixels (target->pixbuf);
 
   frame_map_clear();
   for(;;){

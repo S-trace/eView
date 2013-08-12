@@ -1,8 +1,9 @@
 /* Norin Maxim, 2011, Distributed under GPLv2 Terms.
  *Debug message window special for eInk*/
 #include <gtk/gtk.h>
-#include "digma_hw.h"
 #include <stdio.h>
+#include "gtk_file_manager.h" // Инклюдить первой среди своих, ибо typedef panel!
+#include "digma_hw.h"
 
 static GtkWidget *dbg_win;
 static GtkWidget *vbox;

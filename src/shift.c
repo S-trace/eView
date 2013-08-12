@@ -3,8 +3,8 @@
 
 #include <stdio.h>
 #include "gtk_file_manager.h" // Инклюдить первой среди своих, ибо typedef panel!
-#include "frames_search.h"
 #include "ViewImageWindow.h"
+#include "frames_search.h"
 #include "shift.h"
 extern int width_display, height_display;
 

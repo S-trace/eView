@@ -243,10 +243,10 @@ void picture_menu_destroy (panel *panel, GtkWidget *dialog) // Уничтожа�
   enable_refresh=FALSE;
   gtk_widget_destroy(dialog);
   //   gtk_widget_grab_focus (win);
-  reset_preloaded_image(); // Cбрасываем предзагрузку - всё равно она не сработает сейчас
+  reset_image(&preloaded); // Cбрасываем предзагрузку - всё равно она не сработает сейчас
   if (need_refresh)
   {
-    show_image(panel->selected_name, panel); // Повторно показываем картинку для учёта изменений
+    show_image(&current, panel, TRUE); // Повторно показываем картинку для учёта изменений
     viewed_pages--; // Откатываем назад счётчик страниц - после открытия-закрытия меню он не должен изменяться
   }
   enable_refresh=TRUE;
@@ -279,6 +279,10 @@ gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, panel *panel) 
     case   KEY_REFRESH_QT:
       e_ink_refresh_full();
       return FALSE;
+    
+    case KEY_POWER_QT:
+      enter_suspend(panel);
+      return TRUE;
       
     default:
       e_ink_refresh_part();
@@ -566,7 +570,7 @@ gint keys_updown_options (__attribute__((unused))GtkWidget *window, GdkEventKey 
   }
 }
 
-gint keys_in_options (GtkWidget *dialog, GdkEventKey *event) //задействует кнопки
+gint keys_in_options (GtkWidget *dialog, GdkEventKey *event, panel *panel) //задействует кнопки
 {
   set_brightness(backlight);
   if (interface_is_locked)
@@ -590,6 +594,10 @@ gint keys_in_options (GtkWidget *dialog, GdkEventKey *event) //задейств�
     case   KEY_REFRESH_QT:
       e_ink_refresh_full();
       return FALSE;
+      
+    case KEY_POWER_QT:
+      enter_suspend(panel);
+      return TRUE;
       
     default:
       e_ink_refresh_part();
@@ -723,7 +731,7 @@ gint keys_rotation_menu (__attribute__((unused))GtkWidget *window, GdkEventKey *
   }
 }
 
-gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event) //задействует кнопку М в меню
+gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, panel *panel) //задействует кнопку М в меню
 {
   set_brightness(backlight);
   if (interface_is_locked)
@@ -749,13 +757,17 @@ gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event) //задейст�
       e_ink_refresh_full();
       return FALSE;
       
+    case KEY_POWER_QT:
+      enter_suspend(panel);
+      return TRUE;
+      
     default:
       e_ink_refresh_default ();
       return FALSE;
   }
 }
 
-void start_main_menu (void)
+void start_main_menu (panel *panel)
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons (MAIN_MENU,
                                                    GTK_WINDOW(main_window),
@@ -812,7 +824,7 @@ void start_main_menu (void)
   gtk_window_set_position (GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_widget_show_all (dialog);
   
-  g_signal_connect (GTK_WIDGET(dialog), "key_press_event", G_CALLBACK (keys_in_main_menu), NULL);
+  g_signal_connect (GTK_WIDGET(dialog), "key_press_event", G_CALLBACK (keys_in_main_menu), panel);
   e_ink_refresh_local();
 }
 

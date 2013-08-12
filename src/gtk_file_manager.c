@@ -44,13 +44,18 @@ int width_display, height_display;
 int framebuffer_descriptor=0; // Дескриптор файла фреймбуффера (для обновления)
 int QT=FALSE; // Обнаружен ли QT (влияет на IOCTL обновления и запуск Xfbdev)
 
-void wait_state(void) // Возврат после смотрелки
+void wait_state(GtkWidget *window) // Возврат после смотрелки
 {
+  #ifdef debug_printf
+  printf("wait_state called\n");
+  #endif
+  
   update(active_panel);
-  gtk_widget_show_all(main_window);
+  gtk_widget_show_all(window);
   active_panel->selected_name=basename(active_panel->selected_name); // Бля! >_<
   move_selection(iter_from_filename (active_panel->selected_name, active_panel), active_panel);
   gtk_widget_queue_draw(GTK_WIDGET(active_panel->list)); // Заставляем GTK перерисовать список каталогов
+  
   //   g_signal_connect (G_OBJECT (window), "focus_in_event",
   //                     G_CALLBACK (focus_in_callback), NULL);
   //   g_signal_connect (G_OBJECT (window), "focus_out_event",
@@ -372,8 +377,8 @@ void init (void)
   {
     printf("'%s' opened for writing log as %d fd, will now write it into this file!\n", name, file_descriptor);
     dup2 (file_descriptor, 0);
-//     dup2 (file_descriptor, 1);
-//     dup2 (file_descriptor, 2);
+    dup2 (file_descriptor, 1);
+    dup2 (file_descriptor, 2);
   }
   #endif
   #endif
@@ -408,6 +413,8 @@ void init (void)
       usleep(2000000);
       xsystem("xrandr -d :0 -o left");
     }
+    else
+      xsystem("killall -STOP boeyeserver"); // Боремся со злостным усыплятором
 //     usleep(3000000);
     if (! XOpenDisplay(NULL))
     {
@@ -438,6 +445,7 @@ void shutdown(int exit_code)
     printf("Shutting down Xfbdev\n");
     #endif
     xsystem("killall Xfbdev");
+    xsystem("killall -CONT boeyeserver");
   }
   #ifdef debug_printf
   printf("\n\neView shutudown done. Bye! =^_^=/~\n");
@@ -451,7 +459,7 @@ void sigsegv_handler(void) // Обработчик для вывода Backtrace
   printf("got sigsegv_handler\n");
   void *backtrace_buffer[1024];
   int depth=backtrace(backtrace_buffer, 1023);
-  printf("got backtrace\n\nBacktrace:\n");
+  printf("got backtrace of %d calls\n\nBacktrace:\n", depth);
   backtrace_symbols_fd(backtrace_buffer, depth, 2);
   #endif
   shutdown(EXIT_FAILURE);
@@ -569,7 +577,7 @@ int main (int argc, char **argv)
   wait_for_draw();// Ожидаем отрисовки всего
   enable_refresh=TRUE;
   if (is_picture(active_panel->last_name) )
-    ViewImageWindow (active_panel->last_name, active_panel); // Открываем последнюю отображённую картинку
+    ViewImageWindow (active_panel->last_name, active_panel, TRUE); // Открываем последнюю отображённую картинку
   else
     e_ink_refresh_full();
   //   g_signal_connect (G_OBJECT (window), "show", G_CALLBACK (e_ink_refresh_full), NULL);

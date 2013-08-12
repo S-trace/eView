@@ -10,6 +10,6 @@ PKGCONFIG_CFLAGS := $(shell eval $(PKGCONFIG) --cflags gtk+-2.0)
 PKGCONFIG_LDFLAGS := $(shell eval $(PKGCONFIG) --libs gtk+-2.0)
 
 CFLAGS += $(PKGCONFIG_CFLAGS) $(DFLAGS)
-LDFLAGS += $(PKGCONFIG_LDFLAGS) -lX11
+LDFLAGS += $(PKGCONFIG_LDFLAGS) -lX11 -ldl
 
 CFLAGS += -O3 -Wall

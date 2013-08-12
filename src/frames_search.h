@@ -1,8 +1,6 @@
 #include <gtk/gtk.h>
 #include <string.h>
-#include <gdk-pixbuf/gdk-pixbuf.h>
-
-int frames_search (GdkPixbuf *pixbuf, int width, int height);
+int frames_search (image *target);
 int right_way (void);
 int left_way(void);
 int left_way_sc (void);

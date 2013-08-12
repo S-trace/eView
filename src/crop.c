@@ -2,36 +2,39 @@
  *CROP FUNCTION*/
 //на входе pixbuf на выходе координаты для обрезки
 #include <gtk/gtk.h>
+#include "gtk_file_manager.h" // Инклюдить первой среди своих, ибо typedef panel!
+#include "ViewImageWindow.h"
 #include "crop.h"
+#include "mylib.h" // xfree()
 
-static int x_crop;		// координаты для вырезания из pixbuf_src
+static int x_crop;		// координаты для вырезания из target->pixbuf
 static int y_crop;		//
-static int width_crop;		//
-static int height_crop;		//
+static int width_crop;
+static int height_crop;
 static int coord_crop[4];
 static int rowstride, n_channels;
 static guchar *pixels, *p;
 
-void crop_image (GdkPixbuf *pixbuf, int width, int height)
+void find_crop_image_coords(image *target)
 {
   x_crop = 0;
   y_crop = 0;
-  width_crop = width;
-  height_crop = height;
+  width_crop = target->width;
+  height_crop = target->height;
   
-  n_channels = gdk_pixbuf_get_n_channels (pixbuf);
-  rowstride = gdk_pixbuf_get_rowstride (pixbuf);
-  pixels = gdk_pixbuf_get_pixels (pixbuf);
+  n_channels = gdk_pixbuf_get_n_channels (target->pixbuf);
+  rowstride = gdk_pixbuf_get_rowstride (target->pixbuf);
+  pixels = gdk_pixbuf_get_pixels (target->pixbuf);
   
-  find_x_crop (height);    //поиск координат левого бордюра
-  find_y_crop (width);  		//верхнего
-  find_width_crop (width, height);		//правого
-  find_height_crop (width, height);		//нижнего
+  find_x_crop (target->height);                 //поиск координат левого бордюра
+  find_y_crop (target->width);  		//верхнего
+  find_width_crop (target->width, target->height);		//правого
+  find_height_crop (target->width, target->height);		//нижнего
   coord_crop[0] = x_crop;
   coord_crop[1] = y_crop;
   coord_crop[2] = width_crop - x_crop;
   coord_crop[3] = height_crop - y_crop;
-  if (x_crop==0 && y_crop==0 && width_crop==width && height_crop==height){
+  if (x_crop==0 && y_crop==0 && width_crop==target->width && height_crop==target->height){
     coord_crop[0] = -1;
     // 		g_print ("возврат без изменений\n");
   }
@@ -358,4 +361,6 @@ void find_height_crop (int width, int height)
 int return_crop_coord (int i)
 {
   return coord_crop[i];
+  if (i==3)
+    xfree (&pixels);
 }
