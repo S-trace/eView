@@ -42,32 +42,6 @@
 #define ACTION_DELETE	((int) 6)
 #define ACTION_PERM	((int) 7)
 
-#ifndef COMM_LEN
-#ifdef TASK_COMM_LEN
-enum { COMM_LEN = TASK_COMM_LEN };
-#else
-/* synchronize with sizeof(task_struct.comm) in /usr/include/linux/sched.h */
-enum { COMM_LEN = 16 };
-#endif
-#endif
-typedef struct {
-	DIR *dir;
-	/* Fields are set to 0/NULL if failed to determine (or not requested) */
-	char *cmd;
-	unsigned long rss;
-	unsigned long stime, utime;
-	unsigned pid;
-	unsigned ppid;
-	unsigned pgid;
-	unsigned sid;
-	unsigned uid;
-	unsigned gid;
-	/* basename of executable file in call to exec(2), size from */
-	/* sizeof(task_struct.comm) in /usr/include/linux/sched.h */
-	char state[4];
-	char comm[COMM_LEN];
-	//	user/group? - use passwd/group parsing functions
-} procps_status_t;
 enum {
 	PSSCAN_PID      = 1 << 0,
 	PSSCAN_PPID     = 1 << 1,
@@ -141,27 +115,27 @@ typedef int (*stat_func)(const char *fn, struct stat *ps);
 typedef ssize_t (*action)(int , void *, size_t);
 
 
-// Максимальная глубина вложенных архивов
+/* Максимальная глубина вложенных архивов */
 #define MAX_ARCHIVE_DEPTH 16 
 /* Структура описывающая панель файлового менеджера и её состояние. 
  * Принимается большинством функций работающих с файлами и/или панелями (обычно как указатель на конкретную структуру top_panel или bottom_panel). 
  * НЕ реомендуется использовать в функциях указатели *active_panel и *inactive_panel - это может легко вести к глюкам 
  * Исключение - функции, в которых необходимо использовать обе панели (файловые операции к примеру) */ 
 typedef struct { 
-  GtkWidget *table; // Таблица с именами файлов 
-  GtkWidget *path_label; // Строка с путём ниже таблцицы
-  GtkTreeView *list; // Список файлов
-  char *path; // Текущий путь
-  char *selected_name; // Имя выбранного объекта
-  char *selected_size; // Размер выбранного объекта
-  char *selected_iter; // Итератор (номер в строковом виде) выбранного объекта
-  char *last_name; // Последний просмотренный файл в панели
-  char *archive_cwd; // Текущий каталог в архиве
-  char *archive_list; // имя файла со списком архива (для возможности входа в разные архивы с разных панелей)
-  char archive_stack[MAX_ARCHIVE_DEPTH][256]; // Стек архивов в панели
-  int files_num; // Количество файлов в каталоге на панели
-  int dirs_num; // Количество подкаталогов в каталоге на панели
-  int archive_depth; // Глубина вложенных архивов (0 = FS) - количество ненулевых элементов в стеке архивов
+  GtkWidget *table; /* Таблица с именами файлов  */
+  GtkWidget *path_label; /* Строка с путём ниже таблцицы */
+  GtkTreeView *list; /* Список файлов */
+  char *path; /* Текущий путь */
+  char *selected_name; /* Имя выбранного объекта */
+  char *selected_size; /* Размер выбранного объекта */
+  char *selected_iter; /* Итератор (номер в строковом виде) выбранного объекта */
+  char *last_name; /* Последний просмотренный файл в панели */
+  char *archive_cwd; /* Текущий каталог в архиве */
+  char *archive_list; /* имя файла со списком архива (для возможности входа в разные архивы с разных панелей) */
+  char archive_stack[MAX_ARCHIVE_DEPTH][256]; /* Стек архивов в панели */
+  int files_num; /* Количество файлов в каталоге на панели */
+  int dirs_num; /* Количество подкаталогов в каталоге на панели */
+  int archive_depth; /* Глубина вложенных архивов (0 = FS) - количество ненулевых элементов в стеке архивов */
 } panel; 
 
 int recursive_action(const char *fileName,
@@ -191,20 +165,19 @@ char *find_block_device(char *path);
 struct mntent *find_mount_point(const char *name, const char *table);
 const char* get_cached_username(uid_t uid);
 const char* get_cached_groupname(gid_t gid);
-procps_status_t* procps_scan(procps_status_t* sp, int flags);
 int is_in_ino_dev_hashtable(const struct stat *statbuf, char **name);
 void add_to_ino_dev_hashtable(const struct stat *statbuf, const char *name);
 void erase_mtab(const char *name);
 char *bb_getgrgid(char *group, long gid, int bufsize);
 char *bb_getpwuid(char *name, long uid, int bufsize);
 
-void update (panel *panel);//обновление списка
-void move_selection(const char *move_to, panel *panel); //сдвиг выделения
-char *iter_from_filename (char *fname, panel *panel); //возвращает итератор файла из списка
+void update (panel *panel);/*обновление списка */
+void move_selection(const char *move_to, panel *panel); /*сдвиг выделения */
+char *iter_from_filename (char *fname, panel *panel); /*возвращает итератор файла из списка */
 extern int width_display, height_display;
 extern char *top_cwd;
-extern GtkWidget *main_window; // Окно файлменеджера
-extern GtkWidget *panels_vbox; // vBox для панелей
+extern GtkWidget *main_window; /* Окно файлменеджера */
+extern GtkWidget *panels_vbox; /* vBox для панелей */
 extern panel top_panel, bottom_panel, *active_panel, *inactive_panel;
 extern int interface_is_locked;
 extern int QT;

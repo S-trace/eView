@@ -2,7 +2,7 @@
  *Debug message window special for eInk*/
 #include <gtk/gtk.h>
 #include <stdio.h>
-#include "gtk_file_manager.h" // Инклюдить первой среди своих, ибо typedef panel!
+#include "gtk_file_manager.h" /* Инклюдить первой среди своих, ибо typedef panel! */
 #include "digma_hw.h"
 
 static GtkWidget *dbg_win;
@@ -21,7 +21,7 @@ gint if_key_press ()
 void print_msg (char *msg)
 {
   GtkWidget *label;
-  //printf("msg=%s\n", msg);
+  /*printf("msg=%s\n", msg); */
   label = gtk_label_new (msg);
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0);

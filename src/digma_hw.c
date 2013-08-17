@@ -12,27 +12,27 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
-#include <stdlib.h> // atoi()
+#include <stdlib.h> /* atoi() */
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
-#include <dlfcn.h> // dlopen()
-#include "gtk_file_manager.h" // Инклюдить первой среди своих, ибо typedef panel!
+#include <dlfcn.h> /* dlopen() */
+#include "gtk_file_manager.h" /* Инклюдить первой среди своих, ибо typedef panel! */
 #include "digma_hw.h"
 #include "mylib.h"
 
 int hardware_has_backlight=FALSE, hardware_has_LED=FALSE, hardware_has_APM=FALSE, hardware_has_sysfs_sleep=FALSE;
 const char *LED_path=NULL, *backlight_path=NULL, *sysfs_sleep_path=NULL;
-int LED_state[LED_STATES]; // Массив содержащий значения которые надо писать в sysfs чтобы управлять LED
-int previous_backlight_level; // Уровень подсветки перед запуском eView
-int suspended=FALSE; // Текущее состояние книги
+int LED_state[LED_STATES]; /* Массив содержащий значения которые надо писать в sysfs чтобы управлять LED */
+int previous_backlight_level; /* Уровень подсветки перед запуском eView */
+int suspended=FALSE; /* Текущее состояние книги */
 int was_in_picture_viewer=FALSE;
 extern int framebuffer_descriptor;
 extern int QT;
-extern int enable_refresh;//Принудительно запретить обновлять экран в особых случаях
-extern int LED_notify; // Оповещение светодиодом об обновлении панелей и загрузке
+extern int enable_refresh;/*Принудительно запретить обновлять экран в особых случаях */
+extern int LED_notify; /* Оповещение светодиодом об обновлении панелей и загрузке */
 
-int (*apm_suspend)(int fd); // Функция из libapm.so, загружается через dlopen
+int (*apm_suspend)(int fd); /* Функция из libapm.so, загружается через dlopen */
 
 /* Helper FB update function */
 void epaperUpdate(int ioctl_call, int mode)
@@ -48,7 +48,7 @@ void epaperUpdate(int ioctl_call, int mode)
   if (framebuffer_descriptor >= 0)
   {
     if (QT)
-      usleep(245000); // Иначе запись в видеопамять не успевает завершиться и получаем верхний левый угол новой картинки и нижний правый - прежней.
+      usleep(245000); /* Иначе запись в видеопамять не успевает завершиться и получаем верхний левый угол новой картинки и нижний правый - прежней. */
     ioctl(framebuffer_descriptor, ioctl_call, &mode);
   }
   #endif
@@ -62,7 +62,7 @@ void epaperUpdateFull(void)
   if (QT)
     epaperUpdate(EPAPER_UPDATE_DISPLAY_QT, 3);
   else
-    epaperUpdate(EPAPER_UPDATE_FULL, 3); // Выполняется за 0,847s
+    epaperUpdate(EPAPER_UPDATE_FULL, 3); /* Выполняется за 0,847s */
 }
 
 /**
@@ -73,7 +73,7 @@ void epaperUpdateLocal(void)
   if (QT)
     epaperUpdate(EPAPER_UPDATE_DISPLAY_QT, 2);
   else
-    epaperUpdate(EPAPER_UPDATE_LOCAL, 2); // Выполняется за 0,847s
+    epaperUpdate(EPAPER_UPDATE_LOCAL, 2); /* Выполняется за 0,847s */
 }
 
 /**
@@ -84,18 +84,18 @@ void epaperUpdatePart(void)
   if (QT)
     epaperUpdate(EPAPER_UPDATE_DISPLAY_QT, 1);
   else
-    epaperUpdate(EPAPER_UPDATE_PART, 1); // Выполняется за 0,847s
+    epaperUpdate(EPAPER_UPDATE_PART, 1); /* Выполняется за 0,847s */
 }
 
-int check_for_file (const char *fpath)  // Проверка наличия файла в файловой системе
+int check_for_file (const char *fpath)  /* Проверка наличия файла в файловой системе */
 {
-  if (access(fpath, F_OK))  // F_OK просто проверяет существование файла
+  if (access(fpath, F_OK))  /* F_OK просто проверяет существование файла */
     return FALSE;
   else
     return TRUE;
 }
 
-int read_int_from_file(const char *name) //Чтение числа из файла name
+int read_int_from_file(const char *name) /*Чтение числа из файла name */
 {
   FILE *file_descriptor=fopen(name,"rt");
   if (!file_descriptor)
@@ -124,9 +124,9 @@ int read_int_from_file(const char *name) //Чтение числа из файл
   }
 }
 
-void detect_hardware(void) // Обнаружение оборудования и его возможностей
+void detect_hardware(void) /* Обнаружение оборудования и его возможностей */
 {  
-  if (!hardware_has_backlight) // Digma R60G/GMini C6LHD (Qt)
+  if (!hardware_has_backlight) /* Digma R60G/GMini C6LHD (Qt) */
   {    
     hardware_has_backlight=check_for_file ("/sys/class/backlight/boeye_backlight/brightness");
     if (hardware_has_backlight) 
@@ -139,7 +139,7 @@ void detect_hardware(void) // Обнаружение оборудования и
     }
   }
   
-  if (!hardware_has_LED) // Digma R60G/GMini C6LHD (Qt)
+  if (!hardware_has_LED) /* Digma R60G/GMini C6LHD (Qt) */
   {
     hardware_has_LED=check_for_file ("/sys/class/leds/charger-led/brightness");
     if (hardware_has_LED) 
@@ -148,14 +148,14 @@ void detect_hardware(void) // Обнаружение оборудования и
       #ifdef debug_printf
       printf ("Found LED control at file %s\n", LED_path);
       #endif
-      LED_state[LED_ON]=2; // Неверно!
+      LED_state[LED_ON]=2; /* Неверно! */
       LED_state[LED_OFF]=0;
       LED_state[LED_BLINK_SLOW]=1;
       LED_state[LED_BLINK_FAST]=4;
     }
   }
   
-  if (!hardware_has_LED) // Ritmix RBK700HD GTK/Qt
+  if (!hardware_has_LED) /* Ritmix RBK700HD GTK/Qt */
   {
     hardware_has_LED=check_for_file ("/sys/class/leds/axp192-led-classdev/brightness");
     if (hardware_has_LED)
@@ -171,13 +171,13 @@ void detect_hardware(void) // Обнаружение оборудования и
     }
   }
 
-  if (!hardware_has_LED) // Digma E600 GTK
+  if (!hardware_has_LED) /* Digma E600 GTK */
   {
     hardware_has_LED=check_for_file ("/sys/devices/platform/boeye-leds/leds/da9030_led/brightness");
     if (hardware_has_LED)
     {
       LED_path="/sys/devices/platform/boeye-leds/leds/da9030_led/brightness";
-      LED_state[LED_ON]=3; // Проверить!
+      LED_state[LED_ON]=3; /* Проверить! */
       LED_state[LED_OFF]=4;
       LED_state[LED_BLINK_SLOW]=5;
       LED_state[LED_BLINK_FAST]=6;
@@ -200,11 +200,12 @@ void detect_hardware(void) // Обнаружение оборудования и
         #ifdef debug_printf
         printf("dlopen failed because %s\n", error);
         #endif
-        hardware_has_APM=FALSE; // Не можем управлять через APM, хотя существование файла в /dev/ даёт робкую надежду
+        hardware_has_APM=FALSE; /* Не можем управлять через APM, хотя существование файла в /dev/ даёт робкую надежду */
       }
       dlerror();
-      apm_suspend=dlsym(libapm_handle,"apm_suspend");
-      if ((error = dlerror()) != NULL)  
+      apm_suspend=(int (*)(int))dlsym(libapm_handle,"apm_suspend");
+      error = dlerror();
+      if (error != NULL)  
       {
         #ifdef debug_printf
         printf("dlsym failed because %s\n", error);

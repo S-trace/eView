@@ -84,7 +84,7 @@ gint confirm_request(const char *title, const char *confirm_button, const char *
   GtkWidget *dialog;
   int answer;
   dialog = gtk_dialog_new_with_buttons (title, NULL,
-                                        GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT, reject_button, GTK_RESPONSE_REJECT, confirm_button, GTK_RESPONSE_ACCEPT, NULL);
+                                        GTK_DIALOG_MODAL/*|GTK_DIALOG_DESTROY_WITH_PARENT*/, reject_button, GTK_RESPONSE_REJECT, confirm_button, GTK_RESPONSE_ACCEPT, NULL);
   gtk_dialog_set_default_response (GTK_DIALOG(dialog),GTK_RESPONSE_REJECT);
   g_signal_connect (G_OBJECT (dialog), "map-event", G_CALLBACK (e_ink_refresh_local), NULL);
   g_signal_connect (G_OBJECT (dialog), "key-release-event", G_CALLBACK (e_ink_refresh_default), NULL);
@@ -200,7 +200,7 @@ void Message (const char *title, const char *message) {
   #endif
   MessageWindow = gtk_dialog_new_with_buttons (title,
                                                NULL,
-                                               GTK_DIALOG_MODAL |GTK_DIALOG_DESTROY_WITH_PARENT |GTK_DIALOG_NO_SEPARATOR,
+                                               GTK_DIALOG_MODAL/* |GTK_DIALOG_DESTROY_WITH_PARENT |GTK_DIALOG_NO_SEPARATOR*/,
                                                NULL);
   gtk_window_set_position (GTK_WINDOW (MessageWindow), GTK_WIN_POS_CENTER_ALWAYS);
   label = gtk_label_new (message);
@@ -305,13 +305,13 @@ void enter_subdir(char *name, panel *panel)// Переход на уровень
 
 void dirlist_select(GtkWidget *widget, panel *panel) // Что происходит при перемещении выделенной строки по списку
 {
-  char *selection_row, *tmp;
-  GtkTreePath *path, *start_path, *end_path;
+  char *tmp;
   GtkTreeIter iter;
   GtkTreeModel *model;
   GtkTreeSelection *selection = gtk_tree_view_get_selection (panel->list);
   if (gtk_tree_selection_get_selected (selection, &model, &iter)) 
   {
+    GtkTreePath *start_path, *end_path;
     gtk_tree_model_get (model, &iter, FILE_COLUMN , &tmp, -1);
     panel->selected_name = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
     xfree(&tmp);
@@ -320,8 +320,8 @@ void dirlist_select(GtkWidget *widget, panel *panel) // Что происход�
     xfree(&tmp);
     panel->selected_iter = gtk_tree_model_get_string_from_iter (model, &iter);
     //поведение прокрутки при подходах к краю окна
-    selection_row = iter_from_filename (panel->selected_name, panel);
-    path = gtk_tree_path_new_from_string (selection_row);
+    char *selection_row = iter_from_filename (panel->selected_name, panel);
+    GtkTreePath *path = gtk_tree_path_new_from_string (selection_row);
     //поведение курсора у краев списка
     if (gtk_tree_view_get_visible_range (panel->list, &start_path, &end_path)) 
     {
@@ -543,16 +543,11 @@ gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
     {
       char *last_row_string;
       asprintf(&last_row_string, "%d", panel->files_num+panel->dirs_num-1);
-      char *str_iter;
-      str_iter=get_current_iter(panel);
+      char *str_iter=get_current_iter(panel);
       if (atoi(str_iter) == 0)
-      {
         move_selection (last_row_string, panel);
-        //         e_ink_refresh_local();
-        xfree (&last_row_string);
-        return TRUE;
-      }
       xfree (&last_row_string);
+      xfree (&str_iter);
       return FALSE;
     }
     break;
@@ -561,15 +556,11 @@ gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
     {
       char *last_row_string;
       asprintf(&last_row_string, "%d", panel->files_num+panel->dirs_num-1);
-      char *str_iter;
-      str_iter=get_current_iter(panel);
-      if (atoi(str_iter) == panel->files_num+panel->dirs_num-1) {
+      char *str_iter=get_current_iter(panel);
+      if (atoi(str_iter) == panel->files_num+panel->dirs_num-1)
         move_selection ("0", panel);
-        //         e_ink_refresh_local();
-        xfree (&last_row_string);
-        return TRUE;
-      }
       xfree (&last_row_string);
+      xfree (&str_iter);
       return FALSE;
     }
     break;
@@ -786,7 +777,6 @@ GtkTreeView *string_list_create_on_table(int num,
 
 void enter_suspend(panel *panel)
 {
-  static int suspend_count=-1; // Счётчик засыпаний книги - для выбора номера заставки
   gtk_idle_remove (idle_call_handler); // Удаляем вызов этой функции из очереди вызовов (иначе на ARM она будет вызываться вечно)
   if (! suspended)
   {
@@ -829,6 +819,7 @@ void enter_suspend(panel *panel)
     printf("DBUS sent\n");
     #endif
     
+  static int suspend_count=-1; // Счётчик засыпаний книги - для выбора номера заставки
     if (++suspend_count==screensavers_count-1) // Закольцовываем список картинок для скринсейвера (последняя запись - фигня!)
       suspend_count=0;
     

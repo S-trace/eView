@@ -3,15 +3,15 @@
 #ifndef __cplusplus
 #define _GNU_SOURCE
 #endif
-#include <stdlib.h> // atoi()
+#include <stdlib.h> /* atoi() */
 #include <string.h>
 #include <stdio.h>
-#include <sys/stat.h> //mkdir()
+#include <sys/stat.h> /*mkdir() */
 #include "gtk_file_manager.h"
 #include "mylib.h"
 #include "cfg.h"
 
-static char *cfg_directory = NULL; //путь к файлу с настройками
+static char *cfg_directory = NULL; /*путь к файлу с настройками */
 int crop, rotate, frame, keepaspect, fm_toggle, move_toggle, speed_toggle, clock_toggle, top_panel_active, loop_dir, double_refresh, viewed_pages, preload_enable, suppress_panel, show_hidden_files, manga, LED_notify=TRUE, backlight, sleep_timeout;
 
 char *cfg_file_path (void)
@@ -20,10 +20,9 @@ char *cfg_file_path (void)
   return cfg_directory;
 }
 
-int read_config_int(const char *name) //Чтение числового параметра конфига
+int read_config_int(const char *name) /*Чтение числового параметра конфига */
 {
-  int value;
-  char *config_file_single = xconcat_path_file(cfg_directory, name), value_string[32]; // Имя файла с настройкой
+  char *config_file_single = xconcat_path_file(cfg_directory, name); /* Имя файла с настройкой */
   FILE *file_descriptor=fopen(config_file_single,"rt");
   if (!file_descriptor)
   {
@@ -35,6 +34,8 @@ int read_config_int(const char *name) //Чтение числового пара
   }
   else
   {
+    int value;
+    char value_string[33];
     fgets(value_string,32,file_descriptor);
     value=atoi(value_string);
     fclose(file_descriptor);
@@ -45,9 +46,9 @@ int read_config_int(const char *name) //Чтение числового пара
   }
 }
 
-void read_config_string(char *name, char **destination) //Чтение строкового параметра конфига из файла name в переменную destination
+void read_config_string(char *name, char **destination) /*Чтение строкового параметра конфига из файла name в переменную destination */
 {
-  char temp[256], *config_file_single = xconcat_path_file(cfg_directory, name); // Имя файла с настройкой
+  char *config_file_single = xconcat_path_file(cfg_directory, name); /* Имя файла с настройкой */
   FILE *file_descriptor=fopen(config_file_single,"rt");
   if (!file_descriptor)
   {
@@ -59,6 +60,7 @@ void read_config_string(char *name, char **destination) //Чтение стро�
   }
   else
   {
+    char temp[257];
     if (fgets(temp, PATHSIZE, file_descriptor) == 0)
     {
       fclose(file_descriptor);
@@ -77,9 +79,9 @@ void read_config_string(char *name, char **destination) //Чтение стро�
   }
 }
 
-void read_archive_stack(const char *name, panel *panel) //Чтение стека архивов
+void read_archive_stack(const char *name, panel *panel) /*Чтение стека архивов */
 {
-  char *config_file_single = xconcat_path_file(cfg_directory, name); // Имя файла с настройкой
+  char *config_file_single = xconcat_path_file(cfg_directory, name); /* Имя файла с настройкой */
   FILE *file_descriptor=fopen(config_file_single,"rt");
   if (!file_descriptor)
   {
@@ -106,7 +108,7 @@ void read_archive_stack(const char *name, panel *panel) //Чтение стек�
         #ifdef debug_printf
         printf("Readed empty line, break\n");
         #endif    
-        break; // Прерывание при обнаружении пустой строки в стеке архивов
+        break; /* Прерывание при обнаружении пустой строки в стеке архивов */
       }
       trim_line(panel->archive_stack[i]);
       i++;
@@ -120,9 +122,9 @@ void read_archive_stack(const char *name, panel *panel) //Чтение стек�
   }
 }
 
-void write_config_int(const char *name, int value) //Запись числового параметра конфига
+void write_config_int(const char *name, int value) /*Запись числового параметра конфига */
 {
-  char *config_file_single = xconcat_path_file(cfg_directory, name), *value_string; // Имя файла с настройкой
+  char *config_file_single = xconcat_path_file(cfg_directory, name); /* Имя файла с настройкой */
   #ifdef debug_printf
   printf("writing %d to %s\n", value, config_file_single);
   #endif
@@ -136,15 +138,15 @@ void write_config_int(const char *name, int value) //Запись числово
   }
   else
   {
-    value_string=itoa(value);
+    char *value_string=itoa(value);
     fputs(value_string,file_descriptor);
     fclose(file_descriptor);
   }
 }
 
-void write_config_string(const char *name, const char *value) //Запись строкового параметра конфига
+void write_config_string(const char *name, const char *value) /*Запись строкового параметра конфига */
 {
-  char *config_file_single = xconcat_path_file(cfg_directory, name); // Имя файла с настройкой
+  char *config_file_single = xconcat_path_file(cfg_directory, name); /* Имя файла с настройкой */
   #ifdef debug_printf
   printf("writing %s to %s\n", value, config_file_single);
   #endif
@@ -163,13 +165,12 @@ void write_config_string(const char *name, const char *value) //Запись с�
   }
 }
 
-void write_archive_stack(const char *name, panel *panel) //Запись массива имён архивов из верхней панели
+void write_archive_stack(const char *name, panel *panel) /*Запись массива имён архивов из верхней панели */
 {
-  char *config_file_single = xconcat_path_file(cfg_directory, name); // Имя файла с настройкой
+  char *config_file_single = xconcat_path_file(cfg_directory, name); /* Имя файла с настройкой */
   #ifdef debug_printf
   printf("writing array to '%s'\n", config_file_single);
   #endif
-  int i=0;
   FILE *file_descriptor=fopen(config_file_single,"wt");
   if (!file_descriptor)
   {
@@ -180,6 +181,7 @@ void write_archive_stack(const char *name, panel *panel) //Запись масс
   }
   else
   {
+    int i=0;
     while (panel->archive_stack[i][0] != '\0')
     {
       #ifdef debug_printf
@@ -192,7 +194,7 @@ void write_archive_stack(const char *name, panel *panel) //Запись масс
   }
 }
 
-void create_cfg (void)  //создание файлов настроек по умолчанию
+void create_cfg (void)  /*создание файлов настроек по умолчанию */
 {
   if ((mkdir (cfg_directory, S_IRWXU)) == -1)
   {

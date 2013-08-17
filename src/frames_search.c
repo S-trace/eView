@@ -1,8 +1,8 @@
 /* Norin Maxim, 2011, Distributed under GPLv2 Terms
  *FRAME_FIND_MODE*/
-//определение координат "кадров" на изображении, pixbuf на входе
-//надо сказать, этот код излишне переусложнен, особенно где ветвления...
-#include "gtk_file_manager.h" // Инклюдить первой среди своих, ибо typedef panel!
+/*определение координат "кадров" на изображении, pixbuf на входе */
+/*надо сказать, этот код излишне переусложнен, особенно где ветвления... */
+#include "gtk_file_manager.h" /* Инклюдить первой среди своих, ибо typedef panel! */
 #include "ViewImageWindow.h"
 #include "frames_search.h"
 
@@ -17,21 +17,21 @@
 
 static int rowstride, n_channels;
 static guchar *pixels, *p;
-static int f_num;            //индекс столбца для frame_map
-static int frame_map [2][14]; //массив координат, где 14 - максимум кадров
-static int f_count;	     //счетчик кадров
-static int s_count;	     //счетчик линий-разделителей
+static int f_num;            /*индекс столбца для frame_map */
+static int frame_map [2][14]; /*массив координат, где 14 - максимум кадров */
+static int f_count;	     /*счетчик кадров */
+static int s_count;	     /*счетчик линий-разделителей */
 static int y;
 static int wh, ht;
 
-//воозвращает количество кадров и сохраняет их соординаты в frame_map[][]
+/*воозвращает количество кадров и сохраняет их соординаты в frame_map[][] */
 int frames_search (image *target)
 {  
   y = FRAME_SIZE;
   f_num = 0;
   ht = gdk_pixbuf_get_height (target->pixbuf);
   wh = gdk_pixbuf_get_width  (target->pixbuf);
-  int f = 0; //флаг разрыва цикла
+  int f = 0; /*флаг разрыва цикла */
   f_count = 0;
   s_count = 0;
 
@@ -48,7 +48,7 @@ int frames_search (image *target)
   return f_count;
 }
 
-int right_way () //ветвление
+int right_way () /*ветвление */
 {
   if (ht-FRAME_SIZE > y) {
     y++;
@@ -63,7 +63,7 @@ int right_way () //ветвление
   return 1;
 }
 
-int left_way() //ветвление
+int left_way() /*ветвление */
 {
   int f = 0;
   frame_map[F_END][f_num] = y;
@@ -84,7 +84,7 @@ int left_way() //ветвление
   return 1;
 }
 
-int left_way_sc() //ветвление с проверкой пустоты между кадрами
+int left_way_sc() /*ветвление с проверкой пустоты между кадрами */
 {
   int f = 0;
   for(;;){
@@ -100,7 +100,7 @@ int left_way_sc() //ветвление с проверкой пустоты ме
   return 1;
 }
 
-int left_way_fc () //ветвление
+int left_way_fc () /*ветвление */
 {
   if (f_count>1){
     frame_map[F_END][f_num] = ht;
@@ -111,7 +111,7 @@ int left_way_fc () //ветвление
   return 1;
 }
 
-//заполняет frame_map значением "-1"
+/*заполняет frame_map значением "-1" */
 void frame_map_clear()
 {
   int i, ii;
@@ -120,39 +120,39 @@ void frame_map_clear()
       frame_map[i][ii] = -1;
 }
 
-//здесь определяется, что является разделителем
-//возвращает 1 если  линия-разделитель найдена
+/*здесь определяется, что является разделителем */
+/*возвращает 1 если  линия-разделитель найдена */
 int line_separator ()
 {
   int x, red, green, blue, b_color, w_color, prev, line, rp;
-  rp = 0;		// count  random pixel
-  prev = 1;	// previous pixel   0 black     1  white
-  line = 1;	// 1 сплошная линия или нет 0
-  b_color = 0; 	// 0  не черный
-  w_color = 0; 	// 0  не белый
+  rp = 0;		/* count  random pixel */
+  prev = 1;	/* previous pixel   0 black     1  white */
+  line = 1;	/* 1 сплошная линия или нет 0 */
+  b_color = 0; 	/* 0  не черный */
+  w_color = 0; 	/* 0  не белый */
 
-  //поиск горизонтальной линии относительно равномерного цвета
+  /*поиск горизонтальной линии относительно равномерного цвета */
   for  (x =0; x<wh-1; x++) {
     p = pixels + y * rowstride + x * n_channels;
     red = p[0];
     green = p[1];
     blue = p[2];
 
-    //цветной пиксель или нет
+    /*цветной пиксель или нет */
     if (red != green || red != blue || green != blue)
       rp++;
 
-    //черный или белый пиксель
+    /*черный или белый пиксель */
     if (red < BLACK && green<BLACK && blue < BLACK) b_color = 1;
     if (red > WHITE && green>WHITE && blue >WHITE) w_color =1;
 
-    //какой был пиксель до этого и какой сейчас
+    /*какой был пиксель до этого и какой сейчас */
     if (prev == 1 && b_color == 1) rp++;
     if (prev == 0 && w_color == 1) rp++;
 
     if (rp > PIXEL_RANDOM_MAX){
       line = 0;
-      break;//эта линия не сплошная
+      break;/*эта линия не сплошная */
     }
     if (w_color) prev = 1;
     if (b_color) prev = 0;

@@ -29,14 +29,14 @@
 #define KEY_BACK   0xFF1B
 #define KEY_SHIFT  0xFFE1
 
-#define KEY_MENU_LIBROII 0x2E   // Кнопка МЕНЮ на прошивке для LIBRO II.
-#define KEY_SETTINGS_LIBROII 0x2C // Кнопка НАСТРОЙКИ на прошивке для LIBRO II.
-#define KEY_REFRESH_LIBROII 0x00  // Кнопка ОБНОВИТЬ на прошивке для LIBRO II.
+#define KEY_MENU_LIBROII 0x2E   /* Кнопка МЕНЮ на прошивке для LIBRO II. */
+#define KEY_SETTINGS_LIBROII 0x2C /* Кнопка НАСТРОЙКИ на прошивке для LIBRO II. */
+#define KEY_REFRESH_LIBROII 0x00  /* Кнопка ОБНОВИТЬ на прошивке для LIBRO II. */
 
 #define KEY_REFRESH_QT 0xFFC2
 #define KEY_MENU_QT    0xFFC3
 #define KEY_OPTIONS_QT 0xFFC4
-#define KEY_POWER_QT   0xFF13 // BREAK на PC
+#define KEY_POWER_QT   0xFF13 /* BREAK на PC */
 
 void epaperUpdateFull(void);
 void epaperUpdateLocal(void);
@@ -53,9 +53,9 @@ enum
   LED_ON,
   LED_STATES
 };
-extern int LED_state[LED_STATES]; // Состояния светодиода
-extern int previous_backlight_level; // Уровень подсветки перед запуском eView
-extern int suspended; // Текущее состояние книги
-extern int was_in_picture_viewer; // Находились ли мы в смотрелке перед вызовом усыплятора
-void suspend_hardware(void); // Тупо усыпляет железяку (проснётся от любого нажатия клавиши и отработает его, словно и не спала вовсе)
+extern int LED_state[LED_STATES]; /* Состояния светодиода */
+extern int previous_backlight_level; /* Уровень подсветки перед запуском eView */
+extern int suspended; /* Текущее состояние книги */
+extern int was_in_picture_viewer; /* Находились ли мы в смотрелке перед вызовом усыплятора */
+void suspend_hardware(void); /* Тупо усыпляет железяку (проснётся от любого нажатия клавиши и отработает его, словно и не спала вовсе) */
 #endif /* _DIGMA_HW_H_ */

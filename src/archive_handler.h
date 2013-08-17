@@ -8,4 +8,4 @@ int find_prev_archive_directory(panel *panel);
 int find_next_archive_directory(panel *panel);
 void archive_go_upper(panel *panel);
 void archive_enter_subdir(const char *subdir, panel *panel);
-extern char *archive_cwd_prev; // Предыдущий текущий каталог в архиве
+extern char *archive_cwd_prev; /* Предыдущий текущий каталог в архиве */

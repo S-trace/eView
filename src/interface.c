@@ -409,7 +409,7 @@ void start_picture_menu (panel *panel, GtkWidget *win) // Создаём мен�
   }
   GtkWidget *dialog = gtk_dialog_new_with_buttons (SETTINGS,
                                                    GTK_WINDOW(win),
-                                                   GTK_DIALOG_MODAL |GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                   GTK_DIALOG_MODAL /*|GTK_DIALOG_DESTROY_WITH_PARENT*/,
                                                    NULL);
   gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), menu_vbox);
   gtk_window_set_position (GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ALWAYS);
@@ -620,7 +620,7 @@ void options_menu_create(GtkWidget *main_menu) //Создание меню оп�
 {
   GtkWidget *options_dialog = gtk_dialog_new_with_buttons (SETTINGS,
                                                            GTK_WINDOW(main_menu),
-                                                           GTK_DIALOG_MODAL |GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                           GTK_DIALOG_MODAL /*|GTK_DIALOG_DESTROY_WITH_PARENT*/,
                                                            NULL);
   GtkWidget *menu_vbox = gtk_vbox_new (FALSE, 0);
   
@@ -779,7 +779,7 @@ void start_main_menu (panel *panel)
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons (MAIN_MENU,
                                                    GTK_WINDOW(main_window),
-                                                   GTK_DIALOG_MODAL |GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                   GTK_DIALOG_MODAL /*|GTK_DIALOG_DESTROY_WITH_PARENT*/,
                                                    NULL);
   GtkWidget *menu_vbox = gtk_vbox_new (TRUE, 0);
   

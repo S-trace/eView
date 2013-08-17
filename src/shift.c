@@ -2,19 +2,19 @@
  *computing shift positions for frames*/
 
 #include <stdio.h>
-#include "gtk_file_manager.h" // Инклюдить первой среди своих, ибо typedef panel!
+#include "gtk_file_manager.h" /* Инклюдить первой среди своих, ибо typedef panel! */
 #include "ViewImageWindow.h"
 #include "frames_search.h"
 #include "shift.h"
 extern int width_display, height_display;
 
-//вычиляет позиции смещения вправо, чтобы очередной кадр попал в экран полностью
+/*вычиляет позиции смещения вправо, чтобы очередной кадр попал в экран полностью */
 int shift (int height, int sum_frame, int l_scr)
 {
-  int r_scr = l_scr + width_display;	//правая граница экрана
-  int fn;			//индекс для frame_coord()
-  int s_frame;		//начало кадра
-  int e_frame;		//конец кадра
+  int r_scr = l_scr + width_display;	/*правая граница экрана */
+  int fn;			/*индекс для frame_coord() */
+  int s_frame;		/*начало кадра */
+  int e_frame;		/*конец кадра */
   
   for(fn=0; fn <= sum_frame; fn++) {
     if (frame_coord(0, fn) == -1 || frame_coord(1, fn)== -1) {
@@ -22,7 +22,7 @@ int shift (int height, int sum_frame, int l_scr)
       break;
     }
     if (frame_coord (1,fn) > r_scr) break;
-  }//fn - индекс текущего кадра
+  }/*fn - индекс текущего кадра */
   s_frame = frame_coord(0, fn);
   e_frame = frame_coord(1, fn);
   
@@ -45,13 +45,13 @@ int shift (int height, int sum_frame, int l_scr)
   return 0;
 }
 
-//то же что и shift() но в другую сторону, влевo
+/*то же что и shift() но в другую сторону, влевo */
 int shift_back (int height, int sum_frame, int l_scr)
 {
   int r_scr;
-  int fn;			//индекс для frame_coord()
-  int s_frame;		//начало кадра
-  int e_frame;		//конец кадра
+  int fn;			/*индекс для frame_coord() */
+  int s_frame;		/*начало кадра */
+  int e_frame;		/*конец кадра */
   
   if (l_scr + width_display > height) l_scr = l_scr - 2;
   r_scr = l_scr + width_display;

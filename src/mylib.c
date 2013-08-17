@@ -17,17 +17,16 @@
 #include "mygtk.h"
 #include "cfg.h"
 #include "archive_handler.h"
-#include "ViewImageWindow.h" // die_viewer_window()
+#include "ViewImageWindow.h" /* die_viewer_window() */
 #include "os-specific.h"
 #include "translations.h"
 
 /* Various error message routines.*/
 const char msg_memory_exhausted[] = "memory exhausted";
-char next_directory[PATHSIZE+1];  // Директория, в которую переходим при окончании которого
+char next_directory[PATHSIZE+1];  /* Директория, в которую переходим при окончании которого */
 
-void read_string(const char *name, char **destination) //Чтение строкового параметра из файла name в переменную destination
+void read_string(const char *name, char **destination) /*Чтение строкового параметра из файла name в переменную destination */
 {
-  char temp[256];
   FILE *file_descriptor=fopen(name,"rt");
   if (!file_descriptor)
   {
@@ -39,6 +38,7 @@ void read_string(const char *name, char **destination) //Чтение строк
   }
   else
   {
+    char temp[256];
     if (fgets(temp, PATHSIZE, file_descriptor) == 0)
     {
       fclose(file_descriptor);
@@ -58,7 +58,7 @@ void read_string(const char *name, char **destination) //Чтение строк
   }
 }
 
-void kill_panel (void) // Убиваем panel
+void kill_panel (void) /* Убиваем panel */
 {
   #ifdef debug_printf
   printf ("killing panel\n");
@@ -67,7 +67,7 @@ void kill_panel (void) // Убиваем panel
   return;
 }
 
-void start_panel (void) // Перезапускаем panel
+void start_panel (void) /* Перезапускаем panel */
 {
   #ifdef debug_printf
   printf ("starting panel\n");
@@ -76,12 +76,12 @@ void start_panel (void) // Перезапускаем panel
   return;
 }
 
-char *get_natural_size(long size) // Возвращает размер строки в килобайтах или мегабайтах (округлённо)
+char *get_natural_size(long size) /* Возвращает размер строки в килобайтах или мегабайтах (округлённо) */
 {
   char *value;
   if (size>=KILOBYTE && size<MEGABYTE)
   {
-    asprintf(&value, "%0.2f K  ", size/(float)KILOBYTE); //Пробелы в конце нужны, чтобы скроллбар не перекрывал величину измерения
+    asprintf(&value, "%0.2f K  ", size/(float)KILOBYTE); /*Пробелы в конце нужны, чтобы скроллбар не перекрывал величину измерения */
     return(value);
   }
   if (size>=MEGABYTE && size<GIGABYTE)
@@ -94,25 +94,25 @@ char *get_natural_size(long size) // Возвращает размер стро�
     asprintf(&value, "%0.2f G  ", size/(float)GIGABYTE);
     return(value);
   }
-  return(xconcat(itoa(size), " B  ")); // Надеюсь, что эта книга никогда не столкнётся с файлами терабайтного размера
+  return(xconcat(itoa(size), " B  ")); /* Надеюсь, что эта книга никогда не столкнётся с файлами терабайтного размера */
 }
 
-char *get_natural_time(int time) // Возвращает строку в формате HH:MM:ss
+char *get_natural_time(int time) /* Возвращает строку в формате HH:MM:ss */
 {
   char *value;
-  if (time/3600>0) // Если число секунд > 3600
+  if (time/3600>0) /* Если число секунд > 3600 */
   {
     asprintf(&value,"%02d:%02d:%02d", time/3600, (time%3600)/60, time%60);
     return(value);
   }
   else 
   {
-    if (time/60>0) // Если 3600 > число секунд > 60
+    if (time/60>0) /* Если 3600 > число секунд > 60 */
     {
       asprintf(&value,"%02d:%02d", time/60, time%60);
       return(value);
     }
-    else // Если 60 > число секунд
+    else /* Если 60 > число секунд */
     {
       value=strdup(itoa(time));
       return(value);
@@ -121,7 +121,7 @@ char *get_natural_time(int time) // Возвращает строку в фор�
   return(value);
 }
 
-void xsystem(const char *command) // Вывод на экран и запуск команды
+void xsystem(const char *command) /* Вывод на экран и запуск команды */
 {
   #ifdef debug_printf
   printf("Executing '%s'\n", command);
@@ -129,7 +129,7 @@ void xsystem(const char *command) // Вывод на экран и запуск 
   system(command);
 }
 
-char *trim_line(char *input_line) // Удаляет последний символ у строки
+char *trim_line(char *input_line) /* Удаляет последний символ у строки */
 {
   #ifdef debug_printf
   printf("trim_line called for line '%s'\n", input_line);
@@ -243,57 +243,57 @@ char *find_last_picture_name(panel *panel)
   return last_found_image;
 }
 
-char *find_next_directory(panel *panel) // Поиск следующей директории в списке TODO: Переписать с обработкой не через system() а через список
+char *find_next_directory(panel *panel) /* Поиск следующей директории в списке TODO: Переписать с обработкой не через system() а через список */
 {
-  FILE *fp; // Указатель на файл
+  FILE *fp; /* Указатель на файл */
   static char *command; 
   asprintf(&command, "find \"$(dirname \"`pwd`\")\" -type d|sed 's-$-/-g'|%s > dirlist", SORT_COMMAND); 
-  xsystem(command);  // Получаем список каталогов
+  xsystem(command);  /* Получаем список каталогов */
   free (command);
-  fp = fopen("dirlist", "r"); // Открываем его
-  remove ("dirlist"); // И тут же удаляем, открытый он останется висеть как дескриптор
-  while(! feof(fp)) { // Пока не конец файла
-    fgets ( next_directory, PATHSIZE+1, fp); // Читаем строку из файла
-    trim_line(next_directory); // Удаляем \n с конца строки
-    if (!strcmp (next_directory, panel->path) || !strcmp (trim_line(next_directory), panel->path)) // Сравниваем строку с текущим каталогом
+  fp = fopen("dirlist", "r"); /* Открываем его */
+  remove ("dirlist"); /* И тут же удаляем, открытый он останется висеть как дескриптор */
+  while(! feof(fp)) { /* Пока не конец файла */
+    fgets ( next_directory, PATHSIZE+1, fp); /* Читаем строку из файла */
+    trim_line(next_directory); /* Удаляем \n с конца строки */
+    if (!strcmp (next_directory, panel->path) || !strcmp (trim_line(next_directory), panel->path)) /* Сравниваем строку с текущим каталогом */
     {
-      fgets ( next_directory, PATHSIZE+1, fp); // При совпадении читаем ещё одну строку из файла
-      fclose(fp);// Закрываем файл
-      trim_line(next_directory); // Удаляем \n с конца строки
+      fgets ( next_directory, PATHSIZE+1, fp); /* При совпадении читаем ещё одну строку из файла */
+      fclose(fp);/* Закрываем файл */
+      trim_line(next_directory); /* Удаляем \n с конца строки */
       #ifdef debug_printf
       printf ("Matched filename '%s'\n", next_directory);
       #endif
-      return next_directory;  // И возвращаем значение предыдущей строки
+      return next_directory;  /* И возвращаем значение предыдущей строки */
     }
   }
-  fclose(fp);// Закрываем файл при неудачном поиске
-  return panel->path; // И возвращаем значение текущего каталога
+  fclose(fp);/* Закрываем файл при неудачном поиске */
+  return panel->path; /* И возвращаем значение текущего каталога */
 }
 
-char *find_prev_directory(panel *panel) // Поиск предыдущей директории в списке TODO: Переписать с обработкой не через system() а через список
+char *find_prev_directory(panel *panel) /* Поиск предыдущей директории в списке TODO: Переписать с обработкой не через system() а через список */
 {
-  FILE *fp; // Указатель на файл
-  char next_line[PATHSIZE+1]; // Строка для следующего каталога
+  FILE *fp; /* Указатель на файл */
+  char next_line[PATHSIZE+1]={'\0'}; /* Строка для следующего каталога */
   char *command;
   asprintf(&command, "find \"$(dirname \"`pwd`\")\" -type d|sed 's-$-/-g'|%s > dirlist", SORT_COMMAND); 
-  xsystem(command);  // Получаем список каталогов
+  xsystem(command);  /* Получаем список каталогов */
   free (command);
-  fp = fopen("dirlist", "r"); // Открываем его
-  remove ("dirlist"); // И тут же удаляем, открытый он останется висеть как дескриптор
-  while(! feof(fp)) { // Пока не конец файла
-    strcpy(next_directory, next_line); // Копируем считанную ранее строку в выходную
-    fgets (next_line, PATHSIZE+1, fp); // Читаем следующую строку из файла
-    trim_line(next_line); // Удаляем \n с конца строки
+  fp = fopen("dirlist", "r"); /* Открываем его */
+  remove ("dirlist"); /* И тут же удаляем, открытый он останется висеть как дескриптор */
+  while(! feof(fp)) { /* Пока не конец файла */
+    strcpy(next_directory, next_line); /* Копируем считанную ранее строку в выходную */
+    fgets (next_line, PATHSIZE+1, fp); /* Читаем следующую строку из файла */
+    trim_line(next_line); /* Удаляем \n с конца строки */
     #ifdef debug_printf
     printf ("Filename '%s'\n", next_line);
     #endif
-    if (!strcmp (next_line, panel->path) || !strcmp (trim_line(next_line), panel->path)) // Сравниваем строку с текущим каталогом
+    if (!strcmp (next_line, panel->path) || !strcmp (trim_line(next_line), panel->path)) /* Сравниваем строку с текущим каталогом */
     {
-      fclose(fp);// Закрываем файл
+      fclose(fp);/* Закрываем файл */
       #ifdef debug_printf
       printf ("Matched filename %s\n", next_directory);
       #endif
-      return next_directory;  // И возвращаем значение предыдущей строки
+      return next_directory;  /* И возвращаем значение предыдущей строки */
     }
     else
     {
@@ -302,18 +302,18 @@ char *find_prev_directory(panel *panel) // Поиск предыдущей ди�
       #endif
     }
   }
-  fclose(fp); // Закрываем файл при неудачном поиске
+  fclose(fp); /* Закрываем файл при неудачном поиске */
   #ifdef debug_printf
   printf ("Filename not matched!\n");
   #endif
-  return panel->path; // И возвращаем значение текущего каталога
+  return panel->path; /* И возвращаем значение текущего каталога */
 }
 
-char *next_image (char *input_name, int allow_actions, panel *panel) //выбор следующей картинки. allow_actions - разрешить ли действовать (закрывать окно) - для предзагрузки
+char *next_image (char *input_name, int allow_actions, panel *panel) /*выбор следующей картинки. allow_actions - разрешить ли действовать (закрывать окно) - для предзагрузки */
 {
   char *now_name, *next_name;
   int next_number;
-  now_name=basename(input_name);// Хрен уследишь, откуда с путём прилетит, а откуда без!
+  now_name=basename(input_name);/* Хрен уследишь, откуда с путём прилетит, а откуда без! */
   if (panel->archive_depth > 0) now_name=xconcat(panel->archive_cwd,now_name);
   #ifdef debug_printf
   printf("Finding next image (now at '%s'), panel->files_num=%d\n", now_name, panel->files_num);
@@ -324,7 +324,7 @@ char *next_image (char *input_name, int allow_actions, panel *panel) //выбо�
   else
     next_number=atoi(iter_from_filename(next_name, panel))-1;
   
-  if (panel->files_num == next_number) // При достижении конца списка
+  if (panel->files_num == next_number) /* При достижении конца списка */
   {
     if (loop_dir == LOOP_NONE)
     {
@@ -346,14 +346,14 @@ char *next_image (char *input_name, int allow_actions, panel *panel) //выбо�
     }
     if (loop_dir == LOOP_NEXT)
     {
-      if (allow_actions) // Предзагрузка не будет срабатывать на границе директорий - ну и гхыр с ней!
+      if (allow_actions) /* Предзагрузка не будет срабатывать на границе директорий - ну и гхыр с ней! */
       {
         #ifdef debug_printf
         printf("Finding next directory\n");
         #endif
         if (panel->archive_depth > 0)
         {
-          if(find_next_archive_directory(panel)) // Получаем следующий каталог
+          if(find_next_archive_directory(panel)) /* Получаем следующий каталог */
           {
             #ifdef debug_printf
             printf("JUMP FORWARD DONE!\n");
@@ -373,17 +373,17 @@ char *next_image (char *input_name, int allow_actions, panel *panel) //выбо�
         }
         else
         {
-          char *next_directory=find_next_directory(panel); // Получаем следующий каталог
+          char *next_directory=find_next_directory(panel); /* Получаем следующий каталог */
           #ifdef debug_printf
           printf("NEXT_DIR=%s\n",next_directory);
           #endif
           strcpy(panel->path, next_directory); 
-          write_config_string("top_panel.path", top_panel.path); // Сохраняем его в конфиг
-          write_config_string("bottom_panel.path", bottom_panel.path); // Сохраняем его в конфиг
+          write_config_string("top_panel.path", top_panel.path); /* Сохраняем его в конфиг */
+          write_config_string("bottom_panel.path", bottom_panel.path); /* Сохраняем его в конфиг */
           #ifdef debug_printf
           printf("CHDIR to %s\n", panel->path);
           #endif
-          chdir (panel->path); // Переходим в него
+          chdir (panel->path); /* Переходим в него */
         }
         update(active_panel);
         return find_first_picture_name(panel);
@@ -404,9 +404,7 @@ char *next_image (char *input_name, int allow_actions, panel *panel) //выбо�
       if (allow_actions) 
       {
         Message (INFORMATION,LAST_FILE_REACHED_EXIT);
-        enable_refresh=FALSE;
-        die_viewer_window(); // Если действия разрешены
-        enable_refresh=TRUE;
+        die_viewer_window(); /* Если действия разрешены */
       }
       return panel->selected_name;
     }
@@ -414,11 +412,11 @@ char *next_image (char *input_name, int allow_actions, panel *panel) //выбо�
   return next_name;
 }
 
-char *prev_image (char *input_name, int allow_actions, panel *panel) //выбор предыдущей картинки. allow_actions - разрешить ли действовать (закрывать окно) - для предзагрузки
+char *prev_image (char *input_name, int allow_actions, panel *panel) /*выбор предыдущей картинки. allow_actions - разрешить ли действовать (закрывать окно) - для предзагрузки */
 {
   char *now_name, *prev_name;
   int prev_number;
-  now_name=basename(input_name);// Хрен уследишь, откуда с путём прилетит, а откуда без!
+  now_name=basename(input_name);/* Хрен уследишь, откуда с путём прилетит, а откуда без! */
   if (panel->archive_depth > 0) now_name=xconcat(panel->archive_cwd,now_name);
   #ifdef debug_printf
   printf("Finding previous image (now at '%s'), panel->files_num=%d\n", now_name, panel->files_num);
@@ -429,7 +427,7 @@ char *prev_image (char *input_name, int allow_actions, panel *panel) //выбо�
   else
     prev_number=atoi(iter_from_filename(prev_name, panel));
   
-  if (prev_number == 0) // При достижении начала списка
+  if (prev_number == 0) /* При достижении начала списка */
   {
     if (loop_dir == LOOP_NONE)
     {
@@ -456,7 +454,7 @@ char *prev_image (char *input_name, int allow_actions, panel *panel) //выбо�
       #endif
       if (panel->archive_depth > 0)
       {
-        if(find_prev_archive_directory(panel)) // Получаем предыдущий каталог
+        if(find_prev_archive_directory(panel)) /* Получаем предыдущий каталог */
         {
           #ifdef debug_printf
           printf("JUMP BACKWARD DONE!\n");
@@ -477,14 +475,14 @@ char *prev_image (char *input_name, int allow_actions, panel *panel) //выбо�
       }
       else
       {
-        char *prev_directory=find_prev_directory(panel); // Получаем следующий каталог
+        char *prev_directory=find_prev_directory(panel); /* Получаем следующий каталог */
         strcpy(panel->path, prev_directory); 
-        write_config_string("top_panel.path", top_panel.path); // Сохраняем его в конфиг
-        write_config_string("bottom_panel.path", bottom_panel.path); // Сохраняем его в конфиг
+        write_config_string("top_panel.path", top_panel.path); /* Сохраняем его в конфиг */
+        write_config_string("bottom_panel.path", bottom_panel.path); /* Сохраняем его в конфиг */
         #ifdef debug_printf
         printf("CHDIR to %s\n", panel->path);
         #endif
-        chdir (panel->path); // Переходим в него
+        chdir (panel->path); /* Переходим в него */
       }
       update(panel);
       if (panel->files_num==0)
@@ -500,21 +498,17 @@ char *prev_image (char *input_name, int allow_actions, panel *panel) //выбо�
       if (allow_actions) 
       {
         Message (INFORMATION,FIRST_FILE_REACHED_EXIT);
-        die_viewer_window(); // Если действия разрешены
+        die_viewer_window(); /* Если действия разрешены */
       }
       return find_first_picture_name(panel);
     }
   }
-  #ifdef debug_printf
-  //       printf("Loading previous image '%s' %d '%s'\n", panel->f_name_arr[i], i,panel->f_name_arr[i-1]);
-  #endif
   return prev_name;
-  return NULL;
 }
 
-int is_picture(char *name) // Является ли изображением
+int is_picture(char *name) /* Является ли изображением */
 {
-  int n = strlen(name) - 4; // Позиция начала расширения
+  int n = strlen(name) - 4; /* Позиция начала расширения */
   if(strcasecmp((name+n), ".jpg") != 0 &&
     strcasecmp((name+n), "jpeg") != 0 &&
     strcasecmp((name+n), ".bmp") != 0 &&
@@ -527,9 +521,9 @@ int is_picture(char *name) // Является ли изображением
     return TRUE;
 }
 
-int is_archive(char *name) // Является ли архивом
+int is_archive(char *name) /* Является ли архивом */
 {
-  int n = strlen(name) - 4; // Позиция начала расширения
+  int n = strlen(name) - 4; /* Позиция начала расширения */
   if(strcasecmp((name+n), ".rar") != 0 &&
     strcasecmp((name+n), ".cbr") != 0 &&
     strcasecmp((name+n), ".zip") != 0 &&
@@ -539,9 +533,9 @@ int is_archive(char *name) // Является ли архивом
     return TRUE;
 }
 
-int is_text(char *name) // Является ли текстом
+int is_text(char *name) /* Является ли текстом */
 {
-  int n = strlen(name) - 4; // Позиция начала расширения
+  int n = strlen(name) - 4; /* Позиция начала расширения */
   if(strcasecmp((name+n), ".txt") != 0)
     return FALSE;
   else
@@ -584,7 +578,7 @@ void xfree(void *ptr)
   /*	 sets the pointer to NULL
    *	after it has been freed.*/
   #ifdef debug_printf
-  //   printf("called xfree\n");
+  /*   printf("called xfree\n"); */
   #endif
   
   void **pp = (void **)ptr;
@@ -616,7 +610,7 @@ char *xgetcwd (char *cwd)
   return cwd;
 }
 
-char *xconcat(const char *path,const char *filename)// просто слияние
+char *xconcat(const char *path,const char *filename)/* просто слияние */
 {
   char *buffer;  
   if (!path) path = "";

@@ -19,13 +19,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #include "cfg.h"
-#define MAXFILES 4096 // Максимальное количество файлов в каталоге
+#define MAXFILES 4096 /* Максимальное количество файлов в каталоге */
 
 extern int files_num;
 void xsystem(const char *command);
 char *get_natural_size(long size);
-void kill_panel (void); // Убиваем panel
-void start_panel (void); // Запускаем panel
+void kill_panel (void); /* Убиваем panel */
+void start_panel (void); /* Запускаем panel */
 int is_picture(char *name);
 int is_archive(char *name);
 int is_text(char *name);
@@ -42,5 +42,5 @@ char *xconcat_path_file(const char *path,const char *filename);
 int  xstrlen(const char* s);
 char *trim_line(char *input_line);
 char *itoa(int i);
-char *get_natural_time(int time); // Возвращает строку в формате HH:MM:ss
+char *get_natural_time(int time); /* Возвращает строку в формате HH:MM:ss */
 void read_string(const char *name, char **destination);
