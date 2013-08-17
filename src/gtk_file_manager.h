@@ -210,6 +210,12 @@ extern GtkWidget *panels_vbox; // vBox для панелей
 extern panel top_panel, bottom_panel, *active_panel, *inactive_panel;
 extern int interface_is_locked;
 extern int QT;
+extern volatile int sleep_timer;
+extern pthread_t sleep_timer_tid;
+extern guint idle_call_handler;
+
+void start_sleep_timer(void);
+void *sleep_thread(__attribute__((unused))void* arg);
 void dirlist_focus (void);
 void second_panel_hide(void);
 void second_panel_show(void);

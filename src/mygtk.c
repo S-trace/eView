@@ -27,6 +27,56 @@ GtkWidget *MessageWindow;
 int enable_refresh=1;
 static int need_full_refresh; // Тип необходимого обновления экрана при перемещении курсора по меню
 
+int check_key_press(int keyval, panel *panel) // Возвращает TRUE если всё сделано
+{
+  if (interface_is_locked)
+  {
+    #ifdef debug_printf
+    printf("Interface was locked, keypress ignored!\n");
+    #endif
+    return TRUE;
+  }
+  if (suspended)
+  {
+    if (keyval == KEY_POWER_QT) // Выход из сна
+    {
+      if(was_in_picture_viewer)
+      {
+        show_image(&current, panel, FALSE);
+        e_ink_refresh_full();
+      }
+      else
+        die_viewer_window();
+      was_in_picture_viewer=suspended=FALSE;
+      set_brightness(backlight);
+      sleep_timer=sleep_timeout;
+      return TRUE;
+    }
+    else // Продолжаем спать
+    {
+      #ifdef debug_printf
+      printf("Program is suspended, keypress ignored!\n");
+      #endif
+      suspend_hardware();
+    }
+    return TRUE;
+  }
+  else // Если не спим
+  {
+    if (keyval == KEY_POWER_QT)
+    {
+      enter_suspend(panel);
+      return TRUE;    
+    }
+    else
+    {
+      sleep_timer=sleep_timeout; // При любом нажатии клавиши (где угодно) сбрасываем таймер сна на значение из настроек
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
 gint confirm_request(char *title, char *confirm_button, char *reject_button)
 {
   GtkWidget *dialog;
@@ -455,24 +505,7 @@ void actions(panel *panel) //выбор что делать по клику пе
 
 gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *event, panel *panel) //реакция на кнопки
 {
-  #ifdef debug_printf
-  printf("got %d in main\n", event->keyval);
-  #endif  
-  if (suspended)
-  {
-    #ifdef debug_printf
-    printf("Program is suspended, keypress in filemanager ignored (should never happends)!\n");
-    #endif
-    return TRUE;
-  }
-  set_brightness(backlight);
-  if (interface_is_locked)
-  {
-    #ifdef debug_printf
-    printf("Interface was locked, keypress ignored!\n");
-    #endif
-    return TRUE;
-  }
+  if (check_key_press(event->keyval, panel)) return TRUE;
   switch (event->keyval){
     case   GDK_m:
     case   KEY_MENU:
@@ -545,18 +578,15 @@ gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
       return TRUE;
       break;
       
-    case KEY_POWER_QT:
-      enter_suspend(panel);
-      break;
-      
     case KEY_PGDOWN:
     case KEY_PGUP:
+    case KEY_OK:
       return FALSE; 
       break;
       
     default:
       #ifdef debug_printf
-      printf("got unknown keycode %d in main\n", event->keyval);
+      printf("got unknown keycode 0x%x in main\n", event->keyval);
       #endif  
       return FALSE;
       break;
@@ -755,74 +785,84 @@ GtkTreeView *string_list_create_on_table(int num,
 void enter_suspend(panel *panel)
 {
   static int suspend_count=-1; // Счётчик засыпаний книги - для выбора номера заставки
-  #ifdef debug_printf
-  printf("Entering suspend\n");
-  #endif
-  #ifdef __amd64
-  FILE *list_of_screensavers=popen("cat boeyeserver.conf|grep ScreenSaver | cut -d = -f 2|tr -d ' '| tr ',' '\n'","r");
-  #else
-  FILE *list_of_screensavers=popen("cat /home/root/Settings/boeye/boeyeserver.conf|grep ScreenSaver | cut -d = -f 2|tr -d ' '| tr ',' '\n'","r");
-  #endif
-  #ifdef debug_printf
-  printf("Process opened\n");
-  #endif
-  int screensavers_count=0;
-  char screensavers_array[16][256], temp_buffer[256];
-  while(screensavers_count <= 16 )
+  gtk_idle_remove (idle_call_handler); // Удаляем вызов этой функции из очереди вызовов (иначе на ARM она будет вызываться вечно)
+  if (! suspended)
   {
-    fgets(temp_buffer, 255, list_of_screensavers);
-    if (feof(list_of_screensavers))
-    {
-      pclose(list_of_screensavers);
-      #ifdef debug_printf
-      printf("Process closed\n");
-      #endif
-      break;
-    }
-    trim_line(temp_buffer);
     #ifdef debug_printf
-    printf("read %s\n", temp_buffer);
+    printf("Entering suspend\n");
     #endif
-    strcpy(screensavers_array[screensavers_count], temp_buffer);
-    screensavers_count++;
+    #ifdef __amd64
+    FILE *list_of_screensavers=popen("cat boeyeserver.conf|grep ScreenSaver | cut -d = -f 2|tr -d ' '| tr ',' '\n'","r");
+    #else
+    FILE *list_of_screensavers=popen("cat /home/root/Settings/boeye/boeyeserver.conf|grep ScreenSaver | cut -d = -f 2|tr -d ' '| tr ',' '\n'","r");
+    #endif
+    #ifdef debug_printf
+    printf("Process opened\n");
+    #endif
+    int screensavers_count=0;
+    char screensavers_array[16][256], temp_buffer[256];
+    while(screensavers_count <= 16 )
+    {
+      fgets(temp_buffer, 255, list_of_screensavers);
+      if (feof(list_of_screensavers))
+      {
+        pclose(list_of_screensavers);
+        #ifdef debug_printf
+        printf("Process closed\n");
+        #endif
+        break;
+      }
+      trim_line(temp_buffer);
+      #ifdef debug_printf
+      printf("read %s\n", temp_buffer);
+      #endif
+      strcpy(screensavers_array[screensavers_count], temp_buffer);
+      screensavers_count++;
+    }
+    #ifdef debug_printf
+    printf("loop done\n");fflush (stdout);
+    #endif
+    xsystem("dbus-send /PowerManager com.sibrary.Service.PowerManager.requestSuspend");
+    #ifdef debug_printf
+    printf("DBUS sent\n");
+    #endif
+    
+    if (++suspend_count==screensavers_count-1) // Закольцовываем список картинок для скринсейвера (последняя запись - фигня!)
+      suspend_count=0;
+    
+    // сохраняем предыдущие настройки
+    int saved_crop=crop;
+    int saved_rotate=rotate;
+    int saved_frame=frame;
+    int saved_preload_enable=preload_enable;
+    int saved_keepaspect=keepaspect;
+    crop=rotate=frame=preload_enable=FALSE; // Грязно перенастраиваем смотрелку
+    suspended=keepaspect=TRUE;
+    if (in_picture_viewer)
+    {
+      load_image(screensavers_array[suspend_count], active_panel, FALSE, &screensaver);
+      show_image(&screensaver, panel, FALSE);
+      e_ink_refresh_full();
+      was_in_picture_viewer=in_picture_viewer;
+    }
+    else
+      ViewImageWindow(screensavers_array[suspend_count], active_panel, FALSE);
+    // Восстанавливаем предыдущие настройки
+    crop=saved_crop;
+    rotate=saved_rotate;
+    frame=saved_frame;
+    preload_enable=saved_preload_enable;
+    keepaspect=saved_keepaspect;
+    set_brightness(0);
+    suspend_hardware();  
+    #ifdef debug_printf
+    printf("Suspend done\n");
+    #endif
   }
-  #ifdef debug_printf
-  printf("loop done\n");fflush (stdout);
-  #endif
-  xsystem("dbus-send /PowerManager com.sibrary.Service.PowerManager.requestSuspend");
-  #ifdef debug_printf
-  printf("DBUS sent\n");
-  #endif
-  
-  if (++suspend_count==screensavers_count-1) // Закольцовываем список картинок для скринсейвера. Последняя запись - фигня! 
-    suspend_count=0;
-  
-  // сохраняем предыдущие настройки
-  int saved_crop=crop;
-  int saved_rotate=rotate;
-  int saved_frame=frame;
-  int saved_preload_enable=preload_enable;
-  int saved_keepaspect=keepaspect;
-  crop=rotate=frame=preload_enable=FALSE; // Грязно перенастраиваем смотрелку
-  suspended=keepaspect=TRUE;
-  if (in_picture_viewer)
+  else
   {
-    load_image(screensavers_array[suspend_count], active_panel, FALSE, &screensaver);
-    show_image(&screensaver, panel, FALSE);
-    e_ink_refresh_full();
-    was_in_picture_viewer=in_picture_viewer;
+    #ifdef debug_printf
+    printf("eView is already suspended!\n");
+    #endif
   }
-  else  
-    ViewImageWindow(screensavers_array[suspend_count], active_panel, FALSE);
-  
-  // Восстанавливаем предыдущие настройки
-  crop=saved_crop;
-  rotate=saved_rotate;
-  frame=saved_frame;
-  preload_enable=saved_preload_enable;
-  keepaspect=saved_keepaspect;
-  suspend_hardware();  
-  #ifdef debug_printf
-  printf("Suspend done\n");
-  #endif
 }

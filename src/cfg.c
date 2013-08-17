@@ -10,7 +10,7 @@
 #include "cfg.h"
 
 static char *cfg_directory = NULL; //путь к файлу с настройками
-int crop, rotate, frame, keepaspect, fm_toggle, move_toggle, speed_toggle, clock_toggle, top_panel_active, loop_dir, double_refresh, viewed_pages, preload_enable, suppress_panel, show_hidden_files, manga, LED_notify=TRUE, backlight;
+int crop, rotate, frame, keepaspect, fm_toggle, move_toggle, speed_toggle, clock_toggle, top_panel_active, loop_dir, double_refresh, viewed_pages, preload_enable, suppress_panel, show_hidden_files, manga, LED_notify=TRUE, backlight, sleep_timeout;
 
 char *cfg_file_path (void)
 {
@@ -218,6 +218,7 @@ void create_cfg ()  //создание файлов настроек по умо
   write_config_int("show_hidden_files", FALSE);
   write_config_int("LED_notify", TRUE);
   write_config_int("backlight", FALSE);
+  write_config_int("sleep_timeout", 60);
   write_config_string("top_panel.path", "/");
   write_config_string("top_panel.selected_name", "../");
   write_config_string("top_panel.archive_cwd", "");
@@ -273,6 +274,7 @@ void read_configuration (void)
   show_hidden_files=read_config_int("show_hidden_files");
   LED_notify=read_config_int("LED_notify");
   backlight=read_config_int("backlight");
+  sleep_timeout=read_config_int("sleep_timeout");
   
   read_panel_configuration(&top_panel);
   read_panel_configuration(&bottom_panel);

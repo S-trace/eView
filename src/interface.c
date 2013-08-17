@@ -16,7 +16,7 @@
 #include "os-specific.h"
 
 static GtkWidget *create, *copy, *moving, *delete, *options, *exit_button; // Кнопки в главном меню
-static GtkWidget *fmanager, *move_chk, *clock_panel, *ink_speed, *show_hidden_files_chk, *LED_notify_checkbox, *reset_configuration, *backlight_scale, *about_program; // Пункты в настройках ФМ
+static GtkWidget *fmanager, *move_chk, *clock_panel, *ink_speed, *show_hidden_files_chk, *LED_notify_checkbox, *reset_configuration, *backlight_scale, *sleep_timeout_scale, *about_program; // Пункты в настройках ФМ
 static GtkWidget *crop_image, *rotate_image, *manga_mode, *frame_image, *keepaspect_image, *double_refresh_image, *viewed, *preload_enabled_button, *suppress_panel_button; // Чекбоксы в настройках вьювера
 static GtkWidget *loop_dir_none, *loop_dir_loop, *loop_dir_next, *loop_dir_exit, *loop_dir_frame, *loop_dir_vbox; // Радиобаттон в настройках вьювера
 int need_refresh=FALSE;
@@ -213,7 +213,7 @@ void reset_statistics() // Callback для кнопки статистики (с
 
 gint keys_rotation_picture_menu (__attribute__((unused))GtkWidget *window, GdkEventKey *event) //Круговое перемещение по меню в смотрелке
 {
-  set_brightness(backlight);
+  if (check_key_press(event->keyval, active_panel)) return TRUE;
   switch (event->keyval){
     case   KEY_UP:
       if (gtk_widget_is_focus (crop_image))
@@ -257,14 +257,7 @@ void picture_menu_destroy (panel *panel, GtkWidget *dialog) // Уничтожа�
 
 gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, panel *panel) //задействует кнопки
 {
-  set_brightness(backlight);
-  if (interface_is_locked)
-  {
-    #ifdef debug_printf
-    printf("Interface was locked, keypress ignored!\n");
-    #endif
-    return TRUE;
-  }
+  if (check_key_press(event->keyval, panel)) return TRUE;
   switch (event->keyval){
     case   KEY_MENU:
     case   GDK_m:
@@ -280,10 +273,6 @@ gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, panel *panel) 
       e_ink_refresh_full();
       return FALSE;
     
-    case KEY_POWER_QT:
-      enter_suspend(panel);
-      return TRUE;
-      
     default:
       e_ink_refresh_part();
       return FALSE;
@@ -514,6 +503,19 @@ void backlight_changed(GtkWidget *scalebutton)
   #endif
 }
 
+void sleep_timeout_changed(GtkWidget *scalebutton)
+{
+  write_config_int("sleep_timeout", sleep_timeout = gtk_range_get_value(GTK_RANGE(scalebutton)));
+  sleep_timer=sleep_timeout;
+  #ifdef debug_printf
+  printf("Sleep timeout set to %d\n", sleep_timeout);
+  #endif  
+  if(pthread_kill(sleep_timer_tid, 0) == ESRCH) // Если поток таймера умер
+    start_sleep_timer();
+    
+}
+
+
 // static void led_changed(GtkWidget *scalebutton)
 // {
 //   set_led_state(gtk_range_get_value(GTK_RANGE(scalebutton)));
@@ -532,7 +534,7 @@ void options_destroy (GtkWidget *dialog) // Уничтожаем меню нас
 
 gint keys_rotation_options (__attribute__((unused))GtkWidget *window, GdkEventKey *event) //Круговое перемещение по меню в ФМ
 {
-  set_brightness(backlight);
+  if (check_key_press(event->keyval, active_panel)) return TRUE;
   switch (event->keyval){
     case   KEY_UP:
       if (gtk_widget_is_focus (fmanager))
@@ -557,12 +559,30 @@ gint keys_rotation_options (__attribute__((unused))GtkWidget *window, GdkEventKe
   }
 }
 
-gint keys_updown_options (__attribute__((unused))GtkWidget *window, GdkEventKey *event) // Для возможности переключаться из регулятора подсветки вверх-вниз
+gint keys_updown_backlight (__attribute__((unused))GtkWidget *window, GdkEventKey *event) // Для возможности переключаться из регулятора подсветки вверх-вниз
 {
+  if (check_key_press(event->keyval, active_panel)) return TRUE;
   switch (event->keyval){
     case   KEY_UP:
         gtk_widget_grab_focus (LED_notify_checkbox);
         return TRUE;      
+    case   KEY_DOWN:
+      gtk_widget_grab_focus (sleep_timeout_scale);
+    default:
+      return FALSE;
+  }
+}
+
+gint keys_updown_sleep_timeout (__attribute__((unused))GtkWidget *window, GdkEventKey *event) // Для возможности переключаться из регулятора таймера сна вверх-вниз
+{
+  if (check_key_press(event->keyval, active_panel)) return TRUE;
+  switch (event->keyval){
+    case   KEY_UP:
+      if(hardware_has_backlight)      
+        gtk_widget_grab_focus (backlight_scale);
+      else
+        gtk_widget_grab_focus (LED_notify_checkbox);
+      return TRUE;      
     case   KEY_DOWN:
       gtk_widget_grab_focus (reset_configuration);
     default:
@@ -572,14 +592,7 @@ gint keys_updown_options (__attribute__((unused))GtkWidget *window, GdkEventKey 
 
 gint keys_in_options (GtkWidget *dialog, GdkEventKey *event, panel *panel) //задействует кнопки
 {
-  set_brightness(backlight);
-  if (interface_is_locked)
-  {
-    #ifdef debug_printf
-    printf("Interface was locked, keypress ignored!\n");
-    #endif
-    return TRUE;
-  }
+  if (check_key_press(event->keyval, panel)) return TRUE;
   switch (event->keyval){
     case   KEY_MENU:
     case   GDK_m:
@@ -594,10 +607,6 @@ gint keys_in_options (GtkWidget *dialog, GdkEventKey *event, panel *panel) //з�
     case   KEY_REFRESH_QT:
       e_ink_refresh_full();
       return FALSE;
-      
-    case KEY_POWER_QT:
-      enter_suspend(panel);
-      return TRUE;
       
     default:
       e_ink_refresh_part();
@@ -661,10 +670,18 @@ void options_menu_create(GtkWidget *main_menu) //Создание меню оп�
     g_signal_connect(backlight_scale, "value-changed", G_CALLBACK(backlight_changed), NULL);
     gtk_range_set_value (GTK_RANGE(backlight_scale), backlight);
     gtk_container_add (GTK_CONTAINER (backlight_frame), backlight_scale);
-    g_signal_connect (G_OBJECT (backlight_frame), "key_press_event", G_CALLBACK (keys_updown_options), NULL);
+    g_signal_connect (G_OBJECT (backlight_frame), "key_press_event", G_CALLBACK (keys_updown_backlight), NULL);
     
   }
-
+    GtkWidget *sleep_timeout_frame = gtk_frame_new (SLEEP_TIMEOUT);
+    gtk_box_pack_start (GTK_BOX (menu_vbox), sleep_timeout_frame, FALSE, TRUE, 0);
+    sleep_timeout_scale = gtk_hscale_new_with_range (0, 600, 5);
+    gtk_range_set_value (GTK_RANGE(sleep_timeout_scale), sleep_timeout);
+    g_signal_connect (G_OBJECT (sleep_timeout_scale), "key_press_event", G_CALLBACK (keys_updown_sleep_timeout), NULL);
+    g_signal_connect(sleep_timeout_scale, "value-changed", G_CALLBACK(sleep_timeout_changed), NULL);
+    gtk_container_add (GTK_CONTAINER (sleep_timeout_frame), sleep_timeout_scale);
+    
+  
 //   GtkWidget *LED_test_frame = gtk_frame_new ("LED_TEST");
 //   gtk_box_pack_start (GTK_BOX (menu_vbox), LED_test_frame, FALSE, TRUE, 0);
 //   GtkWidget *led_test_scale = gtk_hscale_new_with_range (0, 255, 1);
@@ -706,7 +723,7 @@ void create_folder()
 
 gint keys_rotation_menu (__attribute__((unused))GtkWidget *window, GdkEventKey *event) //Круговое перемещение по меню в ФМ
 {
-  set_brightness(backlight);
+  if (check_key_press(event->keyval, active_panel)) return TRUE;
   switch (event->keyval){
     case   KEY_UP:
       if (gtk_widget_is_focus (create))
@@ -733,14 +750,7 @@ gint keys_rotation_menu (__attribute__((unused))GtkWidget *window, GdkEventKey *
 
 gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, panel *panel) //задействует кнопку М в меню
 {
-  set_brightness(backlight);
-  if (interface_is_locked)
-  {
-    #ifdef debug_printf
-    printf("Interface was locked, keypress ignored!\n");
-    #endif
-    return TRUE;
-  }
+  if (check_key_press(event->keyval, panel)) return TRUE;
   switch (event->keyval){
     case   KEY_BACK:
     case   KEY_MENU:
@@ -756,10 +766,6 @@ gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, panel *panel) //�
     case   KEY_REFRESH_QT:
       e_ink_refresh_full();
       return FALSE;
-      
-    case KEY_POWER_QT:
-      enter_suspend(panel);
-      return TRUE;
       
     default:
       e_ink_refresh_default ();

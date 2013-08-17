@@ -20,6 +20,7 @@
 #include <fcntl.h> //open()
 #include <X11/Xlib.h> //XOpenDisplay()
 #include <signal.h> //signal()
+#include <pthread.h>
 
 #ifdef debug_printf
 #include <execinfo.h> //backtrace()
@@ -43,6 +44,39 @@ static int table_visible; //видима нижняя панель или нет
 int width_display, height_display;
 int framebuffer_descriptor=0; // Дескриптор файла фреймбуффера (для обновления)
 int QT=FALSE; // Обнаружен ли QT (влияет на IOCTL обновления и запуск Xfbdev)
+volatile int sleep_timer;
+pthread_t sleep_timer_tid;
+guint idle_call_handler; // Хэндлер вызова режима ожидания, нужен чтобы снять вызов функции ожидания после первого вызова
+
+void *sleep_thread(__attribute__((unused))void* arg)
+{
+  #ifdef debug_printf
+  printf("Sleep timeout thread started (timer=%d)\n", sleep_timer);
+  #endif
+  for (;;)
+  {
+    if (sleep_timeout == 0)
+    {
+      #ifdef debug_printf
+      printf("Sleep timeout disabled, ending thread\n");
+      #endif
+      break;
+    }
+    usleep(1000000); // Спим 1 секунду
+    if (--sleep_timer <= 0)
+    {
+      #ifdef debug_printf
+      printf("Sleep timeout reached, go sleep\n");
+      #endif
+      sleep_timer=999999999; // не дёргаемся по пустякам, когда надо - таймер сбросят
+      idle_call_handler=g_idle_add ((GSourceFunc) enter_suspend, active_panel);
+    }
+  }
+  #ifdef debug_printf
+  printf("Sleep thread ended\n");
+  #endif
+  return(NULL);
+}
 
 void wait_state(GtkWidget *window) // Возврат после смотрелки
 {
@@ -453,6 +487,17 @@ void shutdown(int exit_code)
   exit (exit_code);
 }
 
+void start_sleep_timer(void)
+{
+  sleep_timer=sleep_timeout;
+  if(pthread_create(&sleep_timer_tid, NULL, sleep_thread, NULL) != 0)
+  {
+    #ifdef debug_printf
+    printf("Unable to start sleep timer thread!\n");
+    #endif
+  }
+}
+
 void sigsegv_handler(void) // Обработчик для вывода Backtrace сегфолта
 {
   #ifdef debug_printf
@@ -470,6 +515,7 @@ int main (int argc, char **argv)
   signal(SIGSEGV, (__sighandler_t)sigsegv_handler);
   init();
   gtk_init (&argc, &argv);
+  
   set_led_state (LED_state[LED_BLINK_SLOW]);
   #ifdef __amd64
   width_display = 570 ;
@@ -584,6 +630,7 @@ int main (int argc, char **argv)
   //   g_signal_connect_after (current_panel->list, "move_cursor", G_CALLBACK (e_ink_refresh_default), NULL ); // Обновление экрана при сдвиге выделения
   interface_is_locked=FALSE; // Снимаем блокировку интерфейса
   set_led_state (LED_state[LED_OFF]);
+  start_sleep_timer();
   gtk_main ();
   return 0;
 }

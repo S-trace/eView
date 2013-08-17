@@ -20,7 +20,7 @@
 
 image current, screensaver, preloaded;
 GtkObject *adjust;
-GtkWidget *win, *scrolled_window, *gimage;
+GtkWidget *ImageWindow, *scrolled_window, *gimage;
 int shift_val; //на сколько сдвигать картинку
 int value;     //текущая позиция сдвига
 int move_left_to_left; //флаг слайдера, нужен только для правильного обновления на книге
@@ -50,13 +50,12 @@ void die_viewer_window (void)
   printf("Destroying ViewImageWindow\n");
   #endif
   enable_refresh=FALSE;
-  gtk_widget_destroy(win);
+  gtk_widget_destroy(ImageWindow);
   in_picture_viewer=FALSE; 
   if (suppress_panel && ! QT)
     start_panel();    
   wait_for_draw();
   enable_refresh=TRUE;
-  e_ink_refresh_full();  
 }
 
 void reset_image(image *target)
@@ -159,44 +158,14 @@ gboolean show_image(image *image, panel *panel, int enable_actions) // Пока�
       write_config_string("bottom_panel.last_name", panel->last_name);
     move_selection(iter_from_filename (basename(panel->last_name), panel), panel);
   }
-  gtk_window_set_title(GTK_WINDOW(win), image->name);
+  gtk_window_set_title(GTK_WINDOW(ImageWindow), image->name);
   wait_for_draw(); // Ожидаем отрисовки всего
   return TRUE;
 }
 
 gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *event, panel *panel) //реакция на кнопки
 {
-  if (suspended)
-  {
-    if (event->keyval == KEY_POWER_QT)
-    {
-      if(was_in_picture_viewer)
-      {
-        show_image(&current, panel, FALSE);
-        e_ink_refresh_full();
-      }
-      else
-        die_viewer_window();
-      suspended=FALSE;
-    }
-    else 
-    {
-      #ifdef debug_printf
-      printf("Program is suspended, keypress in viewer ignored!\n");
-      #endif
-      suspend_hardware();
-    }
-    return TRUE;
-  }
-  
-  set_brightness(backlight);
-  if (interface_is_locked)
-  {
-    #ifdef debug_printf
-    printf("Interface was locked, keypress ignored!\n");
-    #endif
-    return TRUE;
-  }
+  if (check_key_press(event->keyval, panel)) return TRUE;
   char *new_file; //имя следующего файла с картинкой
   #ifdef debug_printf
   printf("Caught in viewer: %d\n",event->keyval);
@@ -389,7 +358,7 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
         case   KEY_MENU:
         case   KEY_MENU_LIBROII:
         case   KEY_MENU_QT:
-          start_picture_menu (panel, win); // открываем меню картинки
+          start_picture_menu (panel, ImageWindow); // открываем меню картинки
           return FALSE;
           break;
           
@@ -397,10 +366,6 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
         case   KEY_REFRESH_QT:
           e_ink_refresh_full();
           return FALSE;
-          
-        case KEY_POWER_QT: // BREAK на PC
-          enter_suspend(panel);
-          break;
           
         default:
           #ifdef debug_printf
@@ -545,7 +510,7 @@ void ViewImageWindow(char *file, panel *panel, int enable_actions) //созда�
   //   g_signal_handlers_disconnect_by_func( window, focus_in_callback, NULL );
   //   g_signal_handlers_disconnect_by_func( window, focus_out_callback, NULL );
   //   focus_in_processed=0;
-  if (GTK_IS_WIDGET(win))
+  if (GTK_IS_WIDGET(ImageWindow))
   {
     #ifdef debug_printf
     printf("Image Viewer Window already exists, refusing to open new (should never happends)!\n");
@@ -556,50 +521,53 @@ void ViewImageWindow(char *file, panel *panel, int enable_actions) //созда�
     kill_panel();
   if (preloaded.name == NULL)
     preloaded.name="";
-  panel->selected_name=strdup(file);
   #ifdef debug_printf
-  printf("Opening viewer for '%s'\n", panel->selected_name);
+  printf("Opening viewer for '%s'\n", file);
   #endif
-  win = window_create (width_display, height_display, 0, "", NOT_MODAL);
-  gtk_window_set_decorated (GTK_WINDOW(win), FALSE);
-  //   g_signal_connect (G_OBJECT (win), "expose-event", G_CALLBACK (e_ink_refresh_full), NULL);
+  ImageWindow = window_create (width_display, height_display, 0, "", NOT_MODAL);
+  gtk_window_set_decorated (GTK_WINDOW(ImageWindow), FALSE);
+  //   g_signal_connect (G_OBJECT (ImageWindow), "expose-event", G_CALLBACK (e_ink_refresh_full), NULL);
   #ifndef __amd64
-  gtk_window_fullscreen  (GTK_WINDOW(win));  //блокировка окошка "часиков", нужно отключать для отображения на пк
+  gtk_window_fullscreen  (GTK_WINDOW(ImageWindow));  //блокировка окошка "часиков", нужно отключать для отображения на пк
   #endif
-  g_signal_connect (G_OBJECT (win), "key_press_event", G_CALLBACK (which_key_press), panel);
+  g_signal_connect (G_OBJECT (ImageWindow), "key_press_event", G_CALLBACK (which_key_press), panel);
   scrolled_window = gtk_scrolled_window_new (NULL, NULL);
   gtk_container_set_border_width(GTK_CONTAINER(scrolled_window), 0); // Хрен знает работает ли, но хуже не стало
-  gtk_container_add (GTK_CONTAINER (win), scrolled_window);
+  gtk_container_add (GTK_CONTAINER (ImageWindow), scrolled_window);
   
   //GTK_POLICY_ALWAYS для отображения на пк так же как на книжке
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
   gimage = gtk_image_new (); 
   
-  load_image(panel->selected_name, panel, enable_actions, &current);
+  load_image(file, panel, enable_actions, &current);
   show_image(&current, panel, enable_actions);
   
   adjust = gtk_adjustment_new (0.0, 0.0, 200.0, 0.1, 1.0, 1.0);
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW(scrolled_window), GTK_WIDGET(gimage));
   gtk_scrolled_window_set_hadjustment (GTK_SCROLLED_WINDOW(scrolled_window), GTK_ADJUSTMENT(adjust));
-    //сигнал для проверки работы горизонтального сдвига рисунка
-    // g_signal_connect (G_OBJECT (adjust), "value_changed", G_CALLBACK (print_adjust), NULL);
-//     if (enable_actions)
-//     {
-//       if (panel == &top_panel)
-//         write_config_string("top_panel.last_name", panel->selected_name);
-//       else
-//         write_config_string("bottom_panel.last_name", panel->selected_name);
-//     }
-//     else
-//       write_config_int("viewed_pages", --viewed_pages);
-//     
-    gtk_widget_show_all(win);
-    if (enable_actions)
-      in_picture_viewer=TRUE;
-    if (double_refresh) e_ink_refresh_local();
-    e_ink_refresh_full ();
-    //     g_signal_connect_after (GTK_WINDOW (win), "focus", G_CALLBACK (focus_in_callback), NULL);
-    //     g_signal_connect (G_OBJECT (win), "focus-out-event", G_CALLBACK (focus_out_callback), NULL);
-    if(preload_enable && ! suspended) // Предзагрузка
-      load_image(next_image (panel->selected_name, FALSE, panel), panel, FALSE, &preloaded);
+  //сигнал для проверки работы горизонтального сдвига рисунка
+  // g_signal_connect (G_OBJECT (adjust), "value_changed", G_CALLBACK (print_adjust), NULL);
+  //     if (enable_actions)
+  //     {
+  //       if (panel == &top_panel)
+  //         write_config_string("top_panel.last_name", panel->selected_name);
+  //       else
+  //         write_config_string("bottom_panel.last_name", panel->selected_name);
+  //     }
+  //     else
+  //       write_config_int("viewed_pages", --viewed_pages);
+  //     
+  gtk_widget_show_all(ImageWindow);
+  gtk_widget_grab_focus(ImageWindow);
+  if (enable_actions)
+  {
+    panel->selected_name=strdup(file);
+    in_picture_viewer=TRUE;
+  }
+  if (double_refresh) e_ink_refresh_local();
+  e_ink_refresh_full ();
+  //     g_signal_connect_after (GTK_WINDOW (win), "focus", G_CALLBACK (focus_in_callback), NULL);
+  //     g_signal_connect (G_OBJECT (win), "focus-out-event", G_CALLBACK (focus_out_callback), NULL);
+  if(preload_enable && ! suspended) // Предзагрузка
+    load_image(next_image (panel->selected_name, FALSE, panel), panel, FALSE, &preloaded);
 }

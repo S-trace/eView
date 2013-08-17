@@ -27,4 +27,5 @@ gboolean show_image(image *image, panel *panel, int enable_actions); // Пока
 void ViewImageWindow(char *filename, panel *panel, int enable_actions);
 gboolean load_image(char *filename, panel *panel, int enable_actions, image *target);
 gboolean show_image(image *image, panel *panel, int enable_actions);
+extern GtkWidget *ImageWindow;
 #endif

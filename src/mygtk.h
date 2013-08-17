@@ -257,3 +257,4 @@ void create_panel (panel *panel);
 char *get_current_iter (panel *panel); //возвращает итератор текущего файла из списка
 void Qt_error_message(char *message); // Функция открывает на прошивках Qt сообщение об ошибке в стандартной читалке
 void enter_suspend(panel *panel); // Показывает скринсейвер и усыпляет железо
+int check_key_press(int keyval, panel *panel); // Проработка нажатия кнопки питания при сне
