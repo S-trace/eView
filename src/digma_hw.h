@@ -33,11 +33,10 @@
 #define KEY_SETTINGS_LIBROII 0x2C // Кнопка НАСТРОЙКИ на прошивке для LIBRO II.
 #define KEY_REFRESH_LIBROII 0x00  // Кнопка ОБНОВИТЬ на прошивке для LIBRO II.
 
-#define KEY_REFRESH_QT  65474
-#define KEY_MENU_QT  65475
-#define KEY_OPTIONS_QT  65476
-#define KEY_POWER_QT  65299
-// #define KEY_POWER_QT 1741 // русская М - для тестирования
+#define KEY_REFRESH_QT 0xFFC2
+#define KEY_MENU_QT    0xFFC3
+#define KEY_OPTIONS_QT 0xFFC4
+#define KEY_POWER_QT   0xFF13 // BREAK на PC
 
 void epaperUpdateFull(void);
 void epaperUpdateLocal(void);
