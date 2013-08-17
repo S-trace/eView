@@ -1,12 +1,12 @@
 // #include "debug_msg_win.h"
 #define PATHSIZE 256
-void write_config_int(char *name, int value);
-void write_config_string(char *name, char *value);
+void write_config_int(const char *name, int value);
+void write_config_string(const char *name, const char *value);
 void create_cfg (void);
 void read_configuration (void);
-void write_archive_stack(char *name, panel *panel);
+void write_archive_stack(const char *name, panel *panel);
 
-char *cfg_file_path (void);
+char *cfg_file_path(void);
 void reset_config(void);
 extern char *filename, *archive_name, *archive_cwd;
 extern char archive_stack[16][PATHSIZE+1];//Стек имён архивов|
@@ -20,7 +20,7 @@ extern int move_toggle;  //чекбокс подтверждение перем�
 extern int speed_toggle; //режим обновления 1 для нормального
 extern int clock_toggle; //чекбокс показывать панельку с часами
 extern int top_panel_active;//какая панель в фокусе
-extern int loop_dir; // Режим зацикливания при окончании файлов, 0 - ничего, 1 - зацикливание, 2 - переход в следующий каталог, 2 - переход в файлменеджер
+extern int loop_dir; // Режим зацикливания при окончании файлов, 0 - ничего, 1 - зацикливание, 2 - переход в следующий каталог, 3 - переход в файлменеджер
 extern int double_refresh;//двойное обновление в смотрелке
 extern int viewed_pages;//Статистика - число просмотренных страниц
 extern int preload_enable;//Разрешить ли предзагружать спедующее изображение

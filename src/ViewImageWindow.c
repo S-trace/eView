@@ -61,9 +61,9 @@ void die_viewer_window (void)
 void reset_image(image *target)
 {
   #ifdef debug_printf
-  printf("Resetting image %p\n", target);
+  printf("Resetting image %p\n", (void*)target);
   #endif
-  target->name = "";
+  target->name = '\0';
   target->aspect_rate=target->width=target->height=0; // Сбрасываем всё остальное в структуре        
   pixbuf_unref(target->pixbuf);
 }
@@ -376,10 +376,10 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
   return FALSE;
 }
 
-void image_rotate(int angle, image *target)//вращение 90 -против часовой стрелки
+void image_rotate(image *target)//вращение 90 -против часовой стрелки
 {
   
-  GdkPixbuf *pixbuf_key = gdk_pixbuf_rotate_simple (target->pixbuf, angle);
+  GdkPixbuf *pixbuf_key = gdk_pixbuf_rotate_simple (target->pixbuf, GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
   pixbuf_unref(target->pixbuf);
   target->pixbuf = gdk_pixbuf_copy (pixbuf_key);
   pixbuf_unref(pixbuf_key);
@@ -422,7 +422,7 @@ void image_zoom_rotate (image *target)
   else 
     pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf, height_display, width_display * 2, GDK_INTERP_BILINEAR);
   pixbuf_unref(target->pixbuf);
-  target->pixbuf = gdk_pixbuf_rotate_simple (pixbuf_key, 90);
+  target->pixbuf = gdk_pixbuf_rotate_simple (pixbuf_key, GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
   update_image_dimentions(target);
   pixbuf_unref(pixbuf_key);
   target->frames = frames_search(target);
@@ -459,7 +459,7 @@ void image_resize (int mode_rotate, int mode_crop, int keep_aspect, image *targe
   //если оригинал слишком широкий - повернуть на 90
   if (target->width > target->height)
   {
-    image_rotate(90, target);
+    image_rotate(target);
     update_image_dimentions(target);
   }
   
@@ -520,7 +520,7 @@ void ViewImageWindow(char *file, panel *panel, int enable_actions) //созда�
   if (suppress_panel && ! QT)
     kill_panel();
   if (preloaded.name == NULL)
-    preloaded.name="";
+    preloaded.name='\0';
   #ifdef debug_printf
   printf("Opening viewer for '%s'\n", file);
   #endif

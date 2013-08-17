@@ -1,7 +1,9 @@
 /* Soul Trace, 2013, Distributed under GPLv2 Terms */
 // Главное меню, меню опций ФМ и картинки и их callback'и
 
+#ifndef __cplusplus
 #define _GNU_SOURCE
+#endif
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 #include <string.h>
@@ -15,7 +17,7 @@
 #include "ViewImageWindow.h"/*reset_preloaded_image*/
 #include "os-specific.h"
 
-static GtkWidget *create, *copy, *moving, *delete, *options, *exit_button; // Кнопки в главном меню
+static GtkWidget *create, *copy, *moving, *del, *options, *exit_button; // Кнопки в главном меню
 static GtkWidget *fmanager, *move_chk, *clock_panel, *ink_speed, *show_hidden_files_chk, *LED_notify_checkbox, *reset_configuration, *backlight_scale, *sleep_timeout_scale, *about_program; // Пункты в настройках ФМ
 static GtkWidget *crop_image, *rotate_image, *manga_mode, *frame_image, *keepaspect_image, *double_refresh_image, *viewed, *preload_enabled_button, *suppress_panel_button; // Чекбоксы в настройках вьювера
 static GtkWidget *loop_dir_none, *loop_dir_loop, *loop_dir_next, *loop_dir_exit, *loop_dir_frame, *loop_dir_vbox; // Радиобаттон в настройках вьювера
@@ -805,12 +807,12 @@ void start_main_menu (panel *panel)
   if (top_panel.archive_depth > 0 || bottom_panel.archive_depth > 0) gtk_widget_set_sensitive(moving, FALSE); // В архиве не поддерживается
   g_signal_connect (G_OBJECT (moving), "clicked", G_CALLBACK (move_dir_or_file), NULL);
   
-  delete = gtk_button_new_with_label (DELETE);
-  gtk_button_set_alignment (GTK_BUTTON(delete), 0.0, 0.0);
-  gtk_button_set_relief (GTK_BUTTON(delete), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), delete, FALSE, FALSE, 0);
-  if (top_panel.archive_depth > 0 || bottom_panel.archive_depth > 0) gtk_widget_set_sensitive(delete, FALSE); // В архиве не поддерживается
-  g_signal_connect (G_OBJECT (delete), "clicked", G_CALLBACK (delete_dir_or_file), NULL);
+  del = gtk_button_new_with_label (DELETE);
+  gtk_button_set_alignment (GTK_BUTTON(del), 0.0, 0.0);
+  gtk_button_set_relief (GTK_BUTTON(del), GTK_RELIEF_NONE);
+  gtk_box_pack_start (GTK_BOX (menu_vbox), del, FALSE, FALSE, 0);
+  if (top_panel.archive_depth > 0 || bottom_panel.archive_depth > 0) gtk_widget_set_sensitive(del, FALSE); // В архиве не поддерживается
+  g_signal_connect (G_OBJECT (del), "clicked", G_CALLBACK (delete_dir_or_file), NULL);
   
   options = gtk_button_new_with_label (OPTIONS);
   gtk_button_set_alignment (GTK_BUTTON(options), 0.0, 0.0);

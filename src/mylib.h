@@ -22,7 +22,7 @@
 #define MAXFILES 4096 // Максимальное количество файлов в каталоге
 
 extern int files_num;
-void xsystem(char *command);
+void xsystem(const char *command);
 char *get_natural_size(long size);
 void kill_panel (void); // Убиваем panel
 void start_panel (void); // Запускаем panel
@@ -37,9 +37,10 @@ void *xrealloc(void *ptr, size_t size);
 void *xmalloc(size_t size);
 void xfree(void *ptr);
 char *xgetcwd (char *cwd);
-char *xconcat(const char *path,char *filename);
-char *xconcat_path_file(const char *path,char *filename);
+char *xconcat(const char *path,const char *filename);
+char *xconcat_path_file(const char *path,const char *filename);
 int  xstrlen(const char* s);
 char *trim_line(char *input_line);
 char *itoa(int i);
 char *get_natural_time(int time); // Возвращает строку в формате HH:MM:ss
+void read_string(const char *name, char **destination);

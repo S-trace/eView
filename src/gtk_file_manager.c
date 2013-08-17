@@ -2,7 +2,9 @@
  * # * by Tito Ragusa <tito-wolit@tiscali.it>
  * #  Distributed under GPLv2 Terms*/
 
+#ifndef __cplusplus
 #define _GNU_SOURCE
+#endif
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
 #include <sys/types.h>
@@ -105,8 +107,9 @@ void list_fd(panel *panel) //добавление списка имен ката
   panel->dirs_num=0;
   if (panel->archive_depth > 0) // Поведение в архиве
   {
-    char  **namelist, *back="../", *text, *full_name;
-    add_data_to_list(panel->list, &back, 1, NO_AUTOSCROLL, "dir");
+    char const *back="../";
+    char  **namelist, *text, *full_name;
+    add_data_to_list(panel->list, back, 1, NO_AUTOSCROLL, "dir");
     panel->dirs_num++;
     namelist=archive_get_directories_list(panel, panel->archive_cwd);
     if ( namelist[0] != NULL)
@@ -123,7 +126,7 @@ void list_fd(panel *panel) //добавление списка имен ката
         printf("Adding %d archive file '%s'\n", i, text);
         fflush(stdout);
         #endif
-        add_data_to_list(panel->list, &full_name, 1, NO_AUTOSCROLL, "dir");
+        add_data_to_list(panel->list, full_name, 1, NO_AUTOSCROLL, "dir");
         xfree(&namelist[i]);
         i++;
       }
@@ -138,7 +141,7 @@ void list_fd(panel *panel) //добавление списка имен ката
       {
         if (!show_hidden_files && namelist[i][0] == '.') {continue;}
         text=basename(namelist[i]);
-        add_data_to_list(panel->list, &text, 1, NO_AUTOSCROLL, "file");
+        add_data_to_list(panel->list, text, 1, NO_AUTOSCROLL, "file");
         panel->files_num++;
         xfree (&namelist[i]);
         i++;
@@ -170,7 +173,7 @@ void list_fd(panel *panel) //добавление списка имен ката
           printf("Adding %d dir '%s'\n", i, text);
           fflush(stdout);
           #endif
-          add_data_to_list(panel->list, &text, 1, NO_AUTOSCROLL, "dir");
+          add_data_to_list(panel->list, text, 1, NO_AUTOSCROLL, "dir");
           xfree(&text);
         }
       }
@@ -189,7 +192,7 @@ void list_fd(panel *panel) //добавление списка имен ката
           printf("Adding %d file '%s', size %s\n", i, text, fsize);
           fflush(stdout);
           #endif
-          add_data_to_list(panel->list, &text, 1, NO_AUTOSCROLL, fsize);
+          add_data_to_list(panel->list, text, 1, NO_AUTOSCROLL, fsize);
         }
         xfree(&namelist[i]);
       }
@@ -227,7 +230,7 @@ char *iter_from_filename (char *fname, panel *panel) //возвращает ит
     printf("Iter stamp is 0, something bad happened!\n");
     #endif
   }
-  return "0";
+  return strdup("0");
 }
 
 void update(panel *panel) //обновление списка
@@ -262,11 +265,12 @@ void update(panel *panel) //обновление списка
   set_led_state (LED_state[LED_OFF]); // Индикация активности
 }
 
-void move_selection(char *move_to, panel *panel) // сдвигает курсор на заданную строку в символьном виде
+void move_selection(const char *move_to, panel *panel) // сдвигает курсор на заданную строку в символьном виде
 {
+  GtkTreePath *path;
   wait_for_draw();
   if (move_to[0] == '\0') move_to="0";
-  GtkTreePath *path = gtk_tree_path_new_from_string (move_to);
+  path = gtk_tree_path_new_from_string (move_to);
   gtk_tree_view_scroll_to_cell (panel->list, path, NULL, TRUE, 0.5, 0.5);
   gtk_tree_view_set_cursor (panel->list, path, NULL, FALSE);
   wait_for_draw();
@@ -301,10 +305,10 @@ void menu_destroy (GtkWidget *dialog)
 
 void after_delete_update (panel *panel)
 {
+  char *str_iter=get_current_iter(active_panel);
   #ifdef debug_printf
   printf ("after_delete_update\n");
   #endif
-  char *str_iter=get_current_iter(active_panel);
   update(panel);
   move_selection (str_iter, panel);
   e_ink_refresh_local();
@@ -314,9 +318,9 @@ void delete_dir_or_file (void)
 {
   if (confirm_request(DELETE_CONFIRM, GTK_STOCK_DELETE, GTK_STOCK_CANCEL))
   {
+    char *src;
     if (!strncmp (active_panel->selected_name, "../", 3)) 
       return;
-    char *src;
     asprintf (&src, "rm -f -r -R \"%s\"", active_panel->selected_name);
     xsystem(src);
     xfree (&src);
@@ -335,8 +339,8 @@ void move_dir_or_file (void)
   if (!fm_toggle) return;
   if ((!move_toggle) || (move_toggle && confirm_request(MOVE_CONFIRM, MOVE, GTK_STOCK_CANCEL)))
   {
-    if (!strcmp (active_panel->selected_name, "../")) return;
     char *src, *str_iter;
+    if (!strcmp (active_panel->selected_name, "../")) return;
     asprintf (&src, "mv -f \"%s\" \"%s\"", active_panel->selected_name, inactive_panel->path);
     xsystem(src);
     xfree (&src);
@@ -502,9 +506,9 @@ void start_sleep_timer(void)
 void sigsegv_handler(void) // Обработчик для вывода Backtrace сегфолта
 {
   #ifdef debug_printf
-  printf("got sigsegv_handler\n");
   void *backtrace_buffer[1024];
   int depth=backtrace(backtrace_buffer, 1023);
+  printf("got sigsegv_handler\n");
   printf("got backtrace of %d calls\n\nBacktrace:\n", depth);
   backtrace_symbols_fd(backtrace_buffer, depth, 2);
   #endif
@@ -513,6 +517,7 @@ void sigsegv_handler(void) // Обработчик для вывода Backtrace
 
 int main (int argc, char **argv)
 {
+  FILE *fp;
   signal(SIGSEGV, (__sighandler_t)sigsegv_handler);
   init();
   gtk_init (&argc, &argv);
@@ -541,7 +546,6 @@ int main (int argc, char **argv)
   #endif
   Message(EVIEW_IS_STARTING, PLEASE_WAIT);
   top_panel.path = cfg_file_path (); // Получаем месторасположения конфига (текущий каталог в момент запуска) - на книге это /home/root/
-  FILE *fp;
   
   if ((fp = fopen (top_panel.path, "rb"))==NULL) // Действия когда каталог не существует: 
   {

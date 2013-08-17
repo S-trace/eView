@@ -1,6 +1,8 @@
 /* Soul Trace, 2013, Distributed under GPLv2 Terms
  * save & load settings fuctions*/
+#ifndef __cplusplus
 #define _GNU_SOURCE
+#endif
 #include <stdlib.h> // atoi()
 #include <string.h>
 #include <stdio.h>
@@ -18,7 +20,7 @@ char *cfg_file_path (void)
   return cfg_directory;
 }
 
-int read_config_int(char *name) //Чтение числового параметра конфига
+int read_config_int(const char *name) //Чтение числового параметра конфига
 {
   int value;
   char *config_file_single = xconcat_path_file(cfg_directory, name), value_string[32]; // Имя файла с настройкой
@@ -60,10 +62,10 @@ void read_config_string(char *name, char **destination) //Чтение стро�
     if (fgets(temp, PATHSIZE, file_descriptor) == 0)
     {
       fclose(file_descriptor);
+      *destination='\0';
       #ifdef debug_printf
-      printf("reading %s from %s (%s)\n", name, config_file_single, "\0");
+      printf("reading %s from %s (%s)\n", name, config_file_single,*destination);
       #endif
-      *destination="\0";
       return;
     }
     *destination=strdup(temp);
@@ -75,7 +77,7 @@ void read_config_string(char *name, char **destination) //Чтение стро�
   }
 }
 
-void read_archive_stack(char *name, panel *panel) //Чтение стека архивов
+void read_archive_stack(const char *name, panel *panel) //Чтение стека архивов
 {
   char *config_file_single = xconcat_path_file(cfg_directory, name); // Имя файла с настройкой
   FILE *file_descriptor=fopen(config_file_single,"rt");
@@ -118,7 +120,7 @@ void read_archive_stack(char *name, panel *panel) //Чтение стека ар
   }
 }
 
-void write_config_int(char *name, int value) //Запись числового параметра конфига
+void write_config_int(const char *name, int value) //Запись числового параметра конфига
 {
   char *config_file_single = xconcat_path_file(cfg_directory, name), *value_string; // Имя файла с настройкой
   #ifdef debug_printf
@@ -140,7 +142,7 @@ void write_config_int(char *name, int value) //Запись числового �
   }
 }
 
-void write_config_string(char *name, char *value) //Запись строкового параметра конфига
+void write_config_string(const char *name, const char *value) //Запись строкового параметра конфига
 {
   char *config_file_single = xconcat_path_file(cfg_directory, name); // Имя файла с настройкой
   #ifdef debug_printf
@@ -161,7 +163,7 @@ void write_config_string(char *name, char *value) //Запись строков�
   }
 }
 
-void write_archive_stack(char *name, panel *panel) //Запись массива имён архивов из верхней панели
+void write_archive_stack(const char *name, panel *panel) //Запись массива имён архивов из верхней панели
 {
   char *config_file_single = xconcat_path_file(cfg_directory, name); // Имя файла с настройкой
   #ifdef debug_printf
@@ -190,7 +192,7 @@ void write_archive_stack(char *name, panel *panel) //Запись массива
   }
 }
 
-void create_cfg ()  //создание файлов настроек по умолчанию
+void create_cfg (void)  //создание файлов настроек по умолчанию
 {
   if ((mkdir (cfg_directory, S_IRWXU)) == -1)
   {
@@ -237,7 +239,7 @@ void create_cfg ()  //создание файлов настроек по умо
 
 void read_panel_configuration(panel *panel)
 {
-  char *name_prefix;
+  const char *name_prefix;
   if (panel == &top_panel)
     name_prefix = "top";
   else

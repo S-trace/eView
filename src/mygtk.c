@@ -2,7 +2,9 @@
  * # ******************************************************************  by Tito Ragusa <tito-wolit@tiscali.it>
  * #  Distributed under GPLv2 Terms
  * #  Gtk+2.x Utility routines: Base widgets*/
+#ifndef __cplusplus
 #define _GNU_SOURCE
+#endif
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 #include <string.h>
@@ -77,12 +79,12 @@ int check_key_press(int keyval, panel *panel) // Возвращает TRUE ес�
   return TRUE;
 }
 
-gint confirm_request(char *title, char *confirm_button, char *reject_button)
+gint confirm_request(const char *title, const char *confirm_button, const char *reject_button)
 {
   GtkWidget *dialog;
   int answer;
   dialog = gtk_dialog_new_with_buttons (title, NULL,
-                                        GTK_DIALOG_MODAL |GTK_DIALOG_DESTROY_WITH_PARENT, reject_button, GTK_RESPONSE_REJECT, confirm_button, GTK_RESPONSE_ACCEPT, NULL);
+                                        GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT, reject_button, GTK_RESPONSE_REJECT, confirm_button, GTK_RESPONSE_ACCEPT, NULL);
   gtk_dialog_set_default_response (GTK_DIALOG(dialog),GTK_RESPONSE_REJECT);
   g_signal_connect (G_OBJECT (dialog), "map-event", G_CALLBACK (e_ink_refresh_local), NULL);
   g_signal_connect (G_OBJECT (dialog), "key-release-event", G_CALLBACK (e_ink_refresh_default), NULL);
@@ -152,9 +154,9 @@ cat /home/root/Settings/boeye/boeyeserver.conf|grep ScreenSaver | cut -d = -f 2|
  * 
  */
 
-void Qt_error_message(char *message)
+void Qt_error_message(const char *message)
 {
-  char *name="/tmp/eView_error_message.txt";
+  const char *name="/tmp/eView_error_message.txt";
   #ifdef debug_printf
   printf("writing %s to %s\n", message, name);
   #endif
@@ -189,7 +191,7 @@ int MessageDie (GtkWidget *MessageWindow)
   return TRUE;
 }
 
-void Message (char *title, char *message) {
+void Message (const char *title, const char *message) {
   GtkWidget *label;
   //   interface_is_locked=TRUE; //Блокируем остальной интерфейс программы
   /* Создаём виджеты */
@@ -426,9 +428,9 @@ void actions(panel *panel) //выбор что делать по клику пе
   if (strcmp(panel->selected_size, "dir") == 0) // Если кликнули не каталог
   {
     if (panel == &top_panel) // Сбрасываем имя последнего просмотренного файла, чтобы при следующем запуске не было ошибки
-      write_config_string("top_panel.last_name", top_panel.last_name="");
+      write_config_string("top_panel.last_name", top_panel.last_name='\0');
     else
-      write_config_string("bottom_panel.last_name", bottom_panel.last_name="");
+      write_config_string("bottom_panel.last_name", bottom_panel.last_name='\0');
     
     if (strcmp(panel->selected_name, "../")== 0)  // Если кликнули '../'
     {
@@ -453,9 +455,9 @@ void actions(panel *panel) //выбор что делать по клику пе
     if (is_archive(panel->selected_name))
     {
       if (panel == &top_panel) // Сбрасываем имя последнего просмотренного файла, чтобы при следующем запуске не было ошибки
-        write_config_string("top_panel.last_name", top_panel.last_name="");
+        write_config_string("top_panel.last_name", top_panel.last_name='\0');
       else
-        write_config_string("bottom_panel.last_name", bottom_panel.last_name="");
+        write_config_string("bottom_panel.last_name", bottom_panel.last_name='\0');
       if (panel->archive_depth == 0)
       {
         enable_refresh=FALSE;
@@ -465,7 +467,7 @@ void actions(panel *panel) //выбор что делать по клику пе
       }
       else
       {
-        enter_subarchive(xconcat(panel->archive_cwd, panel->selected_name));
+        enter_subarchive(xconcat(panel->archive_cwd, panel->selected_name), panel);
         e_ink_refresh_local();
       }
     }
@@ -640,7 +642,7 @@ GtkWidget *window_create(int x, int y, int border, const char *title, int modal)
 }
 
 /**** Create a Multi column scrolled filename list ************************/
-void add_data_to_list(GtkTreeView *tree, char *data_string[], int n_columns, int autoscroll, char *fs)
+void add_data_to_list(GtkTreeView *tree, const char *data_string, int n_columns, int autoscroll, const char *fs)
 {
   GtkTreeIter iter;
   GtkListStore *store;
@@ -652,12 +654,12 @@ void add_data_to_list(GtkTreeView *tree, char *data_string[], int n_columns, int
   store = (GtkListStore *)gtk_tree_view_get_model(tree);
   gtk_list_store_append(GTK_LIST_STORE(store), &iter);
   for (i = 0; i < n_columns; i++) {
-    if (!*data_string) {
-      *data_string = "";
+    if (!data_string) {
+      data_string = "";
       g_print("					mygtk\n");
     }
-    if (g_utf8_validate(*data_string, -1, NULL) != TRUE) {
-      if ((data = g_locale_to_utf8(*data_string, -1, NULL, NULL, NULL))) {
+    if (g_utf8_validate(data_string, -1, NULL) != TRUE) {
+      if ((data = g_locale_to_utf8(data_string, -1, NULL, NULL, NULL))) {
         gtk_list_store_set(GTK_LIST_STORE(store), &iter, i, data, -1);
         xfree(&data);
       }
@@ -714,7 +716,7 @@ GtkTreeView *string_list_create_on_table(int num,
   GType *types;
   va_list titles;
   int i;
-  char *tmp, *label;
+  const char *tmp, *label;
   double align;
   
   /* This is the scrolled window to put the cList widget inside */

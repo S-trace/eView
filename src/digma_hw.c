@@ -4,7 +4,9 @@
  * Ditributed under GPLv2 Terms
  * http://hatred.homelinux.net/~hatred/digma
  */
-
+#ifndef __cplusplus
+#define _GNU_SOURCE
+#endif
 #include <gtk/gtk.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -20,7 +22,7 @@
 #include "mylib.h"
 
 int hardware_has_backlight=FALSE, hardware_has_LED=FALSE, hardware_has_APM=FALSE, hardware_has_sysfs_sleep=FALSE;
-char *LED_path=NULL, *backlight_path=NULL, *sysfs_sleep_path=NULL;
+const char *LED_path=NULL, *backlight_path=NULL, *sysfs_sleep_path=NULL;
 int LED_state[LED_STATES]; // Массив содержащий значения которые надо писать в sysfs чтобы управлять LED
 int previous_backlight_level; // Уровень подсветки перед запуском eView
 int suspended=FALSE; // Текущее состояние книги
@@ -85,7 +87,7 @@ void epaperUpdatePart(void)
     epaperUpdate(EPAPER_UPDATE_PART, 1); // Выполняется за 0,847s
 }
 
-int check_for_file (char *fpath)  // Проверка наличия файла в файловой системе
+int check_for_file (const char *fpath)  // Проверка наличия файла в файловой системе
 {
   if (access(fpath, F_OK))  // F_OK просто проверяет существование файла
     return FALSE;
@@ -93,7 +95,7 @@ int check_for_file (char *fpath)  // Проверка наличия файла 
     return TRUE;
 }
 
-int read_int_from_file(char *name) //Чтение числа из файла name
+int read_int_from_file(const char *name) //Чтение числа из файла name
 {
   FILE *file_descriptor=fopen(name,"rt");
   if (!file_descriptor)
@@ -236,7 +238,7 @@ void detect_hardware(void) // Обнаружение оборудования и
   #endif
 }
 
-void write_int_to_file(char *file, int value)
+void write_int_to_file(const char *file, int value)
 {
   #ifdef debug_printf
   printf("writing %d to %s\n", value, file);
@@ -256,7 +258,7 @@ void write_int_to_file(char *file, int value)
   }
 }
 
-void write_string_to_file(char *file, char *value)
+void write_string_to_file(const char *file, const char *value)
 {
   #ifdef debug_printf
   printf("writing %s to %s\n", value, file);

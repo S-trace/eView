@@ -19,7 +19,7 @@ extern int in_picture_viewer;
 gint which_key_press (GtkWidget *, GdkEventKey *, panel *panel);
 void image_resize (int mode_rotate, int mode_crop, int keep_aspect, image *target);
 void image_zoom_rotate (image *target);
-void image_rotate (int angle, image *target);
+void image_rotate (image *target);
 void reset_image(image *target);
 void die_viewer_window (void);
 gboolean show_image(image *image, panel *panel, int enable_actions); // Показываем картинку

@@ -85,7 +85,7 @@ enum {
 	| PSSCAN_COMM | PSSCAN_STATE
 	| PSSCAN_RSS | PSSCAN_STIME | PSSCAN_UTIME,
 	PSSCAN_DEF      = PSSCAN_PID | PSSCAN_UIDGID | PSSCAN_RSS
-	| PSSCAN_STATE | PSSCAN_COMM | PSSCAN_CMD,
+	| PSSCAN_STATE | PSSCAN_COMM | PSSCAN_CMD
 };
 
 enum {	/* DO NOT CHANGE THESE VALUES!  cp.c depends on them. */
@@ -95,7 +95,7 @@ FILEUTILS_RECUR = 4,
 FILEUTILS_FORCE = 8,
 FILEUTILS_INTERACTIVE = 0x10,
 FILEUTILS_MAKE_HARDLINK = 0x20,
-FILEUTILS_MAKE_SOFTLINK = 0x40,
+FILEUTILS_MAKE_SOFTLINK = 0x40
 };
 
 enum {
@@ -120,7 +120,6 @@ enum {
 #define debug(x)							x
 #else
 #define bb_perror_msg
-#define bb_perror_msg_and_die(...)
 #define bb_error_msg
 #define bb_error_msg_and_die				exit(1)
 #define debug(x)
@@ -185,7 +184,6 @@ int cp_mv_stat(const char *fn, struct stat *fn_stat);
 char *bb_get_last_path_component(char *path);
 int move_rename(const char *source, const char *dest , int flags);
 int copy_file(const  char *source,const  char *dest, int flags);
-const char *make_human_readable_str(unsigned long long size,unsigned long block_size, unsigned long display_unit);
 const char *bb_mode_string(int mode);
 off_t bb_copyfd_size(int fd1, int fd2, off_t size);
 off_t bb_copyfd_eof(int fd1, int fd2);
@@ -201,7 +199,7 @@ char *bb_getgrgid(char *group, long gid, int bufsize);
 char *bb_getpwuid(char *name, long uid, int bufsize);
 
 void update (panel *panel);//обновление списка
-void move_selection(char *move_to, panel *panel); //сдвиг выделения
+void move_selection(const char *move_to, panel *panel); //сдвиг выделения
 char *iter_from_filename (char *fname, panel *panel); //возвращает итератор файла из списка
 extern int width_display, height_display;
 extern char *top_cwd;

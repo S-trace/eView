@@ -193,7 +193,7 @@ GtkWidget *separator_create_on_table(int direction, GtkWidget *table,
 GtkWidget *string_list_create(int num, int show_hide, int editable,...);
 GtkTreeView *string_list_create_on_table(int num, GtkWidget *table, int start_col, int end_col,
                                        int start_row, int end_row ,int show_hide, int editable, ...);
-void add_data_to_list(GtkTreeView *tree, char *data_string[], int n_columns, int autoscroll, char *fs);
+void add_data_to_list(GtkTreeView *tree, const char *data_string, int n_columns, int autoscroll, const char *fs);
 
 /************** Create a Permissions window **********************************/
 typedef	struct	Perm_data			Perm_data;
@@ -244,17 +244,16 @@ gboolean e_ink_refresh_full(void);
 gboolean e_ink_refresh_default(void);
 #define COLUMN_W (width_display * 83 / 100) // Первая колонка в файлменеджере (для имён). 80 - ширина в процентах
 #define COLUMN_W2 (width_display * 17 / 100)// Вторая колонка в файлменеджере (для размеров). 20 - ширина в процентах
-void Message(char *title, char *message);
+void Message(const char *title,const char *message);
 extern GtkWidget *MessageWindow;
 extern int enable_refresh;//Принудительно запретить обновлять экран в особых случаях
 // extern char focus_in_processed; // Количество обработанных событий получения фокуса
 // gint focus_in_callback (void); // реакция на получение фокуса
 // gint focus_out_callback (void); // реакция на потерю фокуса
 void wait_for_draw (void); 
-void read_string(char *name, char **destination);
-gint confirm_request(char *title, char *confirm_button, char *reject_button);
+gint confirm_request(const char *title, const char *confirm_button, const char *reject_button);
 void create_panel (panel *panel);
 char *get_current_iter (panel *panel); //возвращает итератор текущего файла из списка
-void Qt_error_message(char *message); // Функция открывает на прошивках Qt сообщение об ошибке в стандартной читалке
+void Qt_error_message(const char *message); // Функция открывает на прошивках Qt сообщение об ошибке в стандартной читалке
 void enter_suspend(panel *panel); // Показывает скринсейвер и усыпляет железо
 int check_key_press(int keyval, panel *panel); // Проработка нажатия кнопки питания при сне

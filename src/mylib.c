@@ -3,7 +3,9 @@
  * # Distributed under GPLv2 Terms
  * # Various utility routines put together by Tito <tito-wolit@tiscali.it> .
  * # Copyright (C) 2002-2006 by Tito Ragusa <tito-wolit@tiscali.it> */
-#define _GNU_SOURCE //asprintf()
+#ifndef __cplusplus
+#define _GNU_SOURCE
+#endif
 #include <gtk/gtk.h>
 #include <fcntl.h>
 #include <ctype.h>
@@ -23,7 +25,7 @@
 const char msg_memory_exhausted[] = "memory exhausted";
 char next_directory[PATHSIZE+1];  // Директория, в которую переходим при окончании которого
 
-void read_string(char *name, char **destination) //Чтение строкового параметра из файла name в переменную destination
+void read_string(const char *name, char **destination) //Чтение строкового параметра из файла name в переменную destination
 {
   char temp[256];
   FILE *file_descriptor=fopen(name,"rt");
@@ -119,7 +121,7 @@ char *get_natural_time(int time) // Возвращает строку в фор�
   return(value);
 }
 
-void xsystem(char *command) // Вывод на экран и запуск команды
+void xsystem(const char *command) // Вывод на экран и запуск команды
 {
   #ifdef debug_printf
   printf("Executing '%s'\n", command);
@@ -593,7 +595,7 @@ void xfree(void *ptr)
   *pp = NULL;
 }
 
-char * xgetcwd (char *cwd)
+char *xgetcwd (char *cwd)
 {
   char *ret;
   unsigned path_max;
@@ -601,11 +603,11 @@ char * xgetcwd (char *cwd)
   path_max = (unsigned) PATH_MAX;
   path_max += 2;                /* The getcwd docs say to do this. */
   
-  if (cwd == 0) cwd = xmalloc (path_max);
+  if (cwd == 0) cwd = (char*)xmalloc (path_max);
   
   while ((ret = getcwd (cwd, path_max)) == NULL && errno == ERANGE) {
     path_max += 32;
-    cwd = xrealloc (cwd, path_max);
+    cwd = (char*)xrealloc (cwd, path_max);
   }
   #ifdef debug_printf
   printf("GET_CWD=%s\n", cwd);
@@ -614,7 +616,7 @@ char * xgetcwd (char *cwd)
   return cwd;
 }
 
-char *xconcat(const char *path, char *filename)// просто слияние
+char *xconcat(const char *path,const char *filename)// просто слияние
 {
   char *buffer;  
   if (!path) path = "";
@@ -623,8 +625,7 @@ char *xconcat(const char *path, char *filename)// просто слияние
   return buffer;
 }
 
-
-char *xconcat_path_file(const char *path,char *filename)
+char *xconcat_path_file(const char *path,const char *filename)
 {
   /*
    *      Concatenate path and file name to new allocated buffer,
