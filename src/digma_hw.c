@@ -298,7 +298,10 @@ void suspend_hardware(void)
   int count=0;
   do
   {
-    set_led_state(LED_ON);
+    #ifdef debug_printf
+    if (LED_notify)
+      set_led_state(LED_ON);
+    #endif
     time_t startTime = time(NULL);
     if (hardware_has_APM)
     {
@@ -335,12 +338,14 @@ void suspend_hardware(void)
     {
       #ifdef debug_printf
       printf("successed after %d attempts (sleeped %4.0f seconds)\n", count, duration);
-      set_led_state(LED_OFF);
+      if (LED_notify)
+        set_led_state(LED_OFF);
       #endif
       break;
     }
     #ifdef debug_printf
-    set_led_state(LED_OFF);
+    if (LED_notify)
+      set_led_state(LED_ON);
     #endif
     if (count++>128)
     {

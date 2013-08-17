@@ -426,7 +426,9 @@ void init (void)
     asprintf(&message, GTK_PARTS_IS_OUTDATED, string, NEEDED_GTK_PARTS_VERSION);
     Qt_error_message(message);
   }
+  #ifdef debug_printf
   set_led_state (LED_state[LED_ON]);
+  #endif
   if (XOpenDisplay(NULL))
   {
     #ifdef debug_printf
@@ -449,7 +451,6 @@ void init (void)
     }
     else
       xsystem("killall -STOP boeyeserver"); // Боремся со злостным усыплятором
-//     usleep(3000000);
     if (! XOpenDisplay(NULL))
     {
       #ifdef debug_printf
@@ -515,8 +516,9 @@ int main (int argc, char **argv)
   signal(SIGSEGV, (__sighandler_t)sigsegv_handler);
   init();
   gtk_init (&argc, &argv);
-  
+  #ifdef debug_printf
   set_led_state (LED_state[LED_BLINK_SLOW]);
+  #endif
   #ifdef __amd64
   width_display = 570 ;
   height_display = 762 ; // Для отладки на ПК
@@ -629,7 +631,8 @@ int main (int argc, char **argv)
   //   g_signal_connect (G_OBJECT (window), "show", G_CALLBACK (e_ink_refresh_full), NULL);
   //   g_signal_connect_after (current_panel->list, "move_cursor", G_CALLBACK (e_ink_refresh_default), NULL ); // Обновление экрана при сдвиге выделения
   interface_is_locked=FALSE; // Снимаем блокировку интерфейса
-  set_led_state (LED_state[LED_OFF]);
+  if (LED_notify)
+    set_led_state (LED_state[LED_OFF]);
   start_sleep_timer();
   gtk_main ();
   return 0;
