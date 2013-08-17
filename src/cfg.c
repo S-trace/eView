@@ -1,8 +1,5 @@
 /* Soul Trace, 2013, Distributed under GPLv2 Terms
  * save & load settings fuctions*/
-#ifndef __cplusplus
-#define _GNU_SOURCE
-#endif
 #include <stdlib.h> /* atoi() */
 #include <string.h>
 #include <stdio.h>

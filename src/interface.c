@@ -1,9 +1,6 @@
 /* Soul Trace, 2013, Distributed under GPLv2 Terms */
 // Главное меню, меню опций ФМ и картинки и их callback'и
 
-#ifndef __cplusplus
-#define _GNU_SOURCE
-#endif
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 #include <string.h>

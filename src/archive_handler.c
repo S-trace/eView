@@ -1,7 +1,4 @@
 /* Soul Trace, 2013, Distributed under GPLv2 Terms */
-#ifndef __cplusplus
-#define _GNU_SOURCE
-#endif
 #include <gtk/gtk.h>
 #include <string.h>
 #include <stdlib.h>

@@ -4,9 +4,6 @@
  * Ditributed under GPLv2 Terms
  * http://hatred.homelinux.net/~hatred/digma
  */
-#ifndef __cplusplus
-#define _GNU_SOURCE
-#endif
 #include <gtk/gtk.h>
 #include <sys/types.h>
 #include <sys/stat.h>

@@ -2,9 +2,6 @@
  * # * by Tito Ragusa <tito-wolit@tiscali.it>
  * #  Distributed under GPLv2 Terms*/
 
-#ifndef __cplusplus
-#define _GNU_SOURCE
-#endif
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
 #include <sys/types.h>

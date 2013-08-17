@@ -2,9 +2,6 @@
  * # ******************************************************************  by Tito Ragusa <tito-wolit@tiscali.it>
  * #  Distributed under GPLv2 Terms
  * #  Gtk+2.x Utility routines: Base widgets*/
-#ifndef __cplusplus
-#define _GNU_SOURCE
-#endif
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 #include <string.h>

@@ -3,9 +3,6 @@
  * # Distributed under GPLv2 Terms
  * # Various utility routines put together by Tito <tito-wolit@tiscali.it> .
  * # Copyright (C) 2002-2006 by Tito Ragusa <tito-wolit@tiscali.it> */
-#ifndef __cplusplus
-#define _GNU_SOURCE
-#endif
 #include <gtk/gtk.h>
 #include <fcntl.h>
 #include <ctype.h>
