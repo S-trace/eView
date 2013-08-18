@@ -21,16 +21,16 @@ typedef struct {
 extern image current, preloaded, screensaver;
 extern int in_picture_viewer;
 
-gint which_key_press (GtkWidget *, GdkEventKey *, panel *panel);
+gint which_key_press (GtkWidget *, GdkEventKey *, struct_panel *panel);
 void image_resize (int mode_rotate, int mode_crop, int keep_aspect, image *target);
 void image_zoom_rotate (image *target);
 void image_rotate (image *target);
 void reset_image(image *target);
 void die_viewer_window (void);
-gboolean show_image(image *image, panel *panel, int enable_actions); /* Показываем картинку */
+gboolean show_image(image *image, struct_panel *panel, int enable_actions); /* Показываем картинку */
 /************** Create a Image Viewer Window  *************************/
-void ViewImageWindow(char *filename, panel *panel, int enable_actions);
-gboolean load_image(char *filename, panel *panel, int enable_actions, image *target);
-gboolean show_image(image *image, panel *panel, int enable_actions);
+void ViewImageWindow(char *filename, struct_panel *panel, int enable_actions);
+gboolean load_image(char *filename, struct_panel *panel, int enable_actions, image *target);
+gboolean show_image(image *image, struct_panel *panel, int enable_actions);
 extern GtkWidget *ImageWindow;
 #endif

@@ -63,7 +63,6 @@ void power_information(void)
     {
       read_string(AC_CURRENT,  &ac_current); // Ток AC
       read_string(AC_VOLTAGE,  &ac_voltage); // Вольтаж AC
-      char *time_to_full=get_natural_time(atoi(battery_time_to_full));
       asprintf(&label_text, POWER_SOURCE_IS_AC, battery_capacity, battery_chip_temp, battery_chip_volt, battery_current, power_supplier, battery_status, battery_temp, battery_voltage, time_to_full, ac_current, ac_voltage);
       xfree(&ac_current); 
       xfree(&ac_voltage);
@@ -237,7 +236,7 @@ gint keys_rotation_picture_menu (__attribute__((unused))GtkWidget *window, GdkEv
   }
 }
 
-void picture_menu_destroy (panel *panel, GtkWidget *dialog) // Уничтожаем меню настроек отображения
+void picture_menu_destroy (struct_panel *panel, GtkWidget *dialog) // Уничтожаем меню настроек отображения
 {
   enable_refresh=FALSE;
   gtk_widget_destroy(dialog);
@@ -254,7 +253,7 @@ void picture_menu_destroy (panel *panel, GtkWidget *dialog) // Уничтожа�
   //   g_signal_handlers_unblock_by_func( win, focus_out_callback, NULL );
 }
 
-gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, panel *panel) //задействует кнопки
+gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel) //задействует кнопки
 {
   if (check_key_press(event->keyval, panel)) return TRUE;
   switch (event->keyval){
@@ -278,7 +277,7 @@ gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, panel *panel) 
   }
 }
 
-void start_picture_menu (panel *panel, GtkWidget *win) // Создаём меню настроек картинки
+void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём меню настроек картинки
 {
   need_refresh=FALSE;
   
@@ -589,7 +588,7 @@ gint keys_updown_sleep_timeout (__attribute__((unused))GtkWidget *window, GdkEve
   }
 }
 
-gint keys_in_options (GtkWidget *dialog, GdkEventKey *event, panel *panel) //задействует кнопки
+gint keys_in_options (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel) //задействует кнопки
 {
   if (check_key_press(event->keyval, panel)) return TRUE;
   switch (event->keyval){
@@ -747,7 +746,7 @@ gint keys_rotation_menu (__attribute__((unused))GtkWidget *window, GdkEventKey *
   }
 }
 
-gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, panel *panel) //задействует кнопку М в меню
+gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel) //задействует кнопку М в меню
 {
   if (check_key_press(event->keyval, panel)) return TRUE;
   switch (event->keyval){
@@ -772,7 +771,7 @@ gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, panel *panel) //�
   }
 }
 
-void start_main_menu (panel *panel)
+void start_main_menu (struct_panel *panel)
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons (MAIN_MENU,
                                                    GTK_WINDOW(main_window),

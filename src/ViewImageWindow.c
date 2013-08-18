@@ -115,7 +115,7 @@ void reset_image(image *target)
   pixbuf_unref(target->pixbuf);
 }
 
-gboolean load_image(char *filename, panel *panel, int enable_actions, image *target) /* Загружаем и готовим к показу картинку */
+gboolean load_image(char *filename, struct_panel *panel, int enable_actions, image *target) /* Загружаем и готовим к показу картинку */
 {
   if (filename==NULL || filename[0]=='\0') return FALSE; /*Если функция вызвана с пустым именем для загрузки*/
     if ((strcmp(target->name,filename) == 0) && (check_image_settings(target) == TRUE)) /*Если уже загружено нужное изображение с нужными настройками*/
@@ -203,29 +203,29 @@ gboolean load_image(char *filename, panel *panel, int enable_actions, image *tar
   return TRUE;
 }
 
-gboolean show_image(image *image, panel *panel, int enable_actions) /* Показываем картинку */
+gboolean show_image(image *target, struct_panel *panel, int enable_actions) /* Показываем картинку */
 {
   #ifdef debug_printf
-  printf("Going to show '%s' (enable_actions=%d)\n", image->name, enable_actions);
+  printf("Going to show '%s' (enable_actions=%d)\n", target->name, enable_actions);
   #endif
-  gtk_image_set_from_pixbuf (GTK_IMAGE(gimage), image->pixbuf);
-  printf("showed '%s' (enable_actions=%d)\n", image->name, enable_actions);
+  gtk_image_set_from_pixbuf (GTK_IMAGE(gimage), target->pixbuf);
+  printf("showed '%s' (enable_actions=%d)\n", target->name, enable_actions);
   if (enable_actions)
   {
     write_config_int("viewed_pages", ++viewed_pages); /* Сохраняем на диск счётчик страниц */
-    panel->last_name=strdup(image->name);
+    panel->last_name=strdup(target->name);
     if (panel == &top_panel)
       write_config_string("top_panel.last_name", panel->last_name);
     else
       write_config_string("bottom_panel.last_name", panel->last_name);
     move_selection(iter_from_filename (basename(panel->last_name), panel), panel);
   }
-  gtk_window_set_title(GTK_WINDOW(ImageWindow), image->name);
+  gtk_window_set_title(GTK_WINDOW(ImageWindow), target->name);
   wait_for_draw(); /* Ожидаем отрисовки всего */
   return TRUE;
 }
 
-gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *event, panel *panel) /*реакция на кнопки */
+gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *event, struct_panel *panel) /*реакция на кнопки */
 {
   if (check_key_press(event->keyval, panel)) return TRUE;
   char *new_file; /*имя следующего файла с картинкой */
@@ -563,7 +563,7 @@ void image_resize (int mode_rotate, int mode_crop, int keep_aspect, image *targe
   return;
 }
 
-void ViewImageWindow(char *file, panel *panel, int enable_actions) /*создание изображения через GdkPixbuf */
+void ViewImageWindow(char *file, struct_panel *panel, int enable_actions) /*создание изображения через GdkPixbuf */
 {
   /* Убираем хэндлер с обработки фокуса фэйлменеджером */
   /*   g_signal_handlers_disconnect_by_func( window, focus_in_callback, NULL ); */

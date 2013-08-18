@@ -173,7 +173,7 @@ GtkWidget *default_button_box_create_on_table(	int orientation, GtkWidget *table
 GtkWidget *new_table_create(int cols, int rows, int border, int homogeneus);
 GtkWidget *table_create(int cols, int rows, GtkWidget* window , int border, int homogeneus);
 void start_menu (void);
-void start_pmenu (panel *panel, GtkWidget *win);
+void start_pmenu (struct_panel *panel, GtkWidget *win);
 /* GtkWidget *table_create_on_table(int cols , int rows,  GtkWidget* table, int border, int homogeneus, int start_col, int end_col, int start_row, int end_row); */
 /********************* Standard table widget ********************************/
 
@@ -253,8 +253,8 @@ extern int enable_refresh;/*Принудительно запретить обн
 /* gint focus_out_callback (void); // реакция на потерю фокуса */
 void wait_for_draw (void); 
 gint confirm_request(const char *title, const char *confirm_button, const char *reject_button);
-void create_panel (panel *panel);
-char *get_current_iter (panel *panel); /*возвращает итератор текущего файла из списка */
+void create_panel (struct_panel *panel);
+char *get_current_iter (struct_panel *panel); /*возвращает итератор текущего файла из списка */
 void Qt_error_message(const char *message); /* Функция открывает на прошивках Qt сообщение об ошибке в стандартной читалке */
-void enter_suspend(panel *panel); /* Показывает скринсейвер и усыпляет железо */
-int check_key_press(guint keyval, panel *panel); /* Проработка нажатия кнопки питания при сне */
+void enter_suspend(struct_panel *panel); /* Показывает скринсейвер и усыпляет железо */
+int check_key_press(guint keyval, struct_panel *panel); /* Проработка нажатия кнопки питания при сне */

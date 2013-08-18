@@ -3,11 +3,11 @@ void write_config_int(const char *name, int value);
 void write_config_string(const char *name, const char *value);
 void create_cfg (void);
 void read_configuration (void);
-void write_archive_stack(const char *name, panel *panel);
+void write_archive_stack(const char *name, struct_panel *panel);
 
 char *cfg_file_path(void);
 void reset_config(void);
-extern char *filename, *archive_name, *archive_cwd;
+extern char *archive_name, *archive_cwd;
 extern char archive_stack[16][PATHSIZE+1];/*Стек имён архивов */
 extern int crop;   /* автообрезка бордюра вокруг картинки */
 extern int rotate; /* удвоение размера с поворотом */

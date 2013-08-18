@@ -37,7 +37,7 @@
 #include "interface.h"
 
 int interface_is_locked=TRUE; /* Сразу блокируем интерфейс программы, чтобы при запуске она не падала если зажата клавиша */
-panel top_panel, bottom_panel, *active_panel, *inactive_panel;
+struct_panel top_panel, bottom_panel, *active_panel, *inactive_panel;
 GtkWidget *main_window, *panels_vbox; /* Окно файлменеджера */
 static int table_visible; /*видима нижняя панель или нет */
 int width_display, height_display;
@@ -99,7 +99,7 @@ void wait_state(GtkWidget *window) /* Возврат после смотрелк
   /*   printf ("FMAN CONNECTED!\n"); */
 }
 
-void list_fd(panel *panel) /*добавление списка имен каталогов, файлов и их размеров в панель panel */
+void list_fd(struct_panel *panel) /*добавление списка имен каталогов, файлов и их размеров в панель struct_panel */
 {
   int i = 0;
   panel->files_num = 0;
@@ -186,7 +186,7 @@ void list_fd(panel *panel) /*добавление списка имен ката
         if (!S_ISDIR(stat_p.st_mode)) 
         { 
           /*Убрать скрытные файлы */
-          char *fsize;
+          char *fsize, *text;
           if (!show_hidden_files && namelist[i]->d_name[0] == '.') {continue;}
           text = namelist[i]->d_name;
           panel->files_num++;
@@ -204,7 +204,7 @@ void list_fd(panel *panel) /*добавление списка имен ката
   }
 }
 
-char *iter_from_filename (char *fname, panel *panel) /*возвращает итератор (номер) файла с именем fname из списка в панели panel */
+char *iter_from_filename (char *fname, struct_panel *panel) /*возвращает итератор (номер) файла с именем fname из списка в панели struct_panel */
 {
   GtkTreeIter iter;
   GtkTreeModel *model;
@@ -236,7 +236,7 @@ char *iter_from_filename (char *fname, panel *panel) /*возвращает ит
   return strdup("0");
 }
 
-void update(panel *panel) /*обновление списка */
+void update(struct_panel *panel) /*обновление списка */
 {
   GtkTreeIter iter;
   GtkTreeModel *model;
@@ -268,7 +268,7 @@ void update(panel *panel) /*обновление списка */
   set_led_state (LED_state[LED_OFF]); /* Индикация активности */
 }
 
-void move_selection(const char *move_to, panel *panel) /* сдвигает курсор на заданную строку в символьном виде */
+void move_selection(const char *move_to, struct_panel *panel) /* сдвигает курсор на заданную строку в символьном виде */
 {
   GtkTreePath *path;
   wait_for_draw();
@@ -306,7 +306,7 @@ void menu_destroy (GtkWidget *dialog)
   /*   g_signal_handlers_unblock_by_func( window, focus_out_callback, NULL ); */
 }
 
-void after_delete_update (panel *panel)
+void after_delete_update (struct_panel *panel)
 {
   char *str_iter=get_current_iter(active_panel);
   #ifdef debug_printf
@@ -373,7 +373,7 @@ void copy_dir_or_file (void)
   }
 }
 
-void panel_selector (panel *focus_to) /* Принимает указатель на panel - &top_panel, &bottom_panel или inactive_panel */
+void panel_selector (struct_panel *focus_to) /* Принимает указатель на panel - &top_panel, &bottom_panel или inactive_struct_panel */
 {
   if (GTK_IS_WIDGET(GTK_WIDGET(focus_to->list))) /* Если таблица на которую мы собираемся переключиться существует */
     gtk_widget_grab_focus (GTK_WIDGET(focus_to->list)); /* То фокуссируемся на ней */

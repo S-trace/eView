@@ -27,14 +27,14 @@ void set_system_sleep_timeout(const char *timeout);
 void get_system_sleep_timeout(void);
 void xsystem(const char *command);
 char *get_natural_size(long size);
-void kill_panel (void); /* Убиваем panel */
-void start_panel (void); /* Запускаем panel */
+void kill_panel (void); /* Убиваем struct_panel */
+void start_panel (void); /* Запускаем struct_panel */
 int is_picture(char *name);
 int is_archive(char *name);
 int is_text(char *name);
-char *prev_image (char *now_name, int allow_actions, panel *panel);
-char *next_image (char *now_name, int allow_actions, panel *panel);
-void file_string_array (char *fname[], panel *panel);
+char *prev_image (char *now_name, int allow_actions, struct_panel *panel);
+char *next_image (char *now_name, int allow_actions, struct_panel *panel);
+void file_string_array (char *fname[], struct_panel *panel);
 void err_msg_and_die(const char *fmt, ...)__attribute__ ((format (printf, 1, 2))) __attribute__(( __noreturn__ ));
 void *xrealloc(void *ptr, size_t size);
 void *xmalloc(size_t size);

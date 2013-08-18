@@ -119,10 +119,10 @@ int get_archive_list(const char *archive, const char *list_file) /* Создан
   }
 }    
 
-char **archive_get_files_list(panel *panel, const char *archive_cwd) /* Получение списка файлов в подкаталоге архива */
+char **archive_get_files_list(struct_panel *panel, const char *cwd) /* Получение списка файлов в подкаталоге архива */
 {
   char *bff = NULL,*command = NULL, **names, *escaped;
-  escaped=escape(archive_cwd);
+  escaped=escape(cwd);
   asprintf(&command, "grep '^%s[^/]\\+$' %s > /tmp/files.list", escaped, panel->archive_list);
   xsystem(command); /* Вызываем команду */
   xfree(&escaped);
@@ -142,7 +142,7 @@ char **archive_get_files_list(panel *panel, const char *archive_cwd) /* Полу
   return names;
 }
 
-char **archive_get_directories_list(panel *panel, const char *directory) /* Получение списка подкаталогов нижнего уровня в подкаталоге архива */
+char **archive_get_directories_list(struct_panel *panel, const char *directory) /* Получение списка подкаталогов нижнего уровня в подкаталоге архива */
 {
   char *bff = NULL,*command = NULL, **names, *escaped;
   escaped=escape(directory);
@@ -190,7 +190,7 @@ void archive_extract_file(const char *archive, const char *file, const char *to)
   xfree(&name);
 }
 
-void enter_archive(const char *name, panel *panel, int update_config)
+void enter_archive(const char *name, struct_panel *panel, int update_config)
 {
   char *saved_work_dir=xgetcwd(NULL);
   #ifdef debug_printf
@@ -216,7 +216,7 @@ void enter_archive(const char *name, panel *panel, int update_config)
   }
 }
 
-void enter_subarchive(const char *name, panel *panel) /* Вход во вложенный архив - принимает полный путь к архиву */
+void enter_subarchive(const char *name, struct_panel *panel) /* Вход во вложенный архив - принимает полный путь к архиву */
 {
   char *subarchive;
   #ifdef __amd64
@@ -232,7 +232,7 @@ void enter_subarchive(const char *name, panel *panel) /* Вход во влож�
   enter_archive(subarchive, panel, TRUE);
 }
 
-void leave_archive(panel *panel)
+void leave_archive(struct_panel *panel)
 {
   #ifdef debug_printf
   printf("Leaving archive '%s' to dir '%s'\n",panel->archive_stack[panel->archive_depth], panel->path);
@@ -267,7 +267,7 @@ void leave_archive(panel *panel)
   }
 }
 
-int find_prev_archive_directory(panel *panel)
+int find_prev_archive_directory(struct_panel *panel)
 {
   char **directories_list;
   int i=0;
@@ -320,7 +320,7 @@ int find_prev_archive_directory(panel *panel)
   return FALSE; /* И возвращаем что переход не удался */
 }
 
-int find_next_archive_directory(panel *panel)
+int find_next_archive_directory(struct_panel *panel)
 {
   char **directories_list;
   int i=0;
@@ -377,7 +377,7 @@ int find_next_archive_directory(panel *panel)
   return FALSE; /* И возвращаем значение текущего каталога */
 }
 
-void archive_go_upper(panel *panel) /* Переходим на уровень выше внутри архива */
+void archive_go_upper(struct_panel *panel) /* Переходим на уровень выше внутри архива */
 {
   if (panel->archive_cwd[0] == '\0') /* Если на верхнем уровне архива */
     leave_archive(panel); /* То покидаем его */
@@ -409,7 +409,7 @@ void archive_go_upper(panel *panel) /* Переходим на уровень в
   }
 }
 
-void archive_enter_subdir(const char *subdir, panel *panel)
+void archive_enter_subdir(const char *subdir, struct_panel *panel)
 {
   #ifdef debug_printf
   printf("archive_enter_subdir '%s'\n", subdir);

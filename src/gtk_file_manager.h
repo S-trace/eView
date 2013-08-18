@@ -63,25 +63,25 @@ typedef struct {
   int files_num; /* Количество файлов в каталоге на панели */
   int dirs_num; /* Количество подкаталогов в каталоге на панели */
   int archive_depth; /* Глубина вложенных архивов (0 = FS) - количество ненулевых элементов в стеке архивов */
-} panel; 
+} struct_panel; 
 
-void update (panel *panel);/*обновление списка */
-void move_selection(const char *move_to, panel *panel); /*сдвиг выделения */
-char *iter_from_filename (char *fname, panel *panel); /*возвращает итератор файла из списка */
+void update (struct_panel *panel);/*обновление списка */
+void move_selection(const char *move_to, struct_panel *panel); /*сдвиг выделения */
+char *iter_from_filename (char *fname, struct_panel *panel); /*возвращает итератор файла из списка */
 void start_sleep_timer(void);
 void second_panel_hide(void);
 void second_panel_show(void);
 void delete_dir_or_file (void);
 void move_dir_or_file (void);
 void copy_dir_or_file (void);
-void panel_selector (panel *select_panel);
+void panel_selector (struct_panel *select_panel);
 void menu_destroy (GtkWidget *dialog);
 void shutdown(int exit_code);
 extern int width_display, height_display;
 extern char *top_cwd;
 extern GtkWidget *main_window; /* Окно файлменеджера */
 extern GtkWidget *panels_vbox; /* vBox для панелей */
-extern panel top_panel, bottom_panel, *active_panel, *inactive_panel;
+extern struct_panel top_panel, bottom_panel, *active_panel, *inactive_panel;
 extern int interface_is_locked;
 extern int QT;
 extern volatile int sleep_timer;

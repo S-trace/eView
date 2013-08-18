@@ -109,7 +109,7 @@ void read_string(const char *name, char **destination) /*Чтение строк
   }
 }
 
-void kill_panel (void) /* Убиваем panel */
+void kill_panel (void) /* Убиваем struct_panel */
 {
   #ifdef debug_printf
   printf ("killing panel\n");
@@ -118,7 +118,7 @@ void kill_panel (void) /* Убиваем panel */
   return;
 }
 
-void start_panel (void) /* Перезапускаем panel */
+void start_panel (void) /* Перезапускаем struct_panel */
 {
   #ifdef debug_printf
   printf ("starting panel\n");
@@ -195,7 +195,7 @@ char *trim_line(char *input_line) /* Удаляет последний симв�
     return input_line;
 }
 
-char *find_first_picture_name(panel *panel) 
+char *find_first_picture_name(struct_panel *panel) 
 {
   #ifdef DEBUG_PRINTF
   printf("entering find_first_picture_name\n");
@@ -218,7 +218,7 @@ char *find_first_picture_name(panel *panel)
   return NULL;
 }
 
-char *find_next_picture_name(panel *panel) 
+char *find_next_picture_name(struct_panel *panel) 
 {
   #ifdef DEBUG_PRINTF
   printf("entering find_next_picture_name\n");
@@ -243,7 +243,7 @@ char *find_next_picture_name(panel *panel)
   return NULL;
 }
 
-char *find_prev_picture_name(panel *panel) 
+char *find_prev_picture_name(struct_panel *panel) 
 {
   #ifdef DEBUG_PRINTF
   printf("entering find_prev_picture_name\n");
@@ -271,7 +271,7 @@ char *find_prev_picture_name(panel *panel)
   return NULL;
 }
 
-char *find_last_picture_name(panel *panel)
+char *find_last_picture_name(struct_panel *panel)
 {
   #ifdef DEBUG_PRINTF
   printf("entering find_last_picture_name\n");
@@ -294,7 +294,7 @@ char *find_last_picture_name(panel *panel)
   return last_found_image;
 }
 
-char *find_next_directory(panel *panel) /* Поиск следующей директории в списке TODO: Переписать с обработкой не через system() а через список */
+char *find_next_directory(struct_panel *panel) /* Поиск следующей директории в списке TODO: Переписать с обработкой не через system() а через список */
 {
   FILE *fp; /* Указатель на файл */
   static char *command; 
@@ -321,7 +321,7 @@ char *find_next_directory(panel *panel) /* Поиск следующей дир�
   return panel->path; /* И возвращаем значение текущего каталога */
 }
 
-char *find_prev_directory(panel *panel) /* Поиск предыдущей директории в списке TODO: Переписать с обработкой не через system() а через список */
+char *find_prev_directory(struct_panel *panel) /* Поиск предыдущей директории в списке TODO: Переписать с обработкой не через system() а через список */
 {
   FILE *fp; /* Указатель на файл */
   char next_line[PATHSIZE+1]={'\0'}; /* Строка для следующего каталога */
@@ -360,7 +360,7 @@ char *find_prev_directory(panel *panel) /* Поиск предыдущей ди�
   return panel->path; /* И возвращаем значение текущего каталога */
 }
 
-char *next_image (char *input_name, int allow_actions, panel *panel) /*выбор следующей картинки. allow_actions - разрешить ли действовать (закрывать окно) - для предзагрузки */
+char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*выбор следующей картинки. allow_actions - разрешить ли действовать (закрывать окно) - для предзагрузки */
 {
   char *now_name, *next_name;
   int next_number;
@@ -424,11 +424,11 @@ char *next_image (char *input_name, int allow_actions, panel *panel) /*выбо�
         }
         else
         {
-          char *next_directory=find_next_directory(panel); /* Получаем следующий каталог */
+          char *next_dir=find_next_directory(panel); /* Получаем следующий каталог */
           #ifdef debug_printf
-          printf("NEXT_DIR=%s\n",next_directory);
+          printf("NEXT_DIR=%s\n",next_dir);
           #endif
-          strcpy(panel->path, next_directory); 
+          strcpy(panel->path, next_dir); 
           write_config_string("top_panel.path", top_panel.path); /* Сохраняем его в конфиг */
           write_config_string("bottom_panel.path", bottom_panel.path); /* Сохраняем его в конфиг */
           #ifdef debug_printf
@@ -463,7 +463,7 @@ char *next_image (char *input_name, int allow_actions, panel *panel) /*выбо�
   return next_name;
 }
 
-char *prev_image (char *input_name, int allow_actions, panel *panel) /*выбор предыдущей картинки. allow_actions - разрешить ли действовать (закрывать окно) - для предзагрузки */
+char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*выбор предыдущей картинки. allow_actions - разрешить ли действовать (закрывать окно) - для предзагрузки */
 {
   char *now_name, *prev_name;
   int prev_number;

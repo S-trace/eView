@@ -77,7 +77,7 @@ void read_config_string(char *name, char **destination) /*Чтение стро�
   }
 }
 
-void read_archive_stack(const char *name, panel *panel) /*Чтение стека архивов */
+void read_archive_stack(const char *name, struct_panel *panel) /*Чтение стека архивов */
 {
   char *config_file_single = xconcat_path_file(cfg_directory, name); /* Имя файла с настройкой */
   FILE *file_descriptor=fopen(config_file_single,"rt");
@@ -163,7 +163,7 @@ void write_config_string(const char *name, const char *value) /*Запись с�
   }
 }
 
-void write_archive_stack(const char *name, panel *panel) /*Запись массива имён архивов из верхней панели */
+void write_archive_stack(const char *name, struct_panel *panel) /*Запись массива имён архивов из верхней панели */
 {
   char *config_file_single = xconcat_path_file(cfg_directory, name); /* Имя файла с настройкой */
   #ifdef debug_printf
@@ -237,7 +237,7 @@ void create_cfg (void)  /*создание файлов настроек по у
   xfree(&current_dir);
 }
 
-void read_panel_configuration(panel *panel)
+void read_panel_configuration(struct_panel *panel)
 {
   const char *name_prefix;
   if (panel == &top_panel)

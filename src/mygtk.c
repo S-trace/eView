@@ -23,7 +23,7 @@ GtkWidget *MessageWindow;
 int enable_refresh=1;
 static int need_full_refresh; /* Тип необходимого обновления экрана при перемещении курсора по меню */
 
-int check_key_press(guint keyval, panel *panel) /* Возвращает TRUE если всё сделано */
+int check_key_press(guint keyval, struct_panel *panel) /* Возвращает TRUE если всё сделано */
 {
   if (interface_is_locked)
   {
@@ -172,12 +172,12 @@ void Qt_error_message(const char *message)
   }
 }
 
-int MessageDie (GtkWidget *MessageWindow)
+int MessageDie (GtkWidget *Window)
 {
   #ifdef debug_printf
   printf ("Destroying message window\n");
   #endif
-  gtk_widget_destroy(MessageWindow);
+  gtk_widget_destroy(Window);
   move_selection(iter_from_filename(active_panel->selected_name, active_panel), active_panel);
   wait_for_draw(); /* Ожидаем отрисовки всего */
   e_ink_refresh_full();
@@ -213,7 +213,7 @@ void wait_for_draw (void)
   while (gtk_events_pending ())    gtk_main_iteration ();
 }
 
-char *get_current_iter (panel *panel) /*возвращает итератор текущего файла из списка */
+char *get_current_iter (struct_panel *panel) /*возвращает итератор текущего файла из списка */
 {
   GtkTreeIter iter;
   GtkTreeModel *model;
@@ -268,7 +268,7 @@ gboolean e_ink_refresh_default(void) /* Рефреш экрана по умол�
   return FALSE;
 }
 
-void enter_subdir(char *name, panel *panel)/* Переход на уровень вниз в дереве panel->list */
+void enter_subdir(char *name, struct_panel *panel)/* Переход на уровень вниз в дереве panel->list */
 {
   enable_refresh=FALSE;
   if (panel->archive_depth > 0) /* Если мы в архиве */
@@ -297,7 +297,7 @@ void enter_subdir(char *name, panel *panel)/* Переход на уровень
   enable_refresh=TRUE;
 }
 
-void dirlist_select(GtkWidget *widget, panel *panel) /* Что происходит при перемещении выделенной строки по списку */
+void dirlist_select(GtkWidget *widget, struct_panel *panel) /* Что происходит при перемещении выделенной строки по списку */
 {
   char *tmp;
   GtkTreeIter iter;
@@ -351,7 +351,7 @@ void after_dirlist_select(void) /* Что происходит при перем
     e_ink_refresh_default();
 }
 
-void panel_focussed(panel *panel)
+void panel_focussed(struct_panel *panel)
 {
   if (interface_is_locked) /* Чтобы игнорировать сигнал о фокуссировке на верхней панели во время инициализации программы */
   {
@@ -377,7 +377,7 @@ void panel_focussed(panel *panel)
   e_ink_refresh_local();
 }
 
-void go_upper(panel *panel) /* Переход на уровень вверх в дереве */
+void go_upper(struct_panel *panel) /* Переход на уровень вверх в дереве */
 {
   enable_refresh=FALSE;
   if (panel->archive_depth > 0) /* Если мы в архиве */
@@ -414,7 +414,7 @@ void go_upper(panel *panel) /* Переход на уровень вверх в 
   enable_refresh=TRUE;
 }
 
-void actions(panel *panel) /*выбор что делать по клику переход или запуск */
+void actions(struct_panel *panel) /*выбор что делать по клику переход или запуск */
 {
   #ifdef debug_printf
   printf("CWD=%s\n", panel->path);
@@ -511,7 +511,7 @@ void actions(panel *panel) /*выбор что делать по клику пе
   }
 }
 
-gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *event, panel *panel) /*реакция на кнопки */
+gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *event, struct_panel *panel) /*реакция на кнопки */
 {
   if (check_key_press(event->keyval, panel)) return TRUE;
   switch (event->keyval){
@@ -593,7 +593,7 @@ gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
   return (FALSE);
 }
 
-void create_panel (panel *panel)
+void create_panel (struct_panel *panel)
 {
   /*   GtkWidget *vbox = gtk_vbox_new (FALSE, 0); */
   panel->table = gtk_table_new(30, 1, TRUE);
@@ -756,7 +756,7 @@ GtkTreeView *string_list_create_on_table(size_t num,
   return tree;
 }
 
-void enter_suspend(panel *panel)
+void enter_suspend(struct_panel *panel)
 {
   gtk_idle_remove (idle_call_handler); /* Удаляем вызов этой функции из очереди вызовов (иначе на ARM она будет вызываться вечно) */
   if (! suspended)
