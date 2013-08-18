@@ -43,6 +43,9 @@ static int table_visible; /*видима нижняя панель или нет
 int width_display, height_display;
 int framebuffer_descriptor=0; /* Дескриптор файла фреймбуффера (для обновления) */
 int QT=FALSE; /* Обнаружен ли QT (влияет на IOCTL обновления и запуск Xfbdev) */
+int screensavers_count=0;
+char screensavers_array[16][PATHSIZE+1];
+
 volatile int sleep_timer;
 pthread_t sleep_timer_tid;
 guint idle_call_handler; /* Хэндлер вызова режима ожидания, нужен чтобы снять вызов функции ожидания после первого вызова */
@@ -99,7 +102,6 @@ void wait_state(GtkWidget *window) /* Возврат после смотрелк
 void list_fd(panel *panel) /*добавление списка имен каталогов, файлов и их размеров в панель panel */
 {
   int i = 0;
-  char *text;
   panel->files_num = 0;
   panel->dirs_num=0;
   if (panel->archive_depth > 0) /* Поведение в архиве */
@@ -166,6 +168,7 @@ void list_fd(panel *panel) /*добавление списка имен ката
         stat(namelist[i]->d_name, &stat_p);
         if (S_ISDIR(stat_p.st_mode)) 
         { 
+          char *text;
           text = xconcat_path_file(namelist[i]->d_name, "");
           panel->dirs_num++;
           #ifdef debug_printf
@@ -414,7 +417,6 @@ void init (void)
   else
   {
     printf("'%s' opened for writing log as %d fd, will now write it into this file!\n", name, file_descriptor);
-    dup2 (file_descriptor, 0);
     dup2 (file_descriptor, 1);
     dup2 (file_descriptor, 2);
   }
@@ -430,6 +432,7 @@ void init (void)
     asprintf(&message, GTK_PARTS_IS_OUTDATED, string, NEEDED_GTK_PARTS_VERSION);
     Qt_error_message(message);
   }
+  #endif
   #ifdef debug_printf
   set_led_state (LED_state[LED_ON]);
   #endif
@@ -454,7 +457,9 @@ void init (void)
       xsystem("xrandr -d :0 -o left");
     }
     else
-      xsystem("killall -STOP boeyeserver"); /* Боремся со злостным усыплятором */
+    {
+      get_system_sleep_timeout();
+      set_system_sleep_timeout("86400"); /* Боремся со злостным усыплятором */
     if (! XOpenDisplay(NULL))
     {
       #ifdef debug_printf
@@ -462,11 +467,18 @@ void init (void)
       #endif
       Qt_error_message(FAILED_TO_START_XFBDEV);
     }
-    
   }
-  #endif
+}
+  get_screensavers_list();
+  current.name=strdup("");
+  preloaded.name=strdup("");
+  screensaver.name=strdup("");
+  current.pixbuf=NULL;
+  preloaded.pixbuf=NULL;
+  screensaver.pixbuf=NULL;
 }
 
+void shutdown(int exit_code) __attribute__((noreturn));
 void shutdown(int exit_code)
 {
   #ifdef debug_printf
@@ -484,7 +496,7 @@ void shutdown(int exit_code)
     printf("Shutting down Xfbdev\n");
     #endif
     xsystem("killall Xfbdev");
-    xsystem("killall -CONT boeyeserver");
+    set_system_sleep_timeout(system_sleep_timeout);
   }
   #ifdef debug_printf
   printf("\n\neView shutudown done. Bye! =^_^=/~\n");
@@ -503,6 +515,7 @@ void start_sleep_timer(void)
   }
 }
 
+void sigsegv_handler(void) __attribute__((noreturn));
 void sigsegv_handler(void) /* Обработчик для вывода Backtrace сегфолта */
 {
   #ifdef debug_printf

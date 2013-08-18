@@ -38,6 +38,9 @@ char *escape(const char *input) /* Экранирование нежелател
       case '{': case '}':
       case '"':
         escaped[i++] = '\\'; /* Вставляем перед ними backslash */
+        break;
+      default:
+        break;
     };
     escaped[i++] = input[idx]; /* И копируем собственно символ */
   }
@@ -272,7 +275,7 @@ int find_prev_archive_directory(panel *panel)
   trim_line(up_dir); /* Удяляем последний символ (слэш) из текущего имени */
   char *a=strrchr(up_dir, '/'); /* Ищем последний слэш в пути */
   if (a==NULL) /* Если значение пути вырождается в NULL (слэша больше не оказалось) */
-    up_dir='\0'; /* То делаем archive_cwd нулевой строкой */
+    up_dir[0]='\0'; /* То делаем archive_cwd нулевой строкой */
   else
     *(a+1)='\0'; /* А иначе просто обрезаем путь в архиве на один уровень */
   directories_list=archive_get_directories_list(panel, up_dir);
@@ -325,7 +328,7 @@ int find_next_archive_directory(panel *panel)
   trim_line(up_dir); /* Удяляем последний символ (слэш) из текущего имени */
   char *a=strrchr(up_dir, '/'); /* Ищем последний слэш в пути */
   if (a==NULL) /* Если значение пути вырождается в NULL (слэша больше не оказалось) */
-    up_dir='\0'; /* То делаем archive_cwd нулевой строкой */
+    up_dir[0]='\0'; /* То делаем archive_cwd нулевой строкой */
   else
     *(a+1)='\0'; /* А иначе просто обрезаем путь в архиве на один уровень */
   directories_list=archive_get_directories_list(panel, up_dir);
@@ -384,19 +387,21 @@ void archive_go_upper(panel *panel) /* Переходим на уровень в
     archive_cwd_prev=xconcat(basename(panel->archive_cwd),"/");
     char *a=strrchr(panel->archive_cwd, '/'); /* Ищем последний слэш в пути */
     if (a==NULL) /* Если значение пути вырождается в NULL (слэша больше не оказалось) */
-      panel->archive_cwd='\0'; /* То делаем archive_cwd нулевой строкой */
+      panel->archive_cwd[0]='\0'; /* То делаем archive_cwd нулевой строкой */
     else
       *(a+1)='\0'; /* А иначе просто обрезаем путь в архиве на один уровень */
     
     if (panel == &top_panel)
     {
       write_config_string("top_panel.archive_cwd", panel->archive_cwd);
-      write_config_string("top_panel.last_name", top_panel.last_name='\0');
+      top_panel.last_name[0]='\0';
+      write_config_string("top_panel.last_name", top_panel.last_name);
     }
     else
     {
       write_config_string("bottom_panel.archive_cwd", panel->archive_cwd);
-      write_config_string("bottom_panel.last_name", bottom_panel.last_name='\0');
+      bottom_panel.last_name[0]='\0';
+      write_config_string("bottom_panel.last_name", bottom_panel.last_name);
     }
     update(panel); /* Перерисовываем список */
     move_selection(iter_from_filename (archive_cwd_prev, panel), panel); /* И выделяем предыдущий каталог в архиве */

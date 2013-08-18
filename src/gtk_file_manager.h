@@ -59,7 +59,7 @@ typedef struct {
   char *last_name; /* Последний просмотренный файл в панели */
   char *archive_cwd; /* Текущий каталог в архиве */
   char *archive_list; /* имя файла со списком архива (для возможности входа в разные архивы с разных панелей) */
-  char archive_stack[MAX_ARCHIVE_DEPTH][256]; /* Стек архивов в панели */
+  char archive_stack[MAX_ARCHIVE_DEPTH][PATHSIZE+1]; /* Стек архивов в панели */
   int files_num; /* Количество файлов в каталоге на панели */
   int dirs_num; /* Количество подкаталогов в каталоге на панели */
   int archive_depth; /* Глубина вложенных архивов (0 = FS) - количество ненулевых элементов в стеке архивов */
@@ -87,4 +87,6 @@ extern int QT;
 extern volatile int sleep_timer;
 extern pthread_t sleep_timer_tid;
 extern guint idle_call_handler;
+extern int screensavers_count;
+extern char screensavers_array[16][PATHSIZE+1];
 #endif /* _HAVE_GTK_FILE_MANAGER_ */

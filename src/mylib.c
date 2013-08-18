@@ -22,6 +22,60 @@
 const char msg_memory_exhausted[] = "memory exhausted";
 char next_directory[PATHSIZE+1];  /* Директория, в которую переходим при окончании которого */
 
+void get_system_sleep_timeout(void)
+{
+//   FILE *process=popen("dbus-send --print-reply --type=method_call --dest=com.sibrary.BoeyeServer /PowerManager com.sibrary.Service.PowerManager.getSuspendTime|cut -d ' ' -f 5|tail -n 1", "r");
+  FILE *process=popen("echo 20", "r");
+  char temp_buffer[PATHSIZE+1];
+  fgets(temp_buffer, PATHSIZE, process);
+  if (feof(process))
+    temp_buffer[0]='\0';
+  else
+    trim_line(temp_buffer);
+  pclose(process);
+  system_sleep_timeout=strdup(temp_buffer);
+  #ifdef debug_printf
+  printf("Sleep timeout is %s\n", system_sleep_timeout);
+  #endif
+}
+
+void set_system_sleep_timeout(const char *timeout)
+{  
+  char *command;
+  asprintf(&command,"dbus-send --print-reply --type=method_call --dest=com.sibrary.BoeyeServer /PowerManager com.sibrary.Service.PowerManager.setSuspendTime int32:%s", timeout);
+  xsystem(command);
+  free(command);
+}
+
+
+void get_screensavers_list(void)
+{
+  #ifdef __amd64
+  FILE *list_of_screensavers=popen("cat boeyeserver.conf|grep ScreenSaver | cut -d = -f 2|tr -d ' '| tr ',' '\n'","r");
+  #else
+  FILE *list_of_screensavers=popen("cat /home/root/Settings/boeye/boeyeserver.conf|grep ScreenSaver | cut -d = -f 2|tr -d ' '| tr ',' '\n'","r");
+  #endif
+  char temp_buffer[PATHSIZE+1];
+  while(screensavers_count <= 16 )
+  {
+    fgets(temp_buffer, PATHSIZE, list_of_screensavers);
+    if (feof(list_of_screensavers))
+    {
+      pclose(list_of_screensavers);
+      #ifdef debug_printf
+      printf("Process closed\n");
+      #endif
+      break;
+    }
+    trim_line(temp_buffer);
+    #ifdef debug_printf
+    printf("read %s\n", temp_buffer);
+    #endif
+    strcpy(screensavers_array[screensavers_count], temp_buffer);
+    screensavers_count++;
+  }
+}
+
 void read_string(const char *name, char **destination) /*Чтение строкового параметра из файла name в переменную destination */
 {
   FILE *file_descriptor=fopen(name,"rt");
@@ -133,7 +187,7 @@ char *trim_line(char *input_line) /* Удаляет последний симв�
   #endif  
   if (input_line[0] != '\0')
   {
-    int len=strlen(input_line)-1;
+    size_t len=strlen(input_line)-1;
     input_line[len]='\0';
     return input_line;
   }
@@ -503,9 +557,10 @@ char *prev_image (char *input_name, int allow_actions, panel *panel) /*выбо�
   return prev_name;
 }
 
+int is_picture(char *name) __attribute__((pure));
 int is_picture(char *name) /* Является ли изображением */
 {
-  int n = strlen(name) - 4; /* Позиция начала расширения */
+  size_t n = strlen(name) - 4; /* Позиция начала расширения */
   if(strcasecmp((name+n), ".jpg") != 0 &&
     strcasecmp((name+n), "jpeg") != 0 &&
     strcasecmp((name+n), ".bmp") != 0 &&
@@ -518,9 +573,10 @@ int is_picture(char *name) /* Является ли изображением */
     return TRUE;
 }
 
+int is_archive(char *name) __attribute__((pure));
 int is_archive(char *name) /* Является ли архивом */
 {
-  int n = strlen(name) - 4; /* Позиция начала расширения */
+  size_t n = strlen(name) - 4; /* Позиция начала расширения */
   if(strcasecmp((name+n), ".rar") != 0 &&
     strcasecmp((name+n), ".cbr") != 0 &&
     strcasecmp((name+n), ".zip") != 0 &&
@@ -530,9 +586,10 @@ int is_archive(char *name) /* Является ли архивом */
     return TRUE;
 }
 
+int is_text(char *name) __attribute__((pure));
 int is_text(char *name) /* Является ли текстом */
 {
-  int n = strlen(name) - 4; /* Позиция начала расширения */
+  size_t n = strlen(name) - 4; /* Позиция начала расширения */
   if(strcasecmp((name+n), ".txt") != 0)
     return FALSE;
   else
@@ -591,7 +648,7 @@ char *xgetcwd (char *cwd)
   char *ret;
   unsigned path_max;
   
-  path_max = (unsigned) PATH_MAX;
+  path_max = (ssize_t) PATH_MAX;
   path_max += 2;                /* The getcwd docs say to do this. */
   
   if (cwd == 0) cwd = (char*)xmalloc (path_max);
@@ -633,11 +690,11 @@ char *xconcat_path_file(const char *path,const char *filename)
   return buffer;
 }
 
-char *itoa(int i)
+char *itoa(long i)
 {
   size_t digits = 2; /* automatically has room for the trailing null */
   char *a = NULL;
-  int cp_i = i; /* copy of i, used for counting the digits */
+  long cp_i = i; /* copy of i, used for counting the digits */
   
   /* if the number is negative, we'll need to store space for the '-' */
   if(i < 0)
@@ -652,6 +709,6 @@ char *itoa(int i)
   
   a = (char *) xmalloc(digits+2);
   
-  (void) sprintf(a, "%d", i);
+  (void) sprintf(a, "%ld", i);
   return(a);
 }

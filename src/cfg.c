@@ -10,7 +10,7 @@
 
 static char *cfg_directory = NULL; /*путь к файлу с настройками */
 int crop, rotate, frame, keepaspect, fm_toggle, move_toggle, speed_toggle, clock_toggle, top_panel_active, loop_dir, double_refresh, viewed_pages, preload_enable, suppress_panel, show_hidden_files, manga, LED_notify=TRUE, backlight, sleep_timeout;
-
+char *system_sleep_timeout;
 char *cfg_file_path (void)
 {
   cfg_directory = xconcat_path_file(xgetcwd (cfg_directory), ".eView");
@@ -60,19 +60,20 @@ void read_config_string(char *name, char **destination) /*Чтение стро�
     char temp[257];
     if (fgets(temp, PATHSIZE, file_descriptor) == 0)
     {
-      fclose(file_descriptor);
-      *destination='\0';
       #ifdef debug_printf
-      printf("reading %s from %s (%s)\n", name, config_file_single,*destination);
+      printf("Reading %s from %s failed\n", name, config_file_single);
       #endif
-      return;
+      temp[0]='\0';
+    }
+    else
+    {
+      #ifdef debug_printf
+      printf("Reading %s from %s (%s) successed\n", name, config_file_single, *destination);
+      #endif
     }
     *destination=strdup(temp);
     fclose(file_descriptor);
-    #ifdef debug_printf
-    printf("reading %s from %s (%s)\n", name, config_file_single, *destination);
-    #endif
-    return;
+    return;  
   }
 }
 

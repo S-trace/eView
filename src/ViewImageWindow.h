@@ -12,6 +12,11 @@ typedef struct {
   int width, height; /* Размеры картинки */
   int frames;   /*количество найденых кадров */
   double aspect_rate; /*aspect rate */
+  int keepaspect;
+  int crop;
+  int rotate;
+  int frame;
+  int valid;
 } image;
 extern image current, preloaded, screensaver;
 extern int in_picture_viewer;

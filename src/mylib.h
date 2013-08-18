@@ -22,6 +22,9 @@
 #define MAXFILES 4096 /* Максимальное количество файлов в каталоге */
 
 extern int files_num;
+void get_screensavers_list(void);
+void set_system_sleep_timeout(const char *timeout);
+void get_system_sleep_timeout(void);
 void xsystem(const char *command);
 char *get_natural_size(long size);
 void kill_panel (void); /* Убиваем panel */
@@ -41,6 +44,6 @@ char *xconcat(const char *path,const char *filename);
 char *xconcat_path_file(const char *path,const char *filename);
 int  xstrlen(const char* s);
 char *trim_line(char *input_line);
-char *itoa(int i);
+char *itoa(long i);
 char *get_natural_time(int time); /* Возвращает строку в формате HH:MM:ss */
 void read_string(const char *name, char **destination);

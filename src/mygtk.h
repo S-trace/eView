@@ -179,7 +179,7 @@ void start_pmenu (panel *panel, GtkWidget *win);
 
 /********************* Standard window widget ********************************/
 
-GtkWidget *window_create( int x, int y, int border, const char *title,
+GtkWidget *window_create( int x, int y, guint border, const char *title,
                           int modal);
 
 /************** Create a separator on table   ********************************/
@@ -191,8 +191,9 @@ GtkWidget *separator_create_on_table(int direction, GtkWidget *table,
 
 /************** Create a Multi column scrolled list ************************/
 GtkWidget *string_list_create(int num, int show_hide, int editable,...);
-GtkTreeView *string_list_create_on_table(int num, GtkWidget *table, int start_col, int end_col,
-                                       int start_row, int end_row ,int show_hide, int editable, ...);
+GtkTreeView *string_list_create_on_table(size_t num,
+                                         GtkWidget *table, guint start_col, guint end_col,
+                                         guint start_row, guint end_row, guint show_hide, guint editable,...);
 void add_data_to_list(GtkTreeView *tree, const char *data_string, int n_columns, int autoscroll, const char *fs);
 
 /************** Create a Permissions window **********************************/
@@ -256,4 +257,4 @@ void create_panel (panel *panel);
 char *get_current_iter (panel *panel); /*возвращает итератор текущего файла из списка */
 void Qt_error_message(const char *message); /* Функция открывает на прошивках Qt сообщение об ошибке в стандартной читалке */
 void enter_suspend(panel *panel); /* Показывает скринсейвер и усыпляет железо */
-int check_key_press(int keyval, panel *panel); /* Проработка нажатия кнопки питания при сне */
+int check_key_press(guint keyval, panel *panel); /* Проработка нажатия кнопки питания при сне */

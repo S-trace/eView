@@ -58,31 +58,118 @@ void die_viewer_window (void)
   enable_refresh=TRUE;
 }
 
+
+int check_image_settings(image *target)
+{
+  #ifdef debug_printf
+  printf("Checking image %p settings\n", (void*)target);
+  #endif
+  if (target->valid)
+  {
+    if (target->crop  != crop)   return FALSE;
+    if (target->frame != frame)  return FALSE;
+    if (target->rotate!= rotate) return FALSE;
+    if (target->keepaspect != keepaspect) return FALSE;
+    #ifdef debug_printf
+    printf("Image %p is correct!\n", (void*)target);
+    #endif
+    return TRUE;
+  }
+  else
+  {
+    #ifdef debug_printf
+    printf("Image %p is invalid!\n", (void*)target);
+    #endif
+  }
+  return FALSE;
+}
+
+void copy_image_settings(image *target, image *source)
+{
+  target->crop=source->crop;
+  target->frame=source->frame;
+  target->rotate=source->rotate;
+  target->keepaspect=source->keepaspect;
+  target->height=source->height;
+  target->width=source->width;
+  target->aspect_rate=source->aspect_rate;
+  target->valid=source->valid;
+}
+
+void set_image_settings(image *target)
+{
+  target->crop=crop;
+  target->frame=frame;
+  target->rotate=rotate;
+  target->keepaspect=keepaspect;
+  target->valid=TRUE;
+}
+
 void reset_image(image *target)
 {
   #ifdef debug_printf
   printf("Resetting image %p\n", (void*)target);
   #endif
-  target->name = '\0';
-  target->aspect_rate=target->width=target->height=0; /* Сбрасываем всё остальное в структуре         */
+  target->name[0] = '\0';
+  target->valid=target->keepaspect=target->rotate=target->frame=target->crop=target->aspect_rate=target->width=target->height=0; /* Сбрасываем всё остальное в структуре */
   pixbuf_unref(target->pixbuf);
 }
 
 gboolean load_image(char *filename, panel *panel, int enable_actions, image *target) /* Загружаем и готовим к показу картинку */
 {
+  if (filename==NULL || filename[0]=='\0') return FALSE; /*Если функция вызвана с пустым именем для загрузки*/
+    if ((strcmp(target->name,filename) == 0) && (check_image_settings(target) == TRUE)) /*Если уже загружено нужное изображение с нужными настройками*/
+    {
+      #ifdef debug_printf
+      printf("Correct image is already loaded, nothing to do!\n");
+      #endif
+      return TRUE;
+    }
+
   reset_image(target); /* Сбрасываем изображение которое уже хранилось ранее в этом target */
   #ifdef debug_printf
   printf("Going to load '%s' (enable_actions=%d)\n", filename, enable_actions);
   #endif
-  if (strcmp(preloaded.name,filename) != 0) /*Если предзагруженное изображение и текущее не совпали */
+  if ((strcmp(preloaded.name,filename) == 0) && (check_image_settings(&preloaded) == TRUE)) /*Если предзагруженное изображение и текущее совпали */
   {
-    if (GDK_IS_PIXBUF(preloaded.pixbuf))/*Если в пиксбуфе что-то лежало */
+    #ifdef debug_printf
+    printf("USING PRELOADED IMAGE\n");    
+    #endif
+    if (GDK_IS_PIXBUF(preloaded.pixbuf))
     {
       #ifdef debug_printf
-      printf("PRELOADED IMAGE IS WRONG!!! have '%s', want '%s'\n",preloaded.name,filename);
+      printf("preloaded_image correct\n");
       #endif
+      target->name=strdup(preloaded.name);
+      target->pixbuf=preloaded.pixbuf; /* Не копирование - только указатель! */
+      preloaded.name[0]='\0';
+      preloaded.pixbuf=NULL;
+      update_image_dimentions(target);
+      copy_image_settings(target,&preloaded);
+      reset_image(&preloaded);
+      return TRUE;
     }
-    
+    else
+    {
+      #ifdef debug_printf
+      printf("preloaded data is incorrect (should never happend), trying to load image standart way!\n");
+      #endif
+      reset_image(target);
+      reset_image(&preloaded);
+      return (load_image(filename, panel, enable_actions, target));
+    }
+  }
+  else
+  {
+    #ifdef debug_printf
+    if (GDK_IS_PIXBUF(preloaded.pixbuf))/*Если в пиксбуфе что-то лежало */
+    {
+      if (check_image_settings(&preloaded))
+        printf("PRELOADED IMAGE SETTINGS IS WRONG!!!\n");
+      else
+        printf("PRELOADED IMAGE IS WRONG!!! have '%s', want '%s'\n",preloaded.name,filename);
+    }
+    #endif
     target->name=basename(filename);
     if (panel->archive_depth > 0 && !suspended)
     {
@@ -93,6 +180,8 @@ gboolean load_image(char *filename, panel *panel, int enable_actions, image *tar
     }
     target->pixbuf=gdk_pixbuf_new_from_file (filename, NULL);
     update_image_dimentions(target);
+    set_image_settings(target);
+    
     if (target->pixbuf == NULL)
     {
       if (enable_actions)
@@ -107,37 +196,10 @@ gboolean load_image(char *filename, panel *panel, int enable_actions, image *tar
       printf("Removing extracted '%s'\n",filename);
       #endif
       remove(filename);
-    }    
+    }
     image_resize (rotate, crop, keepaspect, target);
   }
-  else
-  {
-    #ifdef debug_printf
-    printf("USING PRELOADED IMAGE\n");    
-    #endif
-    if (GDK_IS_PIXBUF(preloaded.pixbuf))
-    {
-      #ifdef debug_printf
-      printf("preloaded_image correct\n");
-      #endif
-      target->name=preloaded.name;
-      target->pixbuf=preloaded.pixbuf; /* Не копирование - только указатель! */
-      preloaded.name=NULL;
-      preloaded.pixbuf=NULL;
-      update_image_dimentions(target);
-      reset_image(&preloaded);
-      return TRUE;
-    }
-    else
-    {
-      #ifdef debug_printf
-      printf("preloaded data is incorrect (should never happend), trying to load image standart way!\n");
-      #endif
-      reset_image(&preloaded);
-      reset_image(target);
-      return(load_image(filename, panel, enable_actions, target)); /* Пробуем заново загрузить это же изображение */
-    }
-  }
+  
   return TRUE;
 }
 
@@ -440,11 +502,10 @@ void image_resize (int mode_rotate, int mode_crop, int keep_aspect, image *targe
       int w = return_crop_coord(2);
       int h = return_crop_coord(3);
       
-      GdkPixbuf *pixbuf_key = gdk_pixbuf_new_subpixbuf(target->pixbuf, x, y, w, h);
+      GdkPixbuf *pixbuf_key = gdk_pixbuf_copy (gdk_pixbuf_new_subpixbuf(target->pixbuf, x, y, w, h));
       pixbuf_unref(target->pixbuf);
-      target->pixbuf = gdk_pixbuf_copy (pixbuf_key);
+      target->pixbuf = pixbuf_key;
       update_image_dimentions(target);
-      pixbuf_unref(pixbuf_key);
     }
   }
   
@@ -518,7 +579,7 @@ void ViewImageWindow(char *file, panel *panel, int enable_actions) /*созда�
   if (suppress_panel && ! QT)
     kill_panel();
   if (preloaded.name == NULL)
-    preloaded.name='\0';
+    preloaded.name[0]='\0';
   #ifdef debug_printf
   printf("Opening viewer for '%s'\n", file);
   #endif

@@ -23,7 +23,7 @@ GtkWidget *MessageWindow;
 int enable_refresh=1;
 static int need_full_refresh; /* Тип необходимого обновления экрана при перемещении курсора по меню */
 
-int check_key_press(int keyval, panel *panel) /* Возвращает TRUE если всё сделано */
+int check_key_press(guint keyval, panel *panel) /* Возвращает TRUE если всё сделано */
 {
   if (interface_is_locked)
   {
@@ -422,9 +422,15 @@ void actions(panel *panel) /*выбор что делать по клику пе
   if (strcmp(panel->selected_size, "dir") == 0) /* Если кликнули не каталог */
   {
     if (panel == &top_panel) /* Сбрасываем имя последнего просмотренного файла, чтобы при следующем запуске не было ошибки */
-      write_config_string("top_panel.last_name", top_panel.last_name='\0');
+    {
+      top_panel.last_name[0]='\0';
+      write_config_string("top_panel.last_name", top_panel.last_name);
+    }
     else
-      write_config_string("bottom_panel.last_name", bottom_panel.last_name='\0');
+    {
+      bottom_panel.last_name[0]='\0';
+      write_config_string("bottom_panel.last_name", bottom_panel.last_name);
+    }
     
     if (strcmp(panel->selected_name, "../")== 0)  /* Если кликнули '../' */
     {
@@ -449,9 +455,15 @@ void actions(panel *panel) /*выбор что делать по клику пе
     if (is_archive(panel->selected_name))
     {
       if (panel == &top_panel) /* Сбрасываем имя последнего просмотренного файла, чтобы при следующем запуске не было ошибки */
-        write_config_string("top_panel.last_name", top_panel.last_name='\0');
+      {
+        top_panel.last_name[0]='\0';
+        write_config_string("top_panel.last_name", top_panel.last_name);
+      }
       else
-        write_config_string("bottom_panel.last_name", bottom_panel.last_name='\0');
+      {
+        bottom_panel.last_name[0]='\0';
+        write_config_string("bottom_panel.last_name", bottom_panel.last_name);
+      }
       if (panel->archive_depth == 0)
       {
         enable_refresh=FALSE;
@@ -606,7 +618,7 @@ void create_panel (panel *panel)
 }
 
 /* ****************** Standard window widget******************************** */
-GtkWidget *window_create(int x, int y, int border, const char *title, int modal)
+GtkWidget *window_create(int x, int y, guint border, const char *title, int modal)
 {
   #ifdef debug_printf
   printf("constructing window %dx%d\n",x,y);
@@ -649,7 +661,7 @@ void add_data_to_list(GtkTreeView *tree, const char *data_string, int n_columns,
         xfree(&data);
       }
     } else {
-      gtk_list_store_set(GTK_LIST_STORE(store), &iter, i, *data_string, -1);
+      gtk_list_store_set(GTK_LIST_STORE(store), &iter, i, data_string, -1);
       gtk_list_store_set(GTK_LIST_STORE(store), &iter, i+1, fs, -1);
       /*xfree(&data); */
     }
@@ -663,34 +675,9 @@ void add_data_to_list(GtkTreeView *tree, const char *data_string, int n_columns,
   }
 }
 
-/*void print_adjust(GtkAdjustment *adjust, gpointer data)
- * {    *
- *  g_print("____\n");
- *  /*Начальное значение. */
- *  g_print("val%f  ", gtk_adjustment_get_value         (GTK_ADJUSTMENT(adjust)));
- *  /*Минимальное значение. */
- *  g_print("lower%f  ", gtk_adjustment_get_lower         (GTK_ADJUSTMENT(adjust)));
- *  /*Максимальное значение. */
- *  g_print("upper%f  ", gtk_adjustment_get_upper         (GTK_ADJUSTMENT(adjust)));
- *  /*Шаг приращения. */
- *  g_print("stinc%f  ", gtk_adjustment_get_step_increment(GTK_ADJUSTMENT(adjust)));
- *  /*Страничное приращение. */
- *  g_print("pginc%f  ", gtk_adjustment_get_page_increment(GTK_ADJUSTMENT(adjust)));
- *  /*Размер страницы. */
- *  g_print("pgsize%f  \n", gtk_adjustment_get_page_size     (GTK_ADJUSTMENT(adjust)));
- * } 
- * 
- * void jump_to_selected_row (int val)
- * {
- *  /*g_print("val=%d\n", val); */
- *  gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), val);
- *  gtk_scrolled_window_set_vadjustment (GTK_SCROLLED_WINDOW(scrolled_window),
- *  GTK_ADJUSTMENT(adjust));
- * }*/ 
-
-GtkTreeView *string_list_create_on_table(int num,
-                                         GtkWidget *table, int start_col, int end_col,
-                                         int start_row, int end_row, int show_hide, int editable,...)
+GtkTreeView *string_list_create_on_table(size_t num,
+                                         GtkWidget *table, guint start_col, guint end_col,
+                                         guint start_row, guint end_row, guint show_hide, guint editable,...)
 {
   GtkCellRenderer *renderer;
   GtkTreeViewColumn *column;
@@ -700,7 +687,7 @@ GtkTreeView *string_list_create_on_table(int num,
   GtkTreeSelection *selection;
   GType *types;
   va_list titles;
-  int i;
+  unsigned int i;
   const char *tmp, *label;
   double align;
   
@@ -777,43 +764,12 @@ void enter_suspend(panel *panel)
     #ifdef debug_printf
     printf("Entering suspend\n");
     #endif
-    #ifdef __amd64
-    FILE *list_of_screensavers=popen("cat boeyeserver.conf|grep ScreenSaver | cut -d = -f 2|tr -d ' '| tr ',' '\n'","r");
-    #else
-    FILE *list_of_screensavers=popen("cat /home/root/Settings/boeye/boeyeserver.conf|grep ScreenSaver | cut -d = -f 2|tr -d ' '| tr ',' '\n'","r");
-    #endif
-    #ifdef debug_printf
-    printf("Process opened\n");
-    #endif
-    int screensavers_count=0;
-    char screensavers_array[16][256], temp_buffer[256];
-    while(screensavers_count <= 16 )
-    {
-      fgets(temp_buffer, 255, list_of_screensavers);
-      if (feof(list_of_screensavers))
-      {
-        pclose(list_of_screensavers);
-        #ifdef debug_printf
-        printf("Process closed\n");
-        #endif
-        break;
-      }
-      trim_line(temp_buffer);
-      #ifdef debug_printf
-      printf("read %s\n", temp_buffer);
-      #endif
-      strcpy(screensavers_array[screensavers_count], temp_buffer);
-      screensavers_count++;
-    }
-    #ifdef debug_printf
-    printf("loop done\n");fflush (stdout);
-    #endif
     xsystem("dbus-send /PowerManager com.sibrary.Service.PowerManager.requestSuspend");
     #ifdef debug_printf
     printf("DBUS sent\n");
     #endif
     
-  static int suspend_count=-1; /* Счётчик засыпаний книги - для выбора номера заставки */
+    static int suspend_count=-1; /* Счётчик засыпаний книги - для выбора номера заставки */
     if (++suspend_count==screensavers_count-1) /* Закольцовываем список картинок для скринсейвера (последняя запись - фигня!) */
       suspend_count=0;
     

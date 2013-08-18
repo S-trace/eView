@@ -160,6 +160,7 @@ int line_separator ()
   return line;
 }
 
+int frame_coord (int i, int ii) __attribute__((pure));
 int frame_coord (int i, int ii)
 {
   return frame_map[i][ii];
