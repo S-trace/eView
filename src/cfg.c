@@ -8,13 +8,16 @@
 #include "mylib.h"
 #include "cfg.h"
 
-static char *cfg_directory = NULL; /*путь к файлу с настройками */
-int crop, rotate, frame, keepaspect, fm_toggle, move_toggle, speed_toggle, clock_toggle, top_panel_active, loop_dir, double_refresh, viewed_pages, preload_enable, suppress_panel, show_hidden_files, manga, LED_notify=TRUE, backlight, sleep_timeout;
+static char *cfg_directory; /*путь к файлу с настройками */
+int crop, rotate, frame, keepaspect, fm_toggle, move_toggle, speed_toggle, clock_toggle, top_panel_active, loop_dir, double_refresh, viewed_pages, preload_enable, suppress_panel, show_hidden_files, manga, LED_notify=TRUE;
+int backlight, sleep_timeout;
 char *system_sleep_timeout;
-char *cfg_file_path (void)
+
+void cfg_file_path (void)
 {
-  cfg_directory = xconcat_path_file(xgetcwd (cfg_directory), ".eView");
-  return cfg_directory;
+  char *current_dir=xgetcwd (cfg_directory);
+  cfg_directory = xconcat_path_file(current_dir, ".eView");
+  xfree(&current_dir);
 }
 
 int read_config_int(const char *name) /*Чтение числового параметра конфига */
@@ -27,18 +30,20 @@ int read_config_int(const char *name) /*Чтение числового пара
     printf("UNABLE TO OPEN %s SETTING FILE FOR READ! IT'S BAD!\n", config_file_single);
     #endif
     write_config_int(name, 0);
+    free(config_file_single);
     return 0;
   }
   else
   {
     int value;
     char value_string[33];
-    fgets(value_string,32,file_descriptor);
+    (void)fgets(value_string,32,file_descriptor);
     value=atoi(value_string);
-    fclose(file_descriptor);
+    (void)fclose(file_descriptor);
     #ifdef debug_printf
     printf("reading %s from %s (%d)\n", name, config_file_single, value);
     #endif
+    free(config_file_single);
     return(value);
   }
 }
@@ -53,6 +58,7 @@ void read_config_string(char *name, char **destination) /*Чтение стро�
     printf("UNABLE TO OPEN %s SETTING FILE FOR READ! IT'S BAD!\n", config_file_single);
     #endif
     write_config_string(name, "");
+    free(config_file_single);
     return;
   }
   else
@@ -72,7 +78,8 @@ void read_config_string(char *name, char **destination) /*Чтение стро�
       #endif
     }
     *destination=strdup(temp);
-    fclose(file_descriptor);
+    free(config_file_single);
+    (void)fclose(file_descriptor);
     return;  
   }
 }
@@ -87,6 +94,7 @@ void read_archive_stack(const char *name, struct_panel *panel) /*Чтение с
     printf("UNABLE TO OPEN %s SETTING FILE FOR READ! IT'S BAD!\n", config_file_single);
     #endif
     write_config_string(name, "filesystem\n");
+    free(config_file_single);
     return;
   }
   else
@@ -95,12 +103,12 @@ void read_archive_stack(const char *name, struct_panel *panel) /*Чтение с
     #ifdef debug_printf
     printf("reading %s from '%s' (archive stack)\n", name, config_file_single);
     #endif
-    while(!feof(file_descriptor) && i <= MAX_ARCHIVE_DEPTH )
+    while((feof(file_descriptor) == FALSE) && i <= MAX_ARCHIVE_DEPTH )
     {
       #ifdef debug_printf
       printf("Reading %d element from '%s' (archive stack)\n", i, config_file_single);
       #endif    
-      fgets(panel->archive_stack[i], PATHSIZE, file_descriptor);
+      (void)fgets(panel->archive_stack[i], PATHSIZE, file_descriptor);
       if (panel->archive_stack[i][0] == '\0')
       {
         #ifdef debug_printf
@@ -114,7 +122,8 @@ void read_archive_stack(const char *name, struct_panel *panel) /*Чтение с
     #ifdef debug_printf
     printf("Readed %d elements from '%s' (archive stack)\n", i, config_file_single);
     #endif    
-    fclose(file_descriptor);
+    free(config_file_single);
+    (void)fclose(file_descriptor);
     panel->archive_depth=--i;
     return;
   }
@@ -132,13 +141,16 @@ void write_config_int(const char *name, int value) /*Запись числово
     #ifdef debug_printf
     printf("UNABLE TO OPEN %s SETTING FILE FOR WRITING! IT'S BAD!\n", config_file_single);
     #endif
+    free(config_file_single);
     return;
   }
   else
   {
     char *value_string=itoa(value);
-    fputs(value_string,file_descriptor);
-    fclose(file_descriptor);
+    (void)fputs(value_string,file_descriptor);
+    free(config_file_single);
+    free(value_string);
+    (void)fclose(file_descriptor);
   }
 }
 
@@ -154,12 +166,14 @@ void write_config_string(const char *name, const char *value) /*Запись с�
     #ifdef debug_printf
     printf("UNABLE TO OPEN %s SETTING FILE FOR WRITING! IT'S BAD!\n", config_file_single);
     #endif
+    free(config_file_single);
     return ;
   }
   else
   {
     fprintf(file_descriptor, "%s", value);
-    fclose(file_descriptor);
+    free(config_file_single);
+    (void)fclose(file_descriptor);
   }
 }
 
@@ -175,6 +189,7 @@ void write_archive_stack(const char *name, struct_panel *panel) /*Запись �
     #ifdef debug_printf
     printf("UNABLE TO OPEN '%s' SETTING FILE FOR WRITING! IT'S BAD!\n", config_file_single);
     #endif
+    free(config_file_single);
     return ;
   }
   else
@@ -188,19 +203,21 @@ void write_archive_stack(const char *name, struct_panel *panel) /*Запись �
       fprintf(file_descriptor, "%s\n", panel->archive_stack[i]);
       i++;
     }
-    fclose(file_descriptor);
+    free(config_file_single);
+    (void)fclose(file_descriptor);
   }
 }
 
 void create_cfg (void)  /*создание файлов настроек по умолчанию */
 {
+  char *current_dir;
   if ((mkdir (cfg_directory, S_IRWXU)) == -1)
   {
     #ifdef debug_printf
     printf("UNABLE TO mkdir %s! IT'S BAD!\n", cfg_directory);
     #endif
   }
-  char *current_dir = get_current_dir_name();
+  current_dir = get_current_dir_name();
   write_config_int("crop", TRUE);
   write_config_int("rotate", FALSE);
   write_config_int("frame", FALSE);
@@ -240,6 +257,7 @@ void create_cfg (void)  /*создание файлов настроек по у
 void read_panel_configuration(struct_panel *panel)
 {
   const char *name_prefix;
+  char *path_file, *selected_name_file, *archive_cwd_file, *archive_list_file, *last_name_file, *archive_stack_file; 
   if (panel == &top_panel)
     name_prefix = "top";
   else
@@ -248,12 +266,24 @@ void read_panel_configuration(struct_panel *panel)
   printf("Reading %s panel configuration\n", name_prefix);
   #endif    
   
-  read_config_string(xconcat(name_prefix, "_panel.path"), &panel->path);
-  read_config_string(xconcat(name_prefix, "_panel.selected_name"), &panel->selected_name);
-  read_config_string(xconcat(name_prefix, "_panel.archive_cwd"), &panel->archive_cwd);
-  read_config_string(xconcat(name_prefix, "_panel.archive_list"), &panel->archive_list);
-  read_config_string(xconcat(name_prefix, "_panel.last_name"), &panel->last_name);
-  read_archive_stack(xconcat(name_prefix, "_panel.archive_stack"), panel);
+  path_file=xconcat(name_prefix, "_panel.path");
+  selected_name_file=xconcat(name_prefix, "_panel.selected_name");
+  archive_cwd_file=xconcat(name_prefix, "_panel.archive_cwd");
+  archive_list_file=xconcat(name_prefix, "_panel.archive_list");
+  last_name_file=xconcat(name_prefix, "_panel.last_name");
+  archive_stack_file=xconcat(name_prefix, "_panel.archive_stack");
+  read_config_string(path_file, &panel->path);
+  read_config_string(selected_name_file, &panel->selected_name);
+  read_config_string(archive_cwd_file, &panel->archive_cwd);
+  read_config_string(archive_list_file, &panel->archive_list);
+  read_config_string(last_name_file, &panel->last_name);
+  read_archive_stack(archive_stack_file, panel);
+  free (path_file);
+  free (selected_name_file);
+  free (archive_cwd_file);
+  free (archive_list_file);
+  free (last_name_file);
+  free (archive_stack_file);
 }
 
 void read_configuration (void)
@@ -287,8 +317,8 @@ void reset_config(void)
   #ifdef debug_printf
   printf("Removing '%s'\n", cfg_directory);
   #endif
-  char *command;
+  char *command=NULL;
   asprintf(&command, "rm -rf \"%s\"", cfg_directory);
-  xsystem (command);
+  xsystem(command);
   xfree(&command);
 }
