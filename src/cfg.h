@@ -37,6 +37,6 @@ enum
   LOOP_LOOP,
   LOOP_NEXT,
   LOOP_EXIT,
-  LOOP_DIRECTORY
+  LOOP_DIR
 };
 #endif

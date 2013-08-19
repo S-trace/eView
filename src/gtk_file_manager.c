@@ -551,8 +551,8 @@ void sigsegv_handler(void) /* Обработчик для вывода Backtrace
 int main (int argc, char **argv)
 {
   FILE *fp;
-//   signal(SIGSEGV, (__sighandler_t)sigsegv_handler);
-//   signal(SIGABRT, (__sighandler_t)sigsegv_handler);
+  signal(SIGSEGV, (__sighandler_t)sigsegv_handler);
+  signal(SIGABRT, (__sighandler_t)sigsegv_handler);
   init();
   gtk_init (&argc, &argv);
   #ifdef __amd64
