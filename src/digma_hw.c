@@ -45,7 +45,7 @@ void epaperUpdate(unsigned long int ioctl_call, int mode)
   if (framebuffer_descriptor >= 0)
   {
     if (QT)
-      (void)usleep(245000); /* Иначе запись в видеопамять не успевает завершиться и получаем верхний левый угол новой картинки и нижний правый - прежней. */
+      (void)usleep(355000); /* Иначе запись в видеопамять не успевает завершиться и получаем верхний левый угол новой картинки и нижний правый - прежней. */
       (void)ioctl(framebuffer_descriptor, ioctl_call, &mode);
   }
   #endif
