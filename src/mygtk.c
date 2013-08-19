@@ -73,7 +73,7 @@ int check_key_press(guint keyval, struct_panel *panel) /* Возвращает T
   return TRUE;
 }
 
-gint confirm_request(const char *title, const char *confirm_button, const char *reject_button)
+gboolean confirm_request(const char *title, const char *confirm_button, const char *reject_button)
 {
   GtkWidget *dialog;
   int answer;
@@ -229,43 +229,39 @@ char *get_current_iter (struct_panel *panel) /*возвращает итерат
     return (inlist);
 }
 
-gboolean e_ink_refresh_part(void)
+void e_ink_refresh_part(void)
 {
   #ifdef __amd64
   printf("Updating eINK (part)\n");
   #endif
   wait_for_draw();
   epaperUpdatePart();
-  return FALSE;
 }
 
-gboolean e_ink_refresh_local(void)
+void e_ink_refresh_local(void)
 {
   #ifdef __amd64
   printf("Updating eINK (local)\n");
   #endif
   wait_for_draw();
   epaperUpdateLocal();
-  return FALSE;
 }
 
-gboolean e_ink_refresh_full(void)
+void e_ink_refresh_full(void)
 {
   #ifdef __amd64
   printf("Updating eINK (full)\n");
   #endif
   wait_for_draw();
   epaperUpdateFull();
-  return FALSE;
 }
 
-gboolean e_ink_refresh_default(void) /* Рефреш экрана по умолчанию (из настроек) */
+void e_ink_refresh_default(void) /* Рефреш экрана по умолчанию (из настроек) */
 {
   if (speed_toggle) 
     e_ink_refresh_local();
   else 
     e_ink_refresh_part ();
-  return FALSE;
 }
 
 void enter_subdir(char *name, struct_panel *panel)/* Переход на уровень вниз в дереве panel->list */

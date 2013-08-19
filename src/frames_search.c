@@ -27,11 +27,12 @@ static int wh, ht;
 /*воозвращает количество кадров и сохраняет их соординаты в frame_map[][] */
 int frames_search (image *target)
 {  
+  int f;
   y = FRAME_SIZE;
   f_num = 0;
-  ht = gdk_pixbuf_get_height (target->pixbuf);
-  wh = gdk_pixbuf_get_width  (target->pixbuf);
-  int f = 0; /*флаг разрыва цикла */
+  ht = target->height;
+  wh = target->width;
+  f = 0; /*флаг разрыва цикла */
   f_count = 0;
   s_count = 0;
 

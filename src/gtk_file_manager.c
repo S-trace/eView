@@ -50,7 +50,7 @@ volatile int sleep_timer;
 pthread_t sleep_timer_tid;
 guint idle_call_handler; /* Хэндлер вызова режима ожидания, нужен чтобы снять вызов функции ожидания после первого вызова */
 
-void *sleep_thread(__attribute__((unused))void* arg)
+void /*@null@*/  *sleep_thread(__attribute__((unused)) /*@unused@*/ void* arg)
 {
   #ifdef debug_printf
   printf("Sleep timeout thread started (timer=%d)\n", sleep_timer);
@@ -64,7 +64,7 @@ void *sleep_thread(__attribute__((unused))void* arg)
       #endif
       break;
     }
-    usleep(1000000); /* Спим 1 секунду */
+    (void)usleep(1000000); /* Спим 1 секунду */
     if (--sleep_timer <= 0)
     {
       #ifdef debug_printf
@@ -82,14 +82,19 @@ void *sleep_thread(__attribute__((unused))void* arg)
 
 void wait_state(GtkWidget *window) /* Возврат после смотрелки */
 {
+  char *temp, *iter;
   #ifdef debug_printf
   printf("wait_state called\n");
   #endif
   
   update(active_panel);
   gtk_widget_show_all(window);
+  temp=active_panel->selected_name;
   active_panel->selected_name=basename(active_panel->selected_name); /* Бля! >_< */
-  move_selection(iter_from_filename (active_panel->selected_name, active_panel), active_panel);
+  free(temp);
+  iter=iter_from_filename (active_panel->selected_name, active_panel);
+  move_selection(iter, active_panel);
+  free(iter);
   gtk_widget_queue_draw(GTK_WIDGET(active_panel->list)); /* Заставляем GTK перерисовать список каталогов */
   
   /*   g_signal_connect (G_OBJECT (window), "focus_in_event", */
@@ -116,7 +121,7 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
       while( namelist[i] != 0 && namelist[i][0] != '\0' && GTK_IS_WIDGET(main_window) )
       {
         char *full_name;
-        if (!show_hidden_files && namelist[i][0] == '.') {continue;}
+        if ((show_hidden_files == FALSE) && namelist[i][0] == '.') {continue;}
         panel->dirs_num++;
         text=strdup(namelist[i]);
         trim_line(text); /* Ампутируем последний слэш */
@@ -128,10 +133,12 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
         #endif
         add_data_to_list(panel->list, full_name, 1, NO_AUTOSCROLL, "dir");
         xfree(&namelist[i]);
+        free(full_name);
+        free(text);
         i++;
       }
-      xfree(&namelist);
     }
+    free(namelist);
     
     namelist=archive_get_files_list(panel, panel->archive_cwd);
     if ( namelist[0] != NULL)
@@ -139,15 +146,16 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
       i=0; /* Сбрасываем счётчик, иначе карается сегфолтом! */
       while(namelist[i][0] != '\0' && GTK_IS_WIDGET(main_window) ) /* Пока имя файла не вырождается в пустую строку (грёбаный греп с его повадками!) */
       {
-        if (!show_hidden_files && namelist[i][0] == '.') {continue;}
+        if ((show_hidden_files == FALSE) && namelist[i][0] == '.') {continue;}
         text=basename(namelist[i]);
         add_data_to_list(panel->list, text, 1, NO_AUTOSCROLL, "file");
         panel->files_num++;
         xfree (&namelist[i]);
+//         free(text); // basename() - free() противопоказан!
         i++;
       }
-      xfree(&namelist);
     }
+    free(namelist);
   }
   else /* Поведение в ФС */
   {    
@@ -164,8 +172,8 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
         /*убрать двоеточку из списка папок при присутствии в корневом каталоге */
         if (strcmp(namelist[i]->d_name, "..") == 0 && strcmp (panel->path, "/") == 0) {continue;}
         /*Убрать скрытные каталоги */
-        if (!show_hidden_files && namelist[i]->d_name[0] == '.' && strcmp(namelist[i]->d_name, "..") != 0) {continue;}
-        stat(namelist[i]->d_name, &stat_p);
+        if ((show_hidden_files == FALSE) && namelist[i]->d_name[0] == '.' && strcmp(namelist[i]->d_name, "..") != 0) {continue;}
+        (void)stat(namelist[i]->d_name, &stat_p);
         if (S_ISDIR(stat_p.st_mode)) 
         { 
           char *text;
@@ -176,18 +184,18 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
           fflush(stdout);
           #endif
           add_data_to_list(panel->list, text, 1, NO_AUTOSCROLL, "dir");
-          xfree(&text);
+          free(text);
         }
       }
       for( i = 0; i < n && GTK_IS_WIDGET(main_window); i++ )  /* Второй обход списка - файлы */
       {
         struct stat stat_p;
-        stat(namelist[i]->d_name, &stat_p);
+        (void)stat(namelist[i]->d_name, &stat_p);
         if (!S_ISDIR(stat_p.st_mode)) 
         { 
           /*Убрать скрытные файлы */
           char *fsize, *text;
-          if (!show_hidden_files && namelist[i]->d_name[0] == '.') {continue;}
+          if ((show_hidden_files == FALSE) && namelist[i]->d_name[0] == '.') {continue;}
           text = namelist[i]->d_name;
           panel->files_num++;
           fsize = get_natural_size(stat_p.st_size); /*размер файла */
@@ -196,6 +204,7 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
           fflush(stdout);
           #endif
           add_data_to_list(panel->list, text, 1, NO_AUTOSCROLL, fsize);
+          free (fsize);
         }
         xfree(&namelist[i]);
       }
@@ -212,7 +221,7 @@ char *iter_from_filename (char *fname, struct_panel *panel) /*возвращае
   char *tmp;
   
   model = gtk_tree_view_get_model (panel->list);
-  gtk_tree_model_get_iter_first (model, &iter);
+  (void)gtk_tree_model_get_iter_first (model, &iter);
   if (iter.stamp != 0)
   {
     while (valid) {
@@ -220,13 +229,17 @@ char *iter_from_filename (char *fname, struct_panel *panel) /*возвращае
       gtk_tree_model_get (model, &iter, FILE_COLUMN, &tmp, -1);
       inlist = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
       xfree(&tmp);
-      if (strcmp (inlist, fname) == 0){
-        inlist =  gtk_tree_model_get_string_from_iter (GTK_TREE_MODEL(model), &iter);
+      if (strcmp (inlist, fname) == 0)
+      {
+        free(inlist);
+        inlist=gtk_tree_model_get_string_from_iter (GTK_TREE_MODEL(model), &iter);
         return inlist;
       }
       valid = gtk_tree_model_iter_next (model, &iter);
+      free(inlist);
     }
   }
+//   free(model); // Не требуется и карается abort()ом
   #ifdef debug_printf
   printf("Iter stamp is 0, something bad happened!\n");
   #endif
@@ -238,7 +251,7 @@ void update(struct_panel *panel) /*обновление списка */
   GtkTreeIter iter;
   GtkTreeModel *model;
   gboolean valid = TRUE;
-  char *title;
+  char *title, *iter_string;
   set_led_state (LED_state[LED_BLINK_FAST]); /* Индикация активности */
   panel->files_num=0; /* Обнуляем число файлов в просмотрщике */
   clear_list(panel->list);
@@ -250,7 +263,7 @@ void update(struct_panel *panel) /*обновление списка */
   
   /* подсчет числа строк в листе папок и файлов */
   model = gtk_tree_view_get_model (panel->list);
-  gtk_tree_model_get_iter_first (model, &iter);
+  (void)gtk_tree_model_get_iter_first (model, &iter);
   while (valid) 
     valid = gtk_tree_model_iter_next (model, &iter);
   /*инфа о числе папок и файлов в загловок окна */
@@ -261,7 +274,10 @@ void update(struct_panel *panel) /*обновление списка */
     gtk_label_set_text (GTK_LABEL(panel->path_label), xconcat_path_file(panel->archive_stack[panel->archive_depth], panel->archive_cwd)); /* Пишем имя архива с путём в поле снизу */
   else
     gtk_label_set_text (GTK_LABEL(panel->path_label), panel->path);
-  move_selection(iter_from_filename (panel->selected_name, panel), panel);
+//   free(model); // не требуется и карается abort()ом
+  iter_string=iter_from_filename (panel->selected_name, panel);
+  move_selection(iter_string, panel);
+  free(iter_string);
   set_led_state (LED_state[LED_OFF]); /* Индикация активности */
 }
 
@@ -271,8 +287,9 @@ void move_selection(const char *move_to, struct_panel *panel) /* сдвигае�
   wait_for_draw();
   if (move_to[0] == '\0') move_to="0";
   path = gtk_tree_path_new_from_string (move_to);
-  gtk_tree_view_scroll_to_cell (panel->list, path, NULL, TRUE, 0.5, 0.5);
+  gtk_tree_view_scroll_to_cell (panel->list, path, NULL, TRUE, (gfloat)0.5, (gfloat)0.5);
   gtk_tree_view_set_cursor (panel->list, path, NULL, FALSE);
+  gtk_tree_path_free(path);
   wait_for_draw();
 }
 
@@ -312,6 +329,7 @@ void after_delete_update (struct_panel *panel)
   update(panel);
   move_selection (str_iter, panel);
   e_ink_refresh_local();
+  free(str_iter);
 }
 
 void delete_dir_or_file (void)
@@ -319,16 +337,16 @@ void delete_dir_or_file (void)
   if (confirm_request(DELETE_CONFIRM, GTK_STOCK_DELETE, GTK_STOCK_CANCEL))
   {
     char *src;
-    if (!strncmp (active_panel->selected_name, "../", 3)) 
+    if (strncmp (active_panel->selected_name, "../", 3) == 0) 
       return;
     asprintf (&src, "rm -f -r -R \"%s\"", active_panel->selected_name);
     xsystem(src);
     xfree (&src);
     after_delete_update (active_panel);
-    if (inactive_panel != NULL && !strcmp (active_panel->path, inactive_panel->path))
+    if ((inactive_panel != NULL) && (strcmp (active_panel->path, inactive_panel->path) == 0))
     {
       after_delete_update (inactive_panel);
-      chdir(active_panel->path);
+      (void)chdir(active_panel->path);
     }
     e_ink_refresh_local();
   }
@@ -336,27 +354,29 @@ void delete_dir_or_file (void)
 
 void move_dir_or_file (void)
 {
-  if (!fm_toggle) return;
-  if ((!move_toggle) || (move_toggle && confirm_request(MOVE_CONFIRM, MOVE, GTK_STOCK_CANCEL)))
+  if ( fm_toggle == FALSE) return;
+  if ((move_toggle == FALSE) || ((move_toggle == TRUE) && confirm_request(MOVE_CONFIRM, MOVE, GTK_STOCK_CANCEL)))
   {
     char *src, *str_iter;
-    if (!strcmp (active_panel->selected_name, "../")) return;
+    if (strcmp (active_panel->selected_name, "../" ) == 0) return;
     asprintf (&src, "mv -f \"%s\" \"%s\"", active_panel->selected_name, inactive_panel->path);
     xsystem(src);
     xfree (&src);
     str_iter=get_current_iter(active_panel);
     update(active_panel);
     move_selection (str_iter, active_panel);
+    free(str_iter);
     str_iter=get_current_iter(inactive_panel);
     update (inactive_panel);
     e_ink_refresh_local();
     move_selection (str_iter, inactive_panel);
+    free(str_iter);
   }
 }
 
 void copy_dir_or_file (void)
 {
-  if (!strcmp (active_panel->selected_name, "../")) return;
+  if (strcmp (active_panel->selected_name, "../") == 0) return;
   if (table_visible)
   {
     char *src, *str_iter;
@@ -366,7 +386,8 @@ void copy_dir_or_file (void)
     str_iter=get_current_iter(inactive_panel);
     update(inactive_panel);
     move_selection (str_iter, inactive_panel);
-    chdir (active_panel->path);
+    free(str_iter);
+    (void)chdir (active_panel->path);
   }
 }
 
@@ -394,19 +415,22 @@ void panel_selector (struct_panel *focus_to) /* Принимает указат�
 
 void second_panel_show(void)
 {
-  chdir (bottom_panel.path);
+  char *iter;
+  (void)chdir (bottom_panel.path);
   create_panel(&bottom_panel);
-  move_selection(iter_from_filename (bottom_panel.selected_name, &bottom_panel), &bottom_panel); /* Восстанавливаем позицию указателя */
+  iter=iter_from_filename (bottom_panel.selected_name, &bottom_panel);
+  move_selection(iter, &bottom_panel); /* Восстанавливаем позицию указателя */
   gtk_widget_show_all (main_window);
-  g_signal_connect_swapped (G_OBJECT (bottom_panel.table), "destroy", G_CALLBACK (panel_selector), &top_panel);
+  (void)g_signal_connect_swapped (G_OBJECT (bottom_panel.table), "destroy", G_CALLBACK (panel_selector), &top_panel);
   e_ink_refresh_local();
+  free(iter);
 }
 
 void init (void)
 {
   #ifndef __amd64
   #ifdef debug_printf
-  char *name="/media/mmcblk0p1/eView_debug_log.txt";
+  const char *name="/media/mmcblk0p1/eView_debug_log.txt";
   printf("Trying to open '%s' for writing log\n", name);
   int file_descriptor=creat(name,O_CREAT|O_SYNC|O_TRUNC);
   if (file_descriptor < 0)
@@ -422,7 +446,6 @@ void init (void)
   /* Ранняя инициализация программы */
   detect_hardware();
   #ifndef __amd64
-  char *string, *message;
   read_string("/home/root/.GTK_parts.version", &string);
   if (atoi(string) < NEEDED_GTK_PARTS_VERSION)
   {
@@ -446,11 +469,11 @@ void init (void)
     printf ("X is down! Assuming QT\nTrying to start Xfbdev\n");
     #endif
     xsystem("Xfbdev :0 -br -pn -hide-cursor -dpi 150 -rgba vrgb & ");
-    usleep(1000000);
+    (void)usleep(1000000);
     xsystem("matchbox-window-manager -theme Sato -use_desktop_mode decorated &");
-    if (!hardware_has_backlight)
+    if (hardware_has_backlight == FALSE)
     {
-      usleep(2000000);
+      (void)usleep(2000000);
       xsystem("xrandr -d :0 -o left");
     }
     else
@@ -483,8 +506,8 @@ void shutdown(int exit_code)
   #endif
   if (top_panel.selected_name != NULL) write_config_string("top_panel.selected_name", top_panel.selected_name);
   if (bottom_panel.selected_name != NULL) write_config_string("bottom_panel.selected_name", bottom_panel.selected_name);
-  remove(top_panel.archive_list);
-  remove(bottom_panel.archive_list);
+  (void)remove(top_panel.archive_list);
+  (void)remove(bottom_panel.archive_list);
   set_brightness(previous_backlight_level);
   gtk_main_quit();
   if (QT)
@@ -528,8 +551,8 @@ void sigsegv_handler(void) /* Обработчик для вывода Backtrace
 int main (int argc, char **argv)
 {
   FILE *fp;
-  signal(SIGSEGV, (__sighandler_t)sigsegv_handler);
-  signal(SIGABRT, (__sighandler_t)sigsegv_handler);
+//   signal(SIGSEGV, (__sighandler_t)sigsegv_handler);
+//   signal(SIGABRT, (__sighandler_t)sigsegv_handler);
   init();
   gtk_init (&argc, &argv);
   #ifdef __amd64
@@ -540,10 +563,11 @@ int main (int argc, char **argv)
   screen = gdk_screen_get_default(); /* Текущий screen */
   width_display = gdk_screen_get_width (screen) - 6; /* Ширина экрана */
   height_display = gdk_screen_get_height (screen) - 6; /* Высота экрана */
+  free(screen);
   framebuffer_descriptor = open("/dev/fb0", O_RDWR); /* Открываем фреймбуффер */
   if (framebuffer_descriptor == 0)
   {
-    if (!QT)
+    if (QT == FALSE)
       Message(ERROR, FAILED_TO_OPEN_DEV_FB0);
     else
       Qt_error_message(FAILED_TO_OPEN_DEV_FB0);
@@ -559,21 +583,21 @@ int main (int argc, char **argv)
   {
     create_cfg ();
     read_configuration();
-    chdir("/media/mmcblk0p1/"); /* Для новых книг */
-    chdir("/userdata/media/mmcblk0p1/"); /* Для старых книг */
+    (void)chdir("/media/mmcblk0p1/"); /* Для новых книг */
+    (void)chdir("/userdata/media/mmcblk0p1/"); /* Для старых книг */
     /* Неизвестно, где мы оказались после предыдущих двух переходов (сработал только один):  */
     top_panel.path = xgetcwd(top_panel.path);
     write_config_string("top_panel.path", top_panel.path ); 
   }
   else 
   {
-    fclose(fp);
+    (void)fclose(fp);
     read_configuration();
   }
   /*debug_msg_win (); //окно только для отладки */
   set_brightness(backlight);  
   main_window = window_create(width_display, height_display, 0, VERSION, NOT_MODAL);
-  g_signal_connect (G_OBJECT (main_window), "destroy", G_CALLBACK (shutdown), NULL);
+  (void)g_signal_connect (G_OBJECT (main_window), "destroy", G_CALLBACK (shutdown), NULL);
   panels_vbox = gtk_vbox_new (TRUE, 0);
   gtk_box_set_homogeneous (GTK_BOX (panels_vbox), FALSE);
   gtk_container_add (GTK_CONTAINER (main_window), panels_vbox);
@@ -603,7 +627,7 @@ int main (int argc, char **argv)
     inactive_panel=NULL;
   }
   
-  if (! chdir (active_panel->path)) /* переход в последний рабочий каталог */
+  if (chdir (active_panel->path) == FALSE) /* переход в последний рабочий каталог */
   {
     #ifdef debug_printf
     printf ("Chdir to '%s' failed because %s!\n", active_panel->path, strerror(errno));
@@ -612,15 +636,20 @@ int main (int argc, char **argv)
   if (active_panel->archive_depth > 0 || (inactive_panel != NULL && inactive_panel->archive_depth > 0) )
   {
     enable_refresh=FALSE;
+    char *iter;
     if ( active_panel->archive_depth > 0 )
     {
       enter_archive(active_panel->archive_stack[active_panel->archive_depth], active_panel, FALSE);
-      move_selection(iter_from_filename (active_panel->selected_name, active_panel), active_panel); /* Восстанавливаем состояние выбранных элементов в списке файлов */
+      iter=iter_from_filename (active_panel->selected_name, active_panel);
+      move_selection(iter, active_panel); /* Восстанавливаем состояние выбранных элементов в списке файлов */
+      free(iter);
     }
     if ( inactive_panel != NULL && inactive_panel->archive_depth > 0 )
     {
       enter_archive(inactive_panel->archive_stack[inactive_panel->archive_depth], inactive_panel, FALSE);
-      move_selection(iter_from_filename (inactive_panel->selected_name, inactive_panel), inactive_panel); /* Восстанавливаем состояние выбранных элементов в списке файлов */
+      iter=iter_from_filename (inactive_panel->selected_name, inactive_panel);
+      move_selection(iter, inactive_panel); /* Восстанавливаем состояние выбранных элементов в списке файлов */
+      free(iter);
     }
     enable_refresh=TRUE;
   }

@@ -239,10 +239,10 @@ void menu_options_activated(void);
 /************** Create a Pack box  ************************************/
 
 #endif /* __HAVE_MYGTK_  */
-gboolean e_ink_refresh_part(void);
-gboolean e_ink_refresh_local(void);
-gboolean e_ink_refresh_full(void);
-gboolean e_ink_refresh_default(void);
+void e_ink_refresh_part(void);
+void e_ink_refresh_local(void);
+void e_ink_refresh_full(void);
+void e_ink_refresh_default(void);
 #define COLUMN_W (width_display * 83 / 100) /* Первая колонка в файлменеджере (для имён). 80 - ширина в процентах */
 #define COLUMN_W2 (width_display * 17 / 100)/* Вторая колонка в файлменеджере (для размеров). 20 - ширина в процентах */
 void Message(const char *title,const char *message);
@@ -252,7 +252,7 @@ extern int enable_refresh;/*Принудительно запретить обн
 /* gint focus_in_callback (void); // реакция на получение фокуса */
 /* gint focus_out_callback (void); // реакция на потерю фокуса */
 void wait_for_draw (void); 
-gint confirm_request(const char *title, const char *confirm_button, const char *reject_button);
+gboolean confirm_request(const char *title, const char *confirm_button, const char *reject_button);
 void create_panel (struct_panel *panel);
 char *get_current_iter (struct_panel *panel); /*возвращает итератор текущего файла из списка */
 void Qt_error_message(const char *message); /* Функция открывает на прошивках Qt сообщение об ошибке в стандартной читалке */
