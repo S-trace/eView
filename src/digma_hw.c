@@ -19,7 +19,7 @@
 #include "mylib.h"
 
 int hardware_has_backlight=FALSE, hardware_has_LED=FALSE, hardware_has_APM=FALSE, hardware_has_sysfs_sleep=FALSE;
-const char *LED_path=NULL, *backlight_path=NULL, *sysfs_sleep_path=NULL;
+const char *LED_path, *backlight_path, *sysfs_sleep_path;
 int LED_state[LED_STATES]; /* Массив содержащий значения которые надо писать в sysfs чтобы управлять LED */
 int previous_backlight_level; /* Уровень подсветки перед запуском eView */
 int suspended=FALSE; /* Текущее состояние книги */
@@ -32,12 +32,12 @@ extern int LED_notify; /* Оповещение светодиодом об об�
 int (*apm_suspend)(int fd); /* Функция из libapm.so, загружается через dlopen */
 
 /* Helper FB update function */
-void epaperUpdate(int ioctl_call, int mode)
+void epaperUpdate(unsigned long int ioctl_call, int mode)
 {
-  if (! enable_refresh)
+  if (enable_refresh == FALSE)
   {
     #ifdef debug_printf
-    printf ("Display refresh was locked, IGNORED (ioctl %d mode %d)!\n", ioctl_call, mode);
+    printf ("Display refresh was locked, IGNORED (ioctl %ld mode %d)!\n", ioctl_call, mode);
     #endif
     return;
   }
@@ -45,8 +45,8 @@ void epaperUpdate(int ioctl_call, int mode)
   if (framebuffer_descriptor >= 0)
   {
     if (QT)
-      usleep(245000); /* Иначе запись в видеопамять не успевает завершиться и получаем верхний левый угол новой картинки и нижний правый - прежней. */
-    ioctl(framebuffer_descriptor, ioctl_call, &mode);
+      (void)usleep(245000); /* Иначе запись в видеопамять не успевает завершиться и получаем верхний левый угол новой картинки и нижний правый - прежней. */
+      (void)ioctl(framebuffer_descriptor, ioctl_call, &mode);
   }
   #endif
 }
@@ -107,13 +107,13 @@ int read_int_from_file(const char *name) /*Чтение числа из файл
     char temp[256];
     if (fgets(temp, 256, file_descriptor) == 0)
     {
-      fclose(file_descriptor);
+      (void)fclose(file_descriptor);
       #ifdef debug_printf
       printf("Reading from %s failed!\n", name);
       #endif
       return 0;
     }
-    fclose(file_descriptor);
+    (void)fclose(file_descriptor);
     #ifdef debug_printf
     printf("Read '%s' from %s\n", temp, name);
     #endif
@@ -123,7 +123,7 @@ int read_int_from_file(const char *name) /*Чтение числа из файл
 
 void detect_hardware(void) /* Обнаружение оборудования и его возможностей */
 {  
-  if (!hardware_has_backlight) /* Digma R60G/GMini C6LHD (Qt) */
+  if (hardware_has_backlight == FALSE) /* Digma R60G/GMini C6LHD (Qt) */
   {    
     hardware_has_backlight=check_for_file ("/sys/class/backlight/boeye_backlight/brightness");
     if (hardware_has_backlight) 
@@ -136,7 +136,7 @@ void detect_hardware(void) /* Обнаружение оборудования и
     }
   }
   
-  if (!hardware_has_LED) /* Digma R60G/GMini C6LHD (Qt) */
+  if (hardware_has_LED == FALSE) /* Digma R60G/GMini C6LHD (Qt) */
   {
     hardware_has_LED=check_for_file ("/sys/class/leds/charger-led/brightness");
     if (hardware_has_LED) 
@@ -152,7 +152,7 @@ void detect_hardware(void) /* Обнаружение оборудования и
     }
   }
   
-  if (!hardware_has_LED) /* Ritmix RBK700HD GTK/Qt */
+  if (hardware_has_LED == FALSE) /* Ritmix RBK700HD GTK/Qt */
   {
     hardware_has_LED=check_for_file ("/sys/class/leds/axp192-led-classdev/brightness");
     if (hardware_has_LED)
@@ -168,7 +168,7 @@ void detect_hardware(void) /* Обнаружение оборудования и
     }
   }
 
-  if (!hardware_has_LED) /* Digma E600 GTK */
+  if (hardware_has_LED == FALSE) /* Digma E600 GTK */
   {
     hardware_has_LED=check_for_file ("/sys/devices/platform/boeye-leds/leds/da9030_led/brightness");
     if (hardware_has_LED)
@@ -184,14 +184,15 @@ void detect_hardware(void) /* Обнаружение оборудования и
     }
   }
   
-  if (!hardware_has_APM)
+  if (hardware_has_APM == FALSE)
   {
     hardware_has_APM=check_for_file ("/dev/apm_bios");
     if (hardware_has_APM)
     {      
-      dlerror();    /* Clear any existing error */
-      void *libapm_handle=dlopen("libapm.so", RTLD_NOW);
+      void *libapm_handle;
       char *error;
+      (void)dlerror();    /* Clear any existing error */
+      libapm_handle=dlopen("libapm.so", RTLD_NOW);
       if ((error = dlerror()) != 0)  
       {
         #ifdef debug_printf
@@ -199,7 +200,8 @@ void detect_hardware(void) /* Обнаружение оборудования и
         #endif
         hardware_has_APM=FALSE; /* Не можем управлять через APM, хотя существование файла в /dev/ даёт робкую надежду */
       }
-      dlerror();
+      free(error);
+      free(dlerror());
       apm_suspend=(int (*)(int))dlsym(libapm_handle,"apm_suspend");
       error = dlerror();
       if (error != NULL)  
@@ -209,6 +211,8 @@ void detect_hardware(void) /* Обнаружение оборудования и
         #endif
         hardware_has_APM=FALSE;
       }
+      free(error);
+//       free(libapm_handle); // Не надо - карается МОЛЧАЛИВЫМ сегфолтом 
     }
     
     if (!hardware_has_sysfs_sleep) 
@@ -252,7 +256,7 @@ void write_int_to_file(const char *file, int value)
   else
   {
     fprintf(file_descriptor, "%d", value);
-    fclose(file_descriptor);
+    (void)fclose(file_descriptor);
   }
 }
 
@@ -272,7 +276,7 @@ void write_string_to_file(const char *file, const char *value)
   else
   {
     fprintf(file_descriptor, "%s", value);
-    fclose(file_descriptor);
+    (void)fclose(file_descriptor);
   }
 }
 
@@ -284,20 +288,22 @@ void set_brightness(int value)
 
 void set_led_state (int state)
 {
-  if (LED_notify && hardware_has_LED)
+  if ((LED_notify == TRUE) && (hardware_has_LED == TRUE))
     write_int_to_file(LED_path, state);
 }
 
 void suspend_hardware(void)
 {
-  fflush (stdout);
+  int count=0;
+  (void)fflush (stdout);
   sync();
   #ifdef debug_printf
   printf("Suspending hardware\n");
   #endif
-  int count=0;
   do
   {
+    time_t endTime;
+    double duration;
     #ifdef debug_printf
     if (LED_notify)
       set_led_state(LED_ON);
@@ -309,8 +315,8 @@ void suspend_hardware(void)
       printf("Using APM\n");
       #endif
       int apm_bios=open("/dev/apm_bios", O_RDWR);
-      (*apm_suspend) (apm_bios);
-      close(apm_bios);
+      (void)(*apm_suspend) (apm_bios);
+      (void)close(apm_bios);
     }
     else if (hardware_has_sysfs_sleep)
     {
@@ -326,8 +332,8 @@ void suspend_hardware(void)
       #endif
       break;
     }
-    time_t endTime = time(NULL);
-    double duration = difftime(endTime, startTime);
+    endTime = time(NULL);
+    duration = difftime(endTime, startTime);
     if ((int) duration <= 1)
     {
       #ifdef debug_printf
@@ -354,7 +360,7 @@ void suspend_hardware(void)
       break;
       #endif
     }
-    usleep(100000);  
+    (void)usleep(100000);  
   }
   while (TRUE);
   sync();
