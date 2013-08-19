@@ -11,5 +11,5 @@ void find_x_crop (int height);
 void find_y_crop (int width);
 void find_width_crop (int width, int height);
 void find_height_crop (int width, int height);
-void find_crop_image_coords (image *target);
-int return_crop_coord (int i);
+void find_crop_image_coords (const image *target);
+int return_crop_coord (int i) __attribute__((pure));

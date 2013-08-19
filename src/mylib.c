@@ -148,24 +148,24 @@ char *get_natural_size(long size) /* Возвращает размер стро�
   return(xconcat(itoa(size), " B  ")); /* Надеюсь, что эта книга никогда не столкнётся с файлами терабайтного размера */
 }
 
-char *get_natural_time(int time) /* Возвращает строку в формате HH:MM:ss */
+char *get_natural_time(int seconds) /* Возвращает строку в формате HH:MM:ss */
 {
   char *value;
-  if (time/3600>0) /* Если число секунд > 3600 */
+  if (seconds/3600>0) /* Если число секунд > 3600 */
   {
-    asprintf(&value,"%02d:%02d:%02d", time/3600, (time%3600)/60, time%60);
+    asprintf(&value,"%02d:%02d:%02d", seconds/3600, (seconds%3600)/60, seconds%60);
     return(value);
   }
   else 
   {
-    if (time/60>0) /* Если 3600 > число секунд > 60 */
+    if (seconds/60>0) /* Если 3600 > число секунд > 60 */
     {
-      asprintf(&value,"%02d:%02d", time/60, time%60);
+      asprintf(&value,"%02d:%02d", seconds/60, seconds%60);
       return(value);
     }
     else /* Если 60 > число секунд */
     {
-      value=strdup(itoa(time));
+      value=strdup(itoa(seconds));
       return(value);
     }
   }
@@ -180,7 +180,7 @@ void xsystem(const char *command) /* Вывод на экран и запуск 
   system(command);
 }
 
-char *trim_line(char *input_line) /* Удаляет последний символ у строки */
+void trim_line(char *input_line) /* Удаляет последний символ у строки */
 {
   #ifdef debug_printf
   printf("trim_line called for line '%s'\n", input_line);
@@ -189,10 +189,10 @@ char *trim_line(char *input_line) /* Удаляет последний симв�
   {
     size_t len=strlen(input_line)-1;
     input_line[len]='\0';
-    return input_line;
+    return;
   }
   else
-    return input_line;
+    return;
 }
 
 char *find_first_picture_name(struct_panel *panel) 
@@ -306,7 +306,7 @@ char *find_next_directory(struct_panel *panel) /* Поиск следующей 
   while(! feof(fp)) { /* Пока не конец файла */
     fgets ( next_directory, PATHSIZE+1, fp); /* Читаем строку из файла */
     trim_line(next_directory); /* Удаляем \n с конца строки */
-    if (!strcmp (next_directory, panel->path) || !strcmp (trim_line(next_directory), panel->path)) /* Сравниваем строку с текущим каталогом */
+    if (!strcmp (next_directory, panel->path) || !strcmp (next_directory, panel->path)) /* Сравниваем строку с текущим каталогом */
     {
       fgets ( next_directory, PATHSIZE+1, fp); /* При совпадении читаем ещё одну строку из файла */
       fclose(fp);/* Закрываем файл */
@@ -338,7 +338,7 @@ char *find_prev_directory(struct_panel *panel) /* Поиск предыдуще�
     #ifdef debug_printf
     printf ("Filename '%s'\n", next_line);
     #endif
-    if (!strcmp (next_line, panel->path) || !strcmp (trim_line(next_line), panel->path)) /* Сравниваем строку с текущим каталогом */
+    if (!strcmp (next_line, panel->path) || !strcmp (next_line, panel->path)) /* Сравниваем строку с текущим каталогом */
     {
       fclose(fp);/* Закрываем файл */
       #ifdef debug_printf

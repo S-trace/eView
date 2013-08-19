@@ -15,7 +15,7 @@ static int coord_crop[4];
 static int rowstride, n_channels;
 static guchar *pixels, *p;
 
-void find_crop_image_coords(image *target)
+void find_crop_image_coords(const image *target)
 {
   x_crop = 0;
   y_crop = 0;
@@ -358,9 +358,8 @@ void find_height_crop (int width, int height)
   }
 }
 
+int return_crop_coord (int i) __attribute__((pure));
 int return_crop_coord (int i)
 {
-  if (i==3)
-    xfree (&pixels);
   return coord_crop[i];
 }

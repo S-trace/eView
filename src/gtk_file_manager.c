@@ -227,13 +227,10 @@ char *iter_from_filename (char *fname, struct_panel *panel) /*возвращае
       valid = gtk_tree_model_iter_next (model, &iter);
     }
   }
-  else
-  {
-    #ifdef debug_printf
-    printf("Iter stamp is 0, something bad happened!\n");
-    #endif
-  }
-  return strdup("0");
+  #ifdef debug_printf
+  printf("Iter stamp is 0, something bad happened!\n");
+  #endif
+  return (strdup("0"));
 }
 
 void update(struct_panel *panel) /*обновление списка */
@@ -470,9 +467,9 @@ void init (void)
   }
 }
   get_screensavers_list();
-  current.name=strdup("");
-  preloaded.name=strdup("");
-  screensaver.name=strdup("");
+  current.name[0]='\0';
+  preloaded.name[0]='\0';
+  screensaver.name[0]='\0';
   current.pixbuf=NULL;
   preloaded.pixbuf=NULL;
   screensaver.pixbuf=NULL;
@@ -532,11 +529,9 @@ int main (int argc, char **argv)
 {
   FILE *fp;
   signal(SIGSEGV, (__sighandler_t)sigsegv_handler);
+  signal(SIGABRT, (__sighandler_t)sigsegv_handler);
   init();
   gtk_init (&argc, &argv);
-  #ifdef debug_printf
-  set_led_state (LED_state[LED_BLINK_SLOW]);
-  #endif
   #ifdef __amd64
   width_display = 570 ;
   height_display = 762 ; /* Для отладки на ПК */
@@ -558,7 +553,7 @@ int main (int argc, char **argv)
   printf ("Starting eView in directory '%s'\n", xgetcwd(NULL));
   #endif
   Message(EVIEW_IS_STARTING, PLEASE_WAIT);
-  top_panel.path = cfg_file_path (); /* Получаем месторасположения конфига (текущий каталог в момент запуска) - на книге это /home/root/ */
+  top_panel.path=cfg_file_path (); /* Получаем месторасположения конфига (текущий каталог в момент запуска)*/
   
   if ((fp = fopen (top_panel.path, "rb"))==NULL) /* Действия когда каталог не существует:  */
   {
@@ -567,7 +562,8 @@ int main (int argc, char **argv)
     chdir("/media/mmcblk0p1/"); /* Для новых книг */
     chdir("/userdata/media/mmcblk0p1/"); /* Для старых книг */
     /* Неизвестно, где мы оказались после предыдущих двух переходов (сработал только один):  */
-    write_config_string("top_panel.path", top_panel.path = xgetcwd(top_panel.path)); 
+    top_panel.path = xgetcwd(top_panel.path);
+    write_config_string("top_panel.path", top_panel.path ); 
   }
   else 
   {

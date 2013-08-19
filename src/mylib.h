@@ -43,7 +43,7 @@ char *xgetcwd (char *cwd);
 char *xconcat(const char *path,const char *filename);
 char *xconcat_path_file(const char *path,const char *filename);
 int  xstrlen(const char* s);
-char *trim_line(char *input_line);
+void trim_line(char *input_line);
 char *itoa(long i);
 char *get_natural_time(int time); /* Возвращает строку в формате HH:MM:ss */
 void read_string(const char *name, char **destination);

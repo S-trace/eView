@@ -13,11 +13,12 @@ int crop, rotate, frame, keepaspect, fm_toggle, move_toggle, speed_toggle, clock
 int backlight, sleep_timeout;
 char *system_sleep_timeout;
 
-void cfg_file_path (void)
+char *cfg_file_path (void)
 {
   char *current_dir=xgetcwd (cfg_directory);
   cfg_directory = xconcat_path_file(current_dir, ".eView");
   xfree(&current_dir);
+  return (strdup(cfg_directory));
 }
 
 int read_config_int(const char *name) /*Чтение числового параметра конфига */
@@ -238,7 +239,7 @@ void create_cfg (void)  /*создание файлов настроек по у
   write_config_int("LED_notify", TRUE);
   write_config_int("backlight", FALSE);
   write_config_int("sleep_timeout", 60);
-  write_config_string("top_panel.path", "/");
+  write_config_string("top_panel.path", cfg_directory); // Хз почему, но если установить "/" - прога крашится при первом запуске
   write_config_string("top_panel.selected_name", "../");
   write_config_string("top_panel.archive_cwd", "");
   write_config_string("top_panel.last_name", "");

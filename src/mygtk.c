@@ -384,9 +384,10 @@ void go_upper(struct_panel *panel) /* Переход на уровень вве�
     archive_go_upper(panel);
   else
   {
-/*     if (strcmp (panel->path, "/") == 0) */
-/*       return; */
-    char *saved_path=xconcat_path_file(strrchr(trim_line(panel->path),'/')+1, ""); /* Сохраняем текущий каталог */
+    if (strcmp (panel->path, "/") == 0)
+      return; 
+    trim_line(panel->path);
+    char *saved_path=xconcat_path_file(strrchr(panel->path,'/')+1, ""); /* Сохраняем текущий каталог */
     #ifdef debug_printf
     printf("saved_path=%s\n", saved_path);
     #endif

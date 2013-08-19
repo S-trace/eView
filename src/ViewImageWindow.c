@@ -4,6 +4,8 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <libgen.h> /*basename() */
 #include <gtk/gtk.h>
+#include <stdlib.h>
+
 #include "gtk_file_manager.h"
 #include "digma_hw.h"
 #include "mygtk.h"
@@ -41,6 +43,9 @@ void update_image_dimentions(image *target) /* Перерассчёт разме
 
 void pixbuf_unref(GdkPixbuf *pixbuf)
 {
+  #ifdef debug_printf
+  printf("pixbuf %p unreferenced\n", pixbuf);
+  #endif  
   if (G_IS_OBJECT(pixbuf)) g_object_unref(pixbuf);
 }
 
@@ -51,13 +56,12 @@ void die_viewer_window (void)
   #endif
   enable_refresh=FALSE;
   gtk_widget_destroy(ImageWindow);
-  in_picture_viewer=FALSE; 
-  if (suppress_panel && ! QT)
-    start_panel();    
+  in_picture_viewer=FALSE;
+  if ((suppress_panel == TRUE) && QT != TRUE)
+    start_panel();
   wait_for_draw();
   enable_refresh=TRUE;
 }
-
 
 int check_image_settings(image *target)
 {
@@ -111,11 +115,13 @@ void reset_image(image *target)
   printf("Resetting image %p\n", (void*)target);
   #endif
   target->name[0] = '\0';
-  target->valid=target->keepaspect=target->rotate=target->frame=target->crop=target->aspect_rate=target->width=target->height=0; /* Сбрасываем всё остальное в структуре */
+  target->valid=target->keepaspect=target->rotate=target->frame=target->crop=target->width=target->height=0; /* Сбрасываем всё остальное в структуре */
+  target->aspect_rate=(double)0;
   pixbuf_unref(target->pixbuf);
+  target->pixbuf=NULL;
 }
 
-gboolean load_image(char *filename, struct_panel *panel, int enable_actions, image *target) /* Загружаем и готовим к показу картинку */
+gboolean load_image(const char *filename, struct_panel *panel, int enable_actions, image *target) /* Загружаем и готовим к показу картинку */
 {
   if (filename==NULL || filename[0]=='\0') return FALSE; /*Если функция вызвана с пустым именем для загрузки*/
     if ((strcmp(target->name,filename) == 0) && (check_image_settings(target) == TRUE)) /*Если уже загружено нужное изображение с нужными настройками*/
@@ -140,7 +146,9 @@ gboolean load_image(char *filename, struct_panel *panel, int enable_actions, ima
       #ifdef debug_printf
       printf("preloaded_image correct\n");
       #endif
-      target->name=strdup(preloaded.name);
+      strncpy(target->name, preloaded.name, PATHSIZE);
+      target->name[PATHSIZE]='\0';
+      
       target->pixbuf=preloaded.pixbuf; /* Не копирование - только указатель! */
       preloaded.name[0]='\0';
       preloaded.pixbuf=NULL;
@@ -161,6 +169,7 @@ gboolean load_image(char *filename, struct_panel *panel, int enable_actions, ima
   }
   else
   {
+    char *name=NULL;
     #ifdef debug_printf
     if (GDK_IS_PIXBUF(preloaded.pixbuf))/*Если в пиксбуфе что-то лежало */
     {
@@ -170,15 +179,26 @@ gboolean load_image(char *filename, struct_panel *panel, int enable_actions, ima
         printf("PRELOADED IMAGE IS WRONG!!! have '%s', want '%s'\n",preloaded.name,filename);
     }
     #endif
-    target->name=basename(filename);
+    name=strdup(filename);
+    strncpy(target->name,basename(name),PATHSIZE);
+    target->name[PATHSIZE]='\0';
+    free(name);
+    char *extracted_file_name;
     if (panel->archive_depth > 0 && !suspended)
     {
-      filename=basename(filename); /* Хрен уследишь, откуда с путём прилетит, а откуда без! */
-      filename=xconcat(panel->archive_cwd, filename);
-      archive_extract_file(panel->archive_stack[panel->archive_depth], filename, "/tmp/");
-      filename=xconcat("/tmp/", filename);
+      char *archive_file_name;
+      archive_file_name=xconcat(panel->archive_cwd, target->name);
+      archive_extract_file(panel->archive_stack[panel->archive_depth], archive_file_name, "/tmp/");
+      extracted_file_name=xconcat("/tmp/", archive_file_name);
+      free (archive_file_name);
+      target->pixbuf=gdk_pixbuf_new_from_file (extracted_file_name, NULL);
+      free (extracted_file_name);
     }
-    target->pixbuf=gdk_pixbuf_new_from_file (filename, NULL);
+    else
+      target->pixbuf=gdk_pixbuf_new_from_file (filename, NULL);
+    #ifdef debug_printf
+    printf("pixbuf %p loaded from file\n",target->pixbuf);
+    #endif    
     update_image_dimentions(target);
     set_image_settings(target);
     
@@ -197,7 +217,7 @@ gboolean load_image(char *filename, struct_panel *panel, int enable_actions, ima
       #endif
       remove(filename);
     }
-    image_resize (rotate, crop, keepaspect, target);
+    image_resize (target);
   }
   
   return TRUE;
@@ -227,8 +247,8 @@ gboolean show_image(image *target, struct_panel *panel, int enable_actions) /* �
 
 gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *event, struct_panel *panel) /*реакция на кнопки */
 {
+  char *next_file;
   if (check_key_press(event->keyval, panel)) return TRUE;
-  char *new_file; /*имя следующего файла с картинкой */
   #ifdef debug_printf
   printf("Caught in viewer: %d\n",event->keyval);
   #endif
@@ -293,20 +313,20 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
           }
         }
       }
-      new_file = next_image (panel->selected_name, TRUE, panel);
-      if (new_file==NULL) 
+      next_file = next_image (panel->selected_name, TRUE, panel);
+      if (next_file==NULL) 
       {
         interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
         return FALSE;
       }
-      panel->selected_name = basename(new_file);
-      if (! is_picture(new_file)) 
+      panel->selected_name = basename(next_file);
+      if (! is_picture(next_file)) 
       {
         interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
         return FALSE;
       }
       /*g_print ("загрузка новой картинки\n"); */
-      load_image (new_file, panel, TRUE, &current);
+      load_image (next_file, panel, TRUE, &current);
       show_image (&current, panel, TRUE);
       if (frame && current.frames >= 2) 
         move_left_to_left = TRUE;
@@ -372,14 +392,13 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
           }
         }
         if (rotate) gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), R_SHIFT);
-        new_file = prev_image (panel->selected_name, TRUE, panel);
-        if (new_file==NULL) 
+        next_file = prev_image (panel->selected_name, TRUE, panel);
+        if (next_file==NULL) 
         {
           interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
           return FALSE;
         }
-        panel->selected_name = basename(new_file);
-        
+        panel->selected_name = basename(next_file);
         if (! is_picture(panel->selected_name)) 
         {
           interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
@@ -409,12 +428,10 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
           load_image(next_image (panel->selected_name, FALSE, panel), panel, FALSE, &preloaded);
         interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
         return FALSE;
-        break;
         
         case KEY_BACK:/*GDK_x: */
           die_viewer_window();
           return FALSE;
-          break;
           
         case   GDK_m:
         case   KEY_MENU:
@@ -422,7 +439,6 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
         case   KEY_MENU_QT:
           start_picture_menu (panel, ImageWindow); /* открываем меню картинки */
           return FALSE;
-          break;
           
         case   KEY_REFRESH_LIBROII:
         case   KEY_REFRESH_QT:
@@ -451,6 +467,9 @@ void image_rotate(image *target)/*вращение 90 -против часово
 
 void image_zoom_rotate (image *target)
 {
+  #ifdef debug_printf
+  printf("image_zoom_rotate called\n");
+  #endif
   double height = gdk_pixbuf_get_height (target->pixbuf);
   double width  = gdk_pixbuf_get_width  (target->pixbuf);
   GdkPixbuf *pixbuf_key;
@@ -489,12 +508,13 @@ void image_zoom_rotate (image *target)
   target->frames = frames_search(target);
 }
 
-void image_resize (int mode_rotate, int mode_crop, int keep_aspect, image *target) /* изменение разрешения и подрезка полей */
+void image_resize (image *target) /* изменение разрешения и подрезка полей */
 {
   #ifdef debug_printf
   printf("image_resize called\n");
   #endif
-  if (mode_crop && target->width>115 && target->height>115) {
+  if (crop == TRUE && target->width>115 && target->height>115) 
+  {
     find_crop_image_coords (target);
     if (return_crop_coord(0) != -1) {
       int x = return_crop_coord(0);
@@ -502,14 +522,17 @@ void image_resize (int mode_rotate, int mode_crop, int keep_aspect, image *targe
       int w = return_crop_coord(2);
       int h = return_crop_coord(3);
       
-      GdkPixbuf *pixbuf_key = gdk_pixbuf_copy (gdk_pixbuf_new_subpixbuf(target->pixbuf, x, y, w, h));
+      GdkPixbuf *pixbuf_key = gdk_pixbuf_new_subpixbuf(target->pixbuf, x, y, w, h);
+      #ifdef debug_printf
+      printf("pixbuf %p created by gdk_pixbuf_new_subpixbuf() (crop margins), width=%d, height=%d\n",pixbuf_key, gdk_pixbuf_get_width(pixbuf_key), gdk_pixbuf_get_height(pixbuf_key));
+      #endif
       pixbuf_unref(target->pixbuf);
-      target->pixbuf = pixbuf_key;
-      update_image_dimentions(target);
+      target->pixbuf=pixbuf_key;
+      update_image_dimentions(target);      
     }
   }
   
-  if (mode_rotate) /*удвоение размера с поворотом */
+  if (rotate) /*удвоение размера с поворотом */
   {
     image_zoom_rotate (target);
     return;
@@ -523,8 +546,9 @@ void image_resize (int mode_rotate, int mode_crop, int keep_aspect, image *targe
   }
   
   /* Скалировать оригинал до экрана */
-  if (keep_aspect)
+  if (keepaspect)
   {
+    GdkPixbuf *temp;
     double display_ar = (double)(width_display)/(double)(height_display); /* Соотношение сторон экрана */
     #ifdef debug_printf
     printf("resolution: rx=%i ry=%i dar=%f iar=%f\n", target->width, target->height, display_ar, target->aspect_rate);
@@ -543,11 +567,17 @@ void image_resize (int mode_rotate, int mode_crop, int keep_aspect, image *targe
     #ifdef debug_printf
     printf("scaling pic from %dx%d to %dx%d\n",target->width,target->height,scaled_x,scaled_y);
     #endif
-    GdkPixbuf *pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf, scaled_x, scaled_y, GDK_INTERP_BILINEAR);
+    temp = gdk_pixbuf_scale_simple (target->pixbuf, scaled_x, scaled_y, GDK_INTERP_BILINEAR);
+    #ifdef debug_printf
+    printf("pixbuf %p created by gdk_pixbuf_scale_simple ()\n",temp);
+    #endif
     pixbuf_unref(target->pixbuf);
-    target->pixbuf = gdk_pixbuf_copy (pixbuf_key);
+    target->pixbuf = gdk_pixbuf_copy (temp);
+    #ifdef debug_printf
+    printf("pixbuf %p created by gdk_pixbuf_copy()\n",target->pixbuf);
+    #endif
     update_image_dimentions(target);
-    pixbuf_unref(pixbuf_key);
+    pixbuf_unref(temp);
   }
   else
   {
@@ -563,7 +593,7 @@ void image_resize (int mode_rotate, int mode_crop, int keep_aspect, image *targe
   return;
 }
 
-void ViewImageWindow(char *file, struct_panel *panel, int enable_actions) /*создание изображения через GdkPixbuf */
+void ViewImageWindow(const char *file, struct_panel *panel, int enable_actions) /*создание изображения через GdkPixbuf */
 {
   /* Убираем хэндлер с обработки фокуса фэйлменеджером */
   /*   g_signal_handlers_disconnect_by_func( window, focus_in_callback, NULL ); */

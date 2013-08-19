@@ -5,7 +5,7 @@ void create_cfg (void);
 void read_configuration (void);
 void write_archive_stack(const char *name, struct_panel *panel);
 
-void cfg_file_path (void);
+char *cfg_file_path (void);
 void reset_config(void);
 extern char *archive_name, *archive_cwd;
 extern char archive_stack[16][PATHSIZE+1];/*Стек имён архивов */
