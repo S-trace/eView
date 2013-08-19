@@ -1,22 +1,25 @@
 name ?= eView
 version ?= 063
 lang ?= russian
+CFLAGS+=-std=c99 -D_GNU_SOURCE -Winit-self -Wformat=2 -Wmissing-include-dirs -Wswitch-default -fipa-pure-const -Wfloat-equal -Wundef -Wshadow -Wcast-qual -Wwrite-strings -Wlogical-op -Wall -Werror 
+LDFLAGS+=-lX11 -ldl -lpthread
 DFLAGS = -MD
 ifeq ($(MAKECMDGOALS), arm)
 include libro.mk
 T_ARCH=ARM
-else
-include desktop.mk
-T_ARCH=x86
-endif
-
-CFLAGS += -Wextra  -Dlanguage_$(lang)
-ifeq ($(MAKECMDGOALS), debug)
+else ifeq ($(MAKECMDGOALS), debug)
 include libro.mk
 T_ARCH=ARM
 CFLAGS += -Ddebug_printf 
 LDFLAGS += -rdynamic
+else
+include desktop.mk
+CFLAGS+=-Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn
+T_ARCH=x86
+
 endif
+
+CFLAGS += -Wextra  -Dlanguage_$(lang)
 
 SOURCE_PATH=src
 
