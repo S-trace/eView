@@ -58,21 +58,21 @@
 #define SCROLL			((int) 0)
 #define NO_SCROLL		((int) 1)
 #define AUTOSCROLL		((int) 1)
-#define NO_AUTOSCROLL	((int) 0)
+#define NO_AUTOSCROLL	        ((int) 0)
 
 #define	SHOW_FILE_OP_BUTTONS	((int) 0)
 #define	HIDE_FILE_OP_BUTTONS	((int) 1)
 
-#define	ONE_BUTTON				((int) 1)
+#define	ONE_BUTTON		((int) 1)
 #define	ONE_BUTTON_ONE_CHECK	((int) 2)
-#define	TWO_BUTTONS				((int) 3)
+#define	TWO_BUTTONS		((int) 3)
 #define	TWO_BUTTONS_ONE_CHECK	((int) 4)
-#define	THREE_BUTTONS			((int) 5)
+#define	THREE_BUTTONS		((int) 5)
 
-#define	NOT_HOMOGENEUS	((int) 0)
+#define	NOT_HOMOGENEUS	        ((int) 0)
 #define HOMOGENEUS		((int) 1)
 
-#define	NOT_FIRST_TIME	((int) 0)
+#define	NOT_FIRST_TIME	        ((int) 0)
 #define FIRST_TIME		((int) 1)
 
 #ifdef DEBUG
@@ -86,7 +86,7 @@
 #endif
 
 #define IS_SET(x)		(x)==1
-#define IS_NOT_SET(x)	(x)==0
+#define IS_NOT_SET(x)	        (x)==0
 
 #define ACTIVITY		TRUE
 #define PULSE			FALSE
