@@ -66,8 +66,8 @@ typedef struct {
 } struct_panel; 
 
 void update (struct_panel *panel);/*обновление списка */
-void move_selection(const char *move_to, struct_panel *panel); /*сдвиг выделения */
-char *iter_from_filename (char *fname, struct_panel *panel); /*возвращает итератор файла из списка */
+void move_selection(const char *move_to, const struct_panel *const panel); /*сдвиг выделения */
+char *iter_from_filename (const char *fname, const struct_panel *panel); /*возвращает итератор файла из списка */
 void start_sleep_timer(void);
 void second_panel_hide(void);
 void second_panel_show(void);

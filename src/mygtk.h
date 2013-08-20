@@ -258,3 +258,4 @@ char *get_current_iter (struct_panel *panel); /*возвращает итера�
 void Qt_error_message(const char *message); /* Функция открывает на прошивках Qt сообщение об ошибке в стандартной читалке */
 void enter_suspend(struct_panel *panel); /* Показывает скринсейвер и усыпляет железо */
 int check_key_press(guint keyval, struct_panel *panel); /* Проработка нажатия кнопки питания при сне */
+void select_file_by_name(const char * const name, const struct_panel * const panel);

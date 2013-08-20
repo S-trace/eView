@@ -42,7 +42,6 @@ int shift (int height, int sum_frame, int l_scr)
     return width_display;
   else
     return s_frame - l_scr;
-  return 0;
 }
 
 /*то же что и shift() но в другую сторону, влевo */
@@ -77,5 +76,4 @@ int shift_back (int height, int sum_frame, int l_scr)
     }
     return r_scr - e_frame;
   }
-  return 0;
 }

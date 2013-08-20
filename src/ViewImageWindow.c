@@ -63,10 +63,11 @@ void die_viewer_window (void)
   enable_refresh=TRUE;
 }
 
-int check_image_settings(image *target)
+int check_image_settings(const image *const target) __attribute__((pure));
+int check_image_settings(const image *const target)
 {
   #ifdef debug_printf
-  printf("Checking image %p settings\n", (void*)target);
+  printf("Checking image %p settings\n", target);
   #endif
   if (target->valid)
   {
@@ -75,14 +76,14 @@ int check_image_settings(image *target)
     if (target->rotate!= rotate) return FALSE;
     if (target->keepaspect != keepaspect) return FALSE;
     #ifdef debug_printf
-    printf("Image %p is correct!\n", (void*)target);
+    printf("Image %p is correct!\n", target);
     #endif
     return TRUE;
   }
   else
   {
     #ifdef debug_printf
-    printf("Image %p is invalid!\n", (void*)target);
+    printf("Image %p is invalid!\n", target);
     #endif
   }
   return FALSE;
@@ -109,10 +110,10 @@ void set_image_settings(image *target)
   target->valid=TRUE;
 }
 
-void reset_image(image *target)
+void reset_image(image *const target)
 {
   #ifdef debug_printf
-  printf("Resetting image %p\n", (void*)target);
+  printf("Resetting image %p\n", target);
   #endif
   target->name[0] = '\0';
   target->valid=target->keepaspect=target->rotate=target->frame=target->crop=target->width=target->height=0; /* Сбрасываем всё остальное в структуре */
@@ -121,7 +122,7 @@ void reset_image(image *target)
   target->pixbuf=NULL;
 }
 
-gboolean load_image(const char *filename, struct_panel *panel, int enable_actions, image *target) /* Загружаем и готовим к показу картинку */
+gboolean load_image(const char *const filename, const  struct_panel *const panel, const int enable_actions, image *const target) /* Загружаем и готовим к показу картинку */
 {
   if (filename==NULL || filename[0]=='\0') return FALSE; /*Если функция вызвана с пустым именем для загрузки*/
     if ((strcmp(target->name,filename) == 0) && (check_image_settings(target) == TRUE)) /*Если уже загружено нужное изображение с нужными настройками*/
@@ -169,7 +170,7 @@ gboolean load_image(const char *filename, struct_panel *panel, int enable_action
   }
   else
   {
-    char *name=NULL;
+    char *name=NULL, *extracted_file_name;
     #ifdef debug_printf
     if (GDK_IS_PIXBUF(preloaded.pixbuf))/*Если в пиксбуфе что-то лежало */
     {
@@ -180,11 +181,10 @@ gboolean load_image(const char *filename, struct_panel *panel, int enable_action
     }
     #endif
     name=strdup(filename);
-    strncpy(target->name,basename(name),PATHSIZE);
+    strncpy(target->name,basename(name),PATHSIZE); // basename() - free() не требует
     target->name[PATHSIZE]='\0';
     free(name);
-    char *extracted_file_name;
-    if (panel->archive_depth > 0 && !suspended)
+    if (panel->archive_depth > 0 && (suspended == FALSE))
     {
       char *archive_file_name;
       archive_file_name=xconcat(panel->archive_cwd, target->name);
@@ -205,17 +205,21 @@ gboolean load_image(const char *filename, struct_panel *panel, int enable_action
     if (target->pixbuf == NULL)
     {
       if (enable_actions)
-        Message (ERROR, xconcat(UNABLE_TO_SHOW, filename));
+      {
+        char *body=xconcat(UNABLE_TO_SHOW, filename);
+        Message (ERROR, body);
+        free(body);
+      }
       reset_image(target);
       return FALSE;
     }
     
-    if (panel->archive_depth > 0 && !suspended)
+    if (panel->archive_depth > 0 && (suspended == FALSE))
     {
       #ifdef debug_printf
       printf("Removing extracted '%s'\n",filename);
       #endif
-      remove(filename);
+      (void)remove(filename);
     }
     image_resize (target);
   }
@@ -232,13 +236,17 @@ gboolean show_image(image *target, struct_panel *panel, int enable_actions) /* �
   printf("showed '%s' (enable_actions=%d)\n", target->name, enable_actions);
   if (enable_actions)
   {
+    char *iter;
     write_config_int("viewed_pages", ++viewed_pages); /* Сохраняем на диск счётчик страниц */
+    free(panel->last_name);
     panel->last_name=strdup(target->name);
     if (panel == &top_panel)
       write_config_string("top_panel.last_name", panel->last_name);
     else
       write_config_string("bottom_panel.last_name", panel->last_name);
-    move_selection(iter_from_filename (basename(panel->last_name), panel), panel);
+    iter=iter_from_filename (basename(panel->last_name), panel); // basename() - free() не требует
+    move_selection(iter, panel);
+    free(iter);
   }
   gtk_window_set_title(GTK_WINDOW(ImageWindow), target->name);
   wait_for_draw(); /* Ожидаем отрисовки всего */
@@ -319,15 +327,22 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
         interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
         return FALSE;
       }
-      panel->selected_name = basename(next_file);
-      if (! is_picture(next_file)) 
+      char *full_name=strdup(next_file);
+      char *iter=iter_from_filename (basename(full_name), panel);
+      move_selection(iter, panel);
+      free(iter);
+      free(full_name);
+      if (is_picture(next_file) == FALSE) 
       {
         interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
+        free(next_file);
         return FALSE;
       }
       /*g_print ("загрузка новой картинки\n"); */
-      load_image (next_file, panel, TRUE, &current);
-      show_image (&current, panel, TRUE);
+      (void)load_image (next_file, panel, TRUE, &current);
+      (void)show_image (&current, panel, TRUE);
+      free(next_file);
+      
       if (frame && current.frames >= 2) 
         move_left_to_left = TRUE;
       if (manga)
@@ -343,15 +358,18 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
         if (double_refresh) e_ink_refresh_local();
         e_ink_refresh_full ();
       if(preload_enable) /* Предзагрузка */
-        load_image(next_image (panel->selected_name, FALSE, panel), panel, FALSE, &preloaded);
+      {
+        char *next=next_image (panel->selected_name, FALSE, panel);
+        (void)load_image(next, panel, FALSE, &preloaded);
+        free(next);
+      }
       interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
       return FALSE;
-      break;
       
       case KEY_PGUP:/*GDK_Left: */
       case KEY_LEFT:/*GDK_Left: */
         interface_is_locked=TRUE; /* Блокируем интерфейс на время длительной операции по показу картинки */
-        if (frame && current.frames >= 2)
+        if ((frame == TRUE) && current.frames >= 2)
         {
           value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
           if (value > 2) {
@@ -398,14 +416,17 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
           interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
           return FALSE;
         }
-        panel->selected_name = basename(next_file);
-        if (! is_picture(panel->selected_name)) 
+        select_file_by_name(next_file, panel);
+        if (is_picture(panel->selected_name) == FALSE) 
         {
+          free(next_file);
           interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
           return FALSE;
         }
-        load_image (panel->selected_name, panel, TRUE, &current);
-        show_image (&current, panel, TRUE);
+        (void)load_image (panel->selected_name, panel, TRUE, &current);
+        (void)show_image (&current, panel, TRUE);
+        free(next_file);
+        
         if (manga)
           gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), L_SHIFT);
         else
@@ -425,7 +446,11 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
         else
           write_config_string("bottom_panel.last_name", panel->selected_name);
         if(preload_enable) /* Предзагрузка */
-          load_image(next_image (panel->selected_name, FALSE, panel), panel, FALSE, &preloaded);
+        {
+          char *next=next_image(panel->selected_name, FALSE, panel);
+          (void)load_image(next, panel, FALSE, &preloaded);
+          free(next);
+        }
         interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
         return FALSE;
         
@@ -451,18 +476,6 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
           #endif  
           return FALSE;
   }
-  return FALSE;
-}
-
-void image_rotate(image *target)/*вращение 90 -против часовой стрелки */
-{
-  
-  GdkPixbuf *pixbuf_key = gdk_pixbuf_rotate_simple (target->pixbuf, GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
-  pixbuf_unref(target->pixbuf);
-  target->pixbuf = gdk_pixbuf_copy (pixbuf_key);
-  pixbuf_unref(pixbuf_key);
-  update_image_dimentions(target);
-  return;
 }
 
 void image_zoom_rotate (image *target)
@@ -478,7 +491,7 @@ void image_zoom_rotate (image *target)
     return;
   
   /*оригинал слишком широкий и большой  - растянуть в ширину */
-  if (width > height && width >= width_display) 
+  if (width > height && (int)width >= width_display) 
   {
     pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf, width_display * 2, height_display, GDK_INTERP_BILINEAR);
     pixbuf_unref(target->pixbuf);
@@ -541,7 +554,10 @@ void image_resize (image *target) /* изменение разрешения и 
   /*если оригинал слишком широкий - повернуть на 90 */
   if (target->width > target->height)
   {
-    image_rotate(target);
+    GdkPixbuf *pixbuf_key = gdk_pixbuf_rotate_simple (target->pixbuf, GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
+    pixbuf_unref(target->pixbuf);
+    target->pixbuf = gdk_pixbuf_copy (pixbuf_key);
+    pixbuf_unref(pixbuf_key);
     update_image_dimentions(target);
   }
   
@@ -606,7 +622,7 @@ void ViewImageWindow(const char *file, struct_panel *panel, int enable_actions) 
     #endif
     return;
   }
-  if (suppress_panel && ! QT)
+  if (suppress_panel && (QT == FALSE))
     kill_panel();
   if (preloaded.name == NULL)
     preloaded.name[0]='\0';
@@ -619,7 +635,7 @@ void ViewImageWindow(const char *file, struct_panel *panel, int enable_actions) 
   #ifndef __amd64
   gtk_window_fullscreen  (GTK_WINDOW(ImageWindow));  /*блокировка окошка "часиков", нужно отключать для отображения на пк */
   #endif
-  g_signal_connect (G_OBJECT (ImageWindow), "key_press_event", G_CALLBACK (which_key_press), panel);
+  (void)g_signal_connect (G_OBJECT (ImageWindow), "key_press_event", G_CALLBACK (which_key_press), panel);
   scrolled_window = gtk_scrolled_window_new (NULL, NULL);
   gtk_container_set_border_width(GTK_CONTAINER(scrolled_window), 0); /* Хрен знает работает ли, но хуже не стало */
   gtk_container_add (GTK_CONTAINER (ImageWindow), scrolled_window);
@@ -628,8 +644,8 @@ void ViewImageWindow(const char *file, struct_panel *panel, int enable_actions) 
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
   gimage = gtk_image_new (); 
   
-  load_image(file, panel, enable_actions, &current);
-  show_image(&current, panel, enable_actions);
+  (void)load_image(file, panel, enable_actions, &current);
+  (void)show_image(&current, panel, enable_actions);
   
   adjust = gtk_adjustment_new (0.0, 0.0, 200.0, 0.1, 1.0, 1.0);
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW(scrolled_window), GTK_WIDGET(gimage));
@@ -650,13 +666,17 @@ void ViewImageWindow(const char *file, struct_panel *panel, int enable_actions) 
   gtk_widget_grab_focus(ImageWindow);
   if (enable_actions)
   {
-    panel->selected_name=strdup(file);
+    select_file_by_name(file, panel);
     in_picture_viewer=TRUE;
   }
   if (double_refresh) e_ink_refresh_local();
   e_ink_refresh_full ();
   /*     g_signal_connect_after (GTK_WINDOW (win), "focus", G_CALLBACK (focus_in_callback), NULL); */
   /*     g_signal_connect (G_OBJECT (win), "focus-out-event", G_CALLBACK (focus_out_callback), NULL); */
-  if(preload_enable && ! suspended) /* Предзагрузка */
-    load_image(next_image (panel->selected_name, FALSE, panel), panel, FALSE, &preloaded);
+  if(preload_enable && (suspended == FALSE)) /* Предзагрузка */
+  {
+    char *next=next_image (panel->selected_name, FALSE, panel);
+    (void)load_image(next, panel, FALSE, &preloaded);
+    free(next);
+  }
 }

@@ -82,19 +82,13 @@ void /*@null@*/  *sleep_thread(__attribute__((unused)) /*@unused@*/ void* arg)
 
 void wait_state(GtkWidget *window) /* Возврат после смотрелки */
 {
-  char *temp, *iter;
   #ifdef debug_printf
   printf("wait_state called\n");
   #endif
   
   update(active_panel);
   gtk_widget_show_all(window);
-  temp=active_panel->selected_name;
-  active_panel->selected_name=basename(active_panel->selected_name); /* Бля! >_< */
-  free(temp);
-  iter=iter_from_filename (active_panel->selected_name, active_panel);
-  move_selection(iter, active_panel);
-  free(iter);
+  select_file_by_name(active_panel->selected_name, active_panel);
   gtk_widget_queue_draw(GTK_WIDGET(active_panel->list)); /* Заставляем GTK перерисовать список каталогов */
   
   /*   g_signal_connect (G_OBJECT (window), "focus_in_event", */
@@ -125,16 +119,16 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
         panel->dirs_num++;
         text=strdup(namelist[i]);
         trim_line(text); /* Ампутируем последний слэш */
-        text=basename(text);
-        full_name=xconcat(text,"/");
+        char *text_basename=basename(text);
+        full_name=xconcat(text_basename,"/");
+        free(text);
         #ifdef debug_printf
-        printf("Adding %d archive file '%s'\n", i, text);
+        printf("Adding %d archive file '%s'\n", i, text_basename);
         fflush(stdout);
         #endif
         add_data_to_list(panel->list, full_name, 1, NO_AUTOSCROLL, "dir");
         xfree(&namelist[i]);
         free(full_name);
-        free(text);
         i++;
       }
     }
@@ -213,12 +207,15 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
   }
 }
 
-char *iter_from_filename (char *fname, struct_panel *panel) /*возвращает итератор (номер) файла с именем fname из списка в панели struct_panel */
+char *iter_from_filename (const char *const fname, const struct_panel *const panel) /*возвращает итератор (номер) файла с именем fname из списка в панели struct_panel */
 {
   GtkTreeIter iter;
   GtkTreeModel *model;
   gboolean valid = TRUE;
   char *tmp;
+  #ifdef debug_printf
+  printf("Trying to find iter for name '%s'\n", fname);
+  #endif
   
   model = gtk_tree_view_get_model (panel->list);
   (void)gtk_tree_model_get_iter_first (model, &iter);
@@ -239,11 +236,11 @@ char *iter_from_filename (char *fname, struct_panel *panel) /*возвращае
       free(inlist);
     }
   }
-//   free(model); // Не требуется и карается abort()ом
+  //   free(model); // Не надо - карается abort()ом
   #ifdef debug_printf
-  printf("Iter stamp is 0, something bad happened!\n");
+  printf("Iter not found!\n");
   #endif
-  return (strdup("0"));
+  return (NULL);
 }
 
 void update(struct_panel *panel) /*обновление списка */
@@ -274,18 +271,18 @@ void update(struct_panel *panel) /*обновление списка */
     gtk_label_set_text (GTK_LABEL(panel->path_label), xconcat_path_file(panel->archive_stack[panel->archive_depth], panel->archive_cwd)); /* Пишем имя архива с путём в поле снизу */
   else
     gtk_label_set_text (GTK_LABEL(panel->path_label), panel->path);
-//   free(model); // не требуется и карается abort()ом
+  //   free(model); // Не надо - карается abort()ом
   iter_string=iter_from_filename (panel->selected_name, panel);
   move_selection(iter_string, panel);
   free(iter_string);
   set_led_state (LED_state[LED_OFF]); /* Индикация активности */
 }
 
-void move_selection(const char *move_to, struct_panel *panel) /* сдвигает курсор на заданную строку в символьном виде */
+void move_selection(const char *const move_to, const struct_panel *const panel) /* сдвигает курсор на заданную строку в символьном виде */
 {
   GtkTreePath *path;
   wait_for_draw();
-  if (move_to[0] == '\0') move_to="0";
+  if (move_to == NULL || move_to[0] == '\0' ) return;
   path = gtk_tree_path_new_from_string (move_to);
   gtk_tree_view_scroll_to_cell (panel->list, path, NULL, TRUE, (gfloat)0.5, (gfloat)0.5);
   gtk_tree_view_set_cursor (panel->list, path, NULL, FALSE);
@@ -446,6 +443,7 @@ void init (void)
   /* Ранняя инициализация программы */
   detect_hardware();
   #ifndef __amd64
+  char *string, *message;
   read_string("/home/root/.GTK_parts.version", &string);
   if (atoi(string) < NEEDED_GTK_PARTS_VERSION)
   {
@@ -469,17 +467,19 @@ void init (void)
     printf ("X is down! Assuming QT\nTrying to start Xfbdev\n");
     #endif
     xsystem("Xfbdev :0 -br -pn -hide-cursor -dpi 150 -rgba vrgb & ");
-    (void)usleep(1000000);
-    xsystem("matchbox-window-manager -theme Sato -use_desktop_mode decorated &");
     if (hardware_has_backlight == FALSE)
     {
+      (void)usleep(1000000);
+      xsystem("matchbox-window-manager -theme Sato -use_desktop_mode decorated &"); // На GMini C6LHD/Digma R60G вызывает серую рамку вокруг экрана, да и на других книгах тоже мало хорошего. Но нужен для корректного поворота через xrandr (по сути, ему нужен любой клиент, который до него будет подключен к Xfbdev).
       (void)usleep(2000000);
       xsystem("xrandr -d :0 -o left");
     }
     else
     {
-      get_system_sleep_timeout();
-      set_system_sleep_timeout("86400"); /* Боремся со злостным усыплятором */
+    get_system_sleep_timeout();
+    set_system_sleep_timeout("86400"); /* Боремся со злостным усыплятором */
+    }
+    
     if (! XOpenDisplay(NULL))
     {
       #ifdef debug_printf
@@ -488,8 +488,7 @@ void init (void)
       Qt_error_message(FAILED_TO_START_XFBDEV);
     }
   }
-}
-  get_screensavers_list();
+  get_screensavers_list();  
   current.name[0]='\0';
   preloaded.name[0]='\0';
   screensaver.name[0]='\0';
@@ -563,7 +562,7 @@ int main (int argc, char **argv)
   screen = gdk_screen_get_default(); /* Текущий screen */
   width_display = gdk_screen_get_width (screen) - 6; /* Ширина экрана */
   height_display = gdk_screen_get_height (screen) - 6; /* Высота экрана */
-  free(screen);
+//   free(screen); // Это не надо (сегфолт на книге)
   framebuffer_descriptor = open("/dev/fb0", O_RDWR); /* Открываем фреймбуффер */
   if (framebuffer_descriptor == 0)
   {

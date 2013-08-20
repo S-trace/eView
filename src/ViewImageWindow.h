@@ -25,12 +25,11 @@ gint which_key_press (GtkWidget *, GdkEventKey *, struct_panel *panel);
 void image_resize (image *target);
 void image_zoom_rotate (image *target);
 void image_rotate (image *target);
-void reset_image(image *target);
+void reset_image(image *const target);
 void die_viewer_window (void);
-gboolean show_image(image *image, struct_panel *panel, int enable_actions); /* Показываем картинку */
 /************** Create a Image Viewer Window  *************************/
 void ViewImageWindow(const char *filename, struct_panel *panel, int enable_actions);
-gboolean load_image(const char *filename, struct_panel *panel, int enable_actions, image *target);
-gboolean show_image(image *image, struct_panel *panel, int enable_actions);
+gboolean load_image(const char *const filename, const  struct_panel *const panel, const int enable_actions, image *const target);
+gboolean show_image(image *image, struct_panel *panel, int enable_actions); /* Показываем картинку */
 extern GtkWidget *ImageWindow;
 #endif

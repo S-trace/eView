@@ -296,7 +296,7 @@ void enter_subdir(char *name, struct_panel *panel)/* Переход на уро�
   enable_refresh=TRUE;
 }
 
-void dirlist_select(GtkWidget *widget, struct_panel *panel) /* Что происходит при перемещении выделенной строки по списку */
+void dirlist_select(GtkWidget *const widget, struct_panel *const panel) /* Что происходит при перемещении выделенной строки по списку */
 {
   char *tmp;
   GtkTreeIter iter;
@@ -400,19 +400,18 @@ void go_upper(struct_panel *panel) /* Переход на уровень вве�
     printf("saved_path=%s\n", saved_path);
     #endif
     (void)chdir("..");
-    panel->path=xgetcwd(panel->path);    
+    char *new_path=strrchr(panel->path, '/')+1; // Находим начало имени покинутого каталога
+    new_path[0]='\0'; // Обрезаем строку panel->path на уровень выше
+    update(panel);
+    select_file_by_name(saved_path, panel); 
     if (panel == &top_panel)
     {
-      free(top_panel.selected_name);
-      top_panel.selected_name=strdup(saved_path);
       write_config_string("top_panel.path", top_panel.path);    
       write_config_string("top_panel.selected_name", top_panel.selected_name);
       write_config_string("top_panel.last_name", "");
     }
     else
     {
-      free(bottom_panel.selected_name);
-      bottom_panel.selected_name=strdup(saved_path);
       write_config_string("bottom_panel.path", bottom_panel.path);    
       write_config_string("bottom_panel.selected_name", bottom_panel.selected_name);
       write_config_string("bottom_panel.last_name", "");
@@ -601,6 +600,16 @@ gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
   }
 }
 
+void select_file_by_name(const char * const name, const struct_panel * const panel)
+{
+  #ifdef debug_printf
+  printf("Selecting file '%s'\n", name);
+  #endif  
+  char *iter=iter_from_filename (name, panel);
+  move_selection(iter, panel);
+  free(iter);  
+}
+
 void create_panel (struct_panel *panel)
 {
   /*   GtkWidget *vbox = gtk_vbox_new (FALSE, 0); */
@@ -678,7 +687,7 @@ void add_data_to_list(GtkTreeView *tree, const char *data_string, int n_columns,
     path = gtk_tree_model_get_path(GTK_TREE_MODEL(model), &iter);
     gtk_tree_view_scroll_to_cell(tree, path, NULL, TRUE, (gfloat)0.5, (gfloat)0.5);
     gtk_tree_path_free(path);
-    free(model); // ???
+    //     free(model); // Не надо - карается abort()ом
   }
 }
 
