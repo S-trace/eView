@@ -20,7 +20,6 @@
 
 /* Various error message routines.*/
 const char msg_memory_exhausted[] = "memory exhausted";
-char next_directory[PATHSIZE+1];  /* Директория, в которую переходим при окончании которого */
 
 void get_system_sleep_timeout(void)
 {
@@ -313,7 +312,8 @@ char *find_last_picture_name(struct_panel *panel)
 char *find_next_directory(struct_panel *panel) /* Поиск следующей директории в списке TODO: Переписать с обработкой не через system() а через список */
 {
   FILE *fp; /* Указатель на файл */
-  static char *command; 
+  char next_directory[PATHSIZE+1];
+  char *command; 
   asprintf(&command, "find \"$(dirname \"`pwd`\")\" -type d|sed 's-$-/-g'|%s > dirlist", SORT_COMMAND); 
   xsystem(command);  /* Получаем список каталогов */
   free (command);
@@ -330,7 +330,7 @@ char *find_next_directory(struct_panel *panel) /* Поиск следующей 
       #ifdef debug_printf
       printf ("Matched filename '%s'\n", next_directory);
       #endif
-      return next_directory;  /* И возвращаем значение предыдущей строки */
+      return (strdup (next_directory));  /* И возвращаем значение очередной строки */
     }
   }
   (void)fclose(fp);/* Закрываем файл при неудачном поиске */
@@ -342,13 +342,14 @@ char *find_prev_directory(struct_panel *panel) /* Поиск предыдуще�
   FILE *fp; /* Указатель на файл */
   char next_line[PATHSIZE+1]={'\0'}; /* Строка для следующего каталога */
   char *command;
+  char prev_directory[PATHSIZE+1];
   asprintf(&command, "find \"$(dirname \"`pwd`\")\" -type d|sed 's-$-/-g'|%s > dirlist", SORT_COMMAND); 
   xsystem(command);  /* Получаем список каталогов */
   free (command);
   fp = fopen("dirlist", "r"); /* Открываем его */
   (void)remove ("dirlist"); /* И тут же удаляем, открытый он останется висеть как дескриптор */
   while(! feof(fp)) { /* Пока не конец файла */
-    strcpy(next_directory, next_line); /* Копируем считанную ранее строку в выходную */
+    strcpy(prev_directory, next_line); /* Копируем считанную ранее строку в выходную */
     (void)fgets (next_line, PATHSIZE+1, fp); /* Читаем следующую строку из файла */ // FIXME: Тут хорошо бы проверку сделать
     trim_line(next_line); /* Удаляем \n с конца строки */
     #ifdef debug_printf
@@ -358,9 +359,9 @@ char *find_prev_directory(struct_panel *panel) /* Поиск предыдуще�
     {
       (void)fclose(fp);/* Закрываем файл */
       #ifdef debug_printf
-      printf ("Matched filename %s\n", next_directory);
+      printf ("Matched filename %s\n", prev_directory);
       #endif
-      return next_directory;  /* И возвращаем значение предыдущей строки */
+      return strdup(prev_directory);  /* И возвращаем значение предыдущей строки */
     }
     else
     {
