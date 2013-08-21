@@ -29,8 +29,14 @@ void get_system_sleep_timeout(void)
   FILE *process=popen("dbus-send --print-reply --type=method_call --dest=com.sibrary.BoeyeServer /PowerManager com.sibrary.Service.PowerManager.getSuspendTime|cut -d ' ' -f 5|tail -n 1", "r");
   #endif 
   char temp_buffer[PATHSIZE+1];
-  (void)fgets(temp_buffer, PATHSIZE, process); // FIXME: Тут хорошо бы проверку сделать
-  if (feof(process))
+  if (fgets(temp_buffer, PATHSIZE, process) == 0)
+  {
+    #ifdef debug_printf
+    printf("Reading system sleep timeout from process failed\n");
+    #endif
+    temp_buffer[0]='\0';
+  }
+  else if (feof(process))
     temp_buffer[0]='\0';
   else
     trim_line(temp_buffer);
@@ -60,9 +66,11 @@ void get_screensavers_list(void)
   char temp_buffer[PATHSIZE+1];
   while(screensavers_count <= 16 )
   {
-    (void)fgets(temp_buffer, PATHSIZE, list_of_screensavers); // FIXME: Тут хорошо бы проверку сделать
-    if (feof(list_of_screensavers))
+    if (fgets(temp_buffer, PATHSIZE, list_of_screensavers) == 0)
     {
+      #ifdef debug_printf
+      printf("Reading next screensaver filename failed\n");
+      #endif
       pclose(list_of_screensavers);
       #ifdef debug_printf
       printf("Process closed\n");
@@ -320,11 +328,26 @@ char *find_next_directory(struct_panel *panel) /* Поиск следующей 
   fp = fopen("dirlist", "r"); /* Открываем его */
   (void)remove ("dirlist"); /* И тут же удаляем, открытый он останется висеть как дескриптор */
   while(! feof(fp)) { /* Пока не конец файла */
-    (void)fgets ( next_directory, PATHSIZE+1, fp); /* Читаем строку из файла */ // FIXME: Тут хорошо бы проверку сделать
+    if (fgets ( next_directory, PATHSIZE+1, fp) == 0) /* Читаем строку из файла */
+    {
+      #ifdef debug_printf
+      printf("Reading next directory failed (we in last directory?)\n");
+      #endif
+      (void)fclose(fp);/* Закрываем файл при неудачном чтении */
+      return strdup(panel->path); /* И возвращаем значение текущего каталога */
+    }
     trim_line(next_directory); /* Удаляем \n с конца строки */
     if ((strcmp (next_directory, panel->path) == 0)) /* Сравниваем строку с текущим каталогом */
     {
-      (void)fgets ( next_directory, PATHSIZE+1, fp); /* При совпадении читаем ещё одну строку из файла */ // FIXME: Тут хорошо бы проверку сделать
+      if (fgets (next_directory, PATHSIZE+1, fp) == 0) /* При совпадении читаем ещё одну строку из файла */ 
+      {
+        #ifdef debug_printf
+        printf("Reading next directory failed (we in last directory?)\n");
+        #endif
+        (void)fclose(fp);/* Закрываем файл при неудачном чтении */
+        return strdup(panel->path); /* И возвращаем значение текущего каталога */
+      }
+      
       (void)fclose(fp);/* Закрываем файл */
       trim_line(next_directory); /* Удаляем \n с конца строки */
       #ifdef debug_printf
@@ -350,7 +373,15 @@ char *find_prev_directory(struct_panel *panel) /* Поиск предыдуще�
   (void)remove ("dirlist"); /* И тут же удаляем, открытый он останется висеть как дескриптор */
   while(! feof(fp)) { /* Пока не конец файла */
     strcpy(prev_directory, next_line); /* Копируем считанную ранее строку в выходную */
-    (void)fgets (next_line, PATHSIZE+1, fp); /* Читаем следующую строку из файла */ // FIXME: Тут хорошо бы проверку сделать
+
+    if (fgets (next_line, PATHSIZE+1, fp) == 0) /* Читаем ещё одну строку из файла */ 
+    {
+      #ifdef debug_printf
+      printf("Reading next directory failed (we in last directory?)\n");
+      #endif
+      (void)fclose(fp);/* Закрываем файл при неудачном чтении */
+      return strdup(panel->path); /* И возвращаем значение текущего каталога */
+    }
     trim_line(next_line); /* Удаляем \n с конца строки */
     #ifdef debug_printf
     printf ("Filename '%s'\n", next_line);
