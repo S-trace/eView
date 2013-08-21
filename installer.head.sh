@@ -1,6 +1,6 @@
 #!/bin/sh
 set -v
-echo "Installing GTK_parts_V$version"
+echo "Installing eView"
 echo "\$0 is '$0'"
 self_name=`readlink -f $0`
 echo "\$self_name is '$self_name'"
@@ -9,6 +9,12 @@ echo "\$self_path is '$self_path'"
 echo "pwd is `pwd`"
 PRGNAME=eView
 cd $self_path
+
+if [[ ! -f /usr/bin/Xfbdev ]]; then
+  echo "ERROR: GTK_parts not found, $PRGNAME installation aborted! Please download latest version of GTK_parts from http://raw.github.com/S-trace/eView/master/GTK_parts/GTK_parts.sh and install it." > /tmp/error_message.txt
+  dbus-send --type=method_call --dest=com.test.reader /reader/registry com.test.reader.registry.input string:"/tmp/error_message.txt"
+  exit 1
+fi
 
 rm -rf temp_$PRGNAME
 
