@@ -1,4 +1,4 @@
-#define VERSION "eView 0.63rc3 20.aug.2013"
+#define VERSION "eView 0.63rc3 21.aug.2013"
 #ifdef language_russian
 #define EVIEW_IS_STARTING "eView запускается"
 #define PLEASE_WAIT " Пожалуйста, подождите! " 
@@ -55,6 +55,7 @@
 #define EXIT_TO_FILEMANAGER "Перейти в файлменеджер"
 #define ALLOW_PRELOADING "Разрешить предзагрузку"
 #define SUPPRESS_BATTERY_WARNINGS "Подавлять жалобы на батарейку"
+#define HD_SCALING "HD масштабирование"
 #define BATTERY_CHARGE_PERCENT "Заряд батареи: %s%%"
 #define VIEWED_PAGES "Просмотрено страниц: "
 #define RESET_VIEWED_PAGES "Сбросить счётчик страниц?"
@@ -125,6 +126,7 @@
 #define EXIT_TO_FILEMANAGER "Exit to filemanager"
 #define ALLOW_PRELOADING "Allow image preloading"
 #define SUPPRESS_BATTERY_WARNINGS "Suppress battery warnings"
+#define HD_SCALING "HD scaling"
 #define BATTERY_CHARGE_PERCENT "Battery: %s%%"
 #define VIEWED_PAGES "Viewed pages: "
 #define RESET_VIEWED_PAGES "Reset viewed pages counter?"

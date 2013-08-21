@@ -16,7 +16,7 @@
 
 static GtkWidget *create, *copy, *moving, *del, *options, *exit_button; // Кнопки в главном меню
 static GtkWidget *fmanager, *move_chk, *clock_panel, *ink_speed, *show_hidden_files_chk, *LED_notify_checkbox, *reset_configuration, *backlight_scale, *sleep_timeout_scale, *about_program; // Пункты в настройках ФМ
-static GtkWidget *crop_image, *rotate_image, *manga_mode, *frame_image, *keepaspect_image, *double_refresh_image, *viewed, *preload_enabled_button, *suppress_panel_button; // Чекбоксы в настройках вьювера
+static GtkWidget *crop_image, *rotate_image, *manga_mode, *frame_image, *keepaspect_image, *double_refresh_image, *viewed, *preload_enabled_button, *suppress_panel_button, *HD_scaling_button; // Чекбоксы в настройках вьювера
 static GtkWidget *loop_dir_none, *loop_dir_loop, *loop_dir_next, *loop_dir_exit, *loop_dir_frame, *loop_dir_vbox; // Радиобаттон в настройках вьювера
 int need_refresh=FALSE;
 
@@ -188,6 +188,11 @@ void suppress_panel_callback () // Callback для галки подавлени
   e_ink_refresh_part ();
 }
 
+void HD_scaling_callback () // Callback для галки качественного скалирования
+{
+  write_config_int("HD_scaling", HD_scaling=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(HD_scaling_button)));
+}
+
 void loop_dir_toggler () // Callback для радиобаттона по действию при окончании каталога
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_none))) loop_dir = LOOP_NONE; 
@@ -353,6 +358,12 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
   gtk_button_set_relief (GTK_BUTTON(preload_enabled_button), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), preload_enabled_button, TRUE, TRUE, 0);
   (void)g_signal_connect (G_OBJECT (preload_enabled_button), "clicked", G_CALLBACK (preload_toggler), NULL);
+
+  HD_scaling_button = gtk_check_button_new_with_label(HD_SCALING);
+  if (HD_scaling) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(HD_scaling_button), TRUE);
+  gtk_button_set_relief (GTK_BUTTON(HD_scaling_button), GTK_RELIEF_NONE);
+  gtk_box_pack_start (GTK_BOX (menu_vbox), HD_scaling_button, TRUE, TRUE, 0);
+  (void)g_signal_connect (G_OBJECT (HD_scaling_button), "clicked", G_CALLBACK (HD_scaling_callback), NULL);
   
   if (QT == FALSE)
   {

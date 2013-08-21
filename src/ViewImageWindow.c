@@ -485,6 +485,9 @@ void image_zoom_rotate (image *target)
   #endif
   double height = gdk_pixbuf_get_height (target->pixbuf);
   double width  = gdk_pixbuf_get_width  (target->pixbuf);
+  int scaling_quality=GDK_INTERP_BILINEAR;
+  if (HD_scaling) scaling_quality=GDK_INTERP_HYPER;
+    
   GdkPixbuf *pixbuf_key;
   current.frames = 0;
   if (height < 300 && width < 200) /*оригинал слишком маленький - ничего не менять */
@@ -493,7 +496,7 @@ void image_zoom_rotate (image *target)
   /*оригинал слишком широкий и большой  - растянуть в ширину */
   if (width > height && (int)width >= width_display) 
   {
-    pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf, width_display * 2, height_display, GDK_INTERP_BILINEAR);
+    pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf, width_display * 2, height_display, scaling_quality);
     pixbuf_unref(target->pixbuf);
     target->pixbuf = gdk_pixbuf_copy (pixbuf_key);
     update_image_dimentions(target);
@@ -507,13 +510,13 @@ void image_zoom_rotate (image *target)
     if (target->frames >= 2)
     {
       target->aspect_rate = height / width * height_display;
-      pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf, height_display, target->aspect_rate, GDK_INTERP_BILINEAR);
+      pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf, height_display, target->aspect_rate, scaling_quality);
     } 
     else
-      pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf, height_display, width_display * 2, GDK_INTERP_BILINEAR);
+      pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf, height_display, width_display * 2, scaling_quality);
   } 
   else 
-    pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf, height_display, width_display * 2, GDK_INTERP_BILINEAR);
+    pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf, height_display, width_display * 2, scaling_quality);
   pixbuf_unref(target->pixbuf);
   target->pixbuf = gdk_pixbuf_rotate_simple (pixbuf_key, GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
   update_image_dimentions(target);
@@ -523,9 +526,13 @@ void image_zoom_rotate (image *target)
 
 void image_resize (image *target) /* изменение разрешения и подрезка полей */
 {
+  int scaling_quality=GDK_INTERP_BILINEAR;
+  if (HD_scaling) scaling_quality=GDK_INTERP_HYPER;
+  
   #ifdef debug_printf
   printf("image_resize called\n");
   #endif
+  
   if (crop == TRUE && target->width>115 && target->height>115) 
   {
     find_crop_image_coords (target);
@@ -583,7 +590,7 @@ void image_resize (image *target) /* изменение разрешения и 
     #ifdef debug_printf
     printf("scaling pic from %dx%d to %dx%d\n",target->width,target->height,scaled_x,scaled_y);
     #endif
-    temp = gdk_pixbuf_scale_simple (target->pixbuf, scaled_x, scaled_y, GDK_INTERP_BILINEAR);
+    temp = gdk_pixbuf_scale_simple (target->pixbuf, scaled_x, scaled_y, scaling_quality);
     #ifdef debug_printf
     printf("pixbuf %p created by gdk_pixbuf_scale_simple ()\n",temp);
     #endif
@@ -600,7 +607,7 @@ void image_resize (image *target) /* изменение разрешения и 
     #ifdef debug_printf
     printf("aspect not preserved\n");
     #endif
-    GdkPixbuf *pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf, width_display, height_display, GDK_INTERP_BILINEAR);
+    GdkPixbuf *pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf, width_display, height_display, scaling_quality);
     pixbuf_unref(target->pixbuf);
     target->pixbuf = gdk_pixbuf_copy (pixbuf_key);
     update_image_dimentions(target);
