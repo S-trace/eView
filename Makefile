@@ -24,7 +24,7 @@ CFLAGS += -Wextra  -Dlanguage_$(lang)
 
 SOURCE_PATH=src
 
-OBJS = gtk_file_manager.o mylib.o mygtk.o ViewImageWindow.o digma_hw.o crop.o cfg.o debug_msg_win.o frames_search.o shift.o archive_handler.o interface.o backtrace.o
+OBJS = gtk_file_manager.o mylib.o mygtk.o ViewImageWindow.o digma_hw.o crop.o cfg.o debug_msg_win.o frames_search.o shift.o archive_handler.o interface.o
 OBJ = $(addprefix src/, $(OBJS))
 EXE = $(name)$(version)_$(lang).app
 
