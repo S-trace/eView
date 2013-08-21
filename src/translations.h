@@ -1,4 +1,4 @@
-#define VERSION "eView 0.63rc3 21.aug.2013"
+#define VERSION "eView 0.63rc4 21.aug.2013"
 #ifdef language_russian
 #define EVIEW_IS_STARTING "eView запускается"
 #define PLEASE_WAIT " Пожалуйста, подождите! " 
@@ -8,7 +8,7 @@
 #define UNABLE_TO_ENTER_NEXT_DIRECTORY "Переход в следующий\nкаталог неудался!"
 #define UNABLE_TO_ENTER_PREVIOUS_DIRECTORY "Переход в предыдущий\nкаталог неудался!"
 #define UNABLE_TO_SHOW "Невозможно отобразить: \n"
-#define GTK_PARTS_IS_OUTDATED "Ошибка eView: \nОбнаружены компоненты GTK версии %s, требуемая версия не ниже %d. \nПожалуйста, скачайте https://dl.dropboxusercontent.com/u/100376233/eView/GTK_parts.sh и обновите компоненты"
+#define GTK_PARTS_IS_OUTDATED "Ошибка eView: \nОбнаружены компоненты GTK версии %s, требуемая версия не ниже %d. \nПожалуйста, скачайте новейшую версию с http://raw.github.com/S-trace/eView/master/GTK_parts/GTK_parts.sh и обновите компоненты"
 #define FAILED_TO_START_XFBDEV "Ошибка eView: \nНе удалось запустить Xfbdev. Пожалуйста, свяжитесь с разработком (S-trace@list.ru) чтобы попытаться исправить это"
 #define FAILED_TO_OPEN_DEV_FB0 "Ошибка eView: \nНевозможно открыть /dev/fb0 - экран не будет обновляться! Пожалуйста, свяжитесь с разработком (S-trace@list.ru) чтобы попытаться исправить это"
 
