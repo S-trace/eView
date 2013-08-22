@@ -264,7 +264,7 @@ void update(struct_panel *panel) /*обновление списка */
   while (valid) 
     valid = gtk_tree_model_iter_next (model, &iter);
   /*инфа о числе папок и файлов в загловок окна */
-  asprintf(&title, "Dirs: %d  Files: %d %s", panel->dirs_num-1, panel->files_num, "    "VERSION);
+  asprintf(&title, "Dirs: %d  Files: %d %s", panel->dirs_num-1, panel->files_num, "  "VERSION);
   gtk_window_set_title(GTK_WINDOW(main_window), title);
   xfree (&title);
   if (panel->archive_depth > 0)
@@ -692,6 +692,7 @@ int main (int argc, char **argv)
   /*   g_signal_connect (G_OBJECT (window), "show", G_CALLBACK (e_ink_refresh_full), NULL); */
   /*   g_signal_connect_after (current_panel->list, "move_cursor", G_CALLBACK (e_ink_refresh_default), NULL ); // Обновление экрана при сдвиге выделения */
   interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
+  preload_next_screensaver(); // Загружаем первую заставку в память для мгновенного отображения
   if (LED_notify)
     set_led_state (LED_state[LED_OFF]);
   start_sleep_timer();

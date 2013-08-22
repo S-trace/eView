@@ -47,3 +47,4 @@ void trim_line(char *input_line);
 char *itoa(long i);
 char *get_natural_time(int time); /* Возвращает строку в формате HH:MM:ss */
 void read_string(const char *name, char **destination);
+void preload_next_screensaver(void);

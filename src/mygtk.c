@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdlib.h> /*system()*/
 #include <unistd.h>  /*chdir()*/
+#include <pthread.h>
 
 #include "gtk_file_manager.h" /*update()*/
 #include "cfg.h"
@@ -21,6 +22,7 @@
 
 GtkWidget *MessageWindow;
 int enable_refresh=1;
+int suspend_count=-1; /* Счётчик засыпаний книги - для выбора номера заставки */
 static int need_full_refresh; /* Тип необходимого обновления экрана при перемещении курсора по меню */
 
 int check_key_press(guint keyval, struct_panel *panel) /* Возвращает TRUE если всё сделано */
@@ -36,6 +38,7 @@ int check_key_press(guint keyval, struct_panel *panel) /* Возвращает T
   {
     if (keyval == KEY_POWER_QT) /* Выход из сна */
     {
+      pthread_cancel(suspend_helper_tid); // Принудительно завершаем работу потока, который усыпляет книгу (если он сам не завершился ещё)
       if(was_in_picture_viewer)
       {
         (void)show_image(&current, panel, FALSE);
@@ -276,7 +279,7 @@ void enter_subdir(char *name, struct_panel *panel)/* Переход на уро�
   {
     char *path=xconcat_path_file(panel->path, name);
     (void)chdir (path);
-    free (panel->path); // FIXME! // Приводит к сегфолту на книге при первом запуске (с пустым конфигом) при входе в каталог 
+    free (panel->path);
     panel->path=strdup(path);
     free (path);
     update(panel);
@@ -775,15 +778,13 @@ GtkTreeView *string_list_create_on_table(size_t num,
 }
 
 void enter_suspend(struct_panel *panel)
-{
-  static int suspend_count=-1; /* Счётчик засыпаний книги - для выбора номера заставки */
-  /* сохраняем предыдущие настройки смотрелки */
+{  
   int saved_crop=crop;
   int saved_rotate=rotate;
   int saved_frame=frame;
   int saved_preload_enable=preload_enable;
   int saved_keepaspect=keepaspect;
-  
+
   gtk_idle_remove (idle_call_handler); /* Удаляем вызов этой функции из очереди вызовов (иначе на ARM она будет вызываться вечно) */
   if (suspended == FALSE)
   {
@@ -795,14 +796,10 @@ void enter_suspend(struct_panel *panel)
     printf("DBUS sent\n");
     #endif
     
-    if (++suspend_count==screensavers_count-1) /* Закольцовываем список картинок для скринсейвера (последняя запись - фигня!) */
-      suspend_count=0;
-    
     crop=rotate=frame=preload_enable=FALSE; /* Грязно перенастраиваем смотрелку */
     suspended=keepaspect=TRUE;
     if (in_picture_viewer)
     {
-      (void)load_image(screensavers_array[suspend_count], active_panel, FALSE, &screensaver);
       (void)show_image(&screensaver, panel, FALSE);
       e_ink_refresh_full();
       was_in_picture_viewer=in_picture_viewer;
@@ -816,6 +813,7 @@ void enter_suspend(struct_panel *panel)
     preload_enable=saved_preload_enable;
     keepaspect=saved_keepaspect;
     set_brightness(0);
+    preload_next_screensaver();
     suspend_hardware();  
     #ifdef debug_printf
     printf("Suspend done\n");

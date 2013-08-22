@@ -45,6 +45,8 @@ void set_brightness(int value);
 void set_led_state (int state);
 void detect_hardware(void);
 extern int hardware_has_backlight, hardware_has_LED;
+extern pthread_t suspend_helper_tid;
+
 enum
 {
   LED_OFF,

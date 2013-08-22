@@ -14,6 +14,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <dlfcn.h> /* dlopen() */
+#include <pthread.h>
+
 #include "gtk_file_manager.h" /* Инклюдить первой среди своих, ибо typedef panel! */
 #include "digma_hw.h"
 #include "mylib.h"
@@ -24,6 +26,8 @@ int LED_state[LED_STATES]; /* Массив содержащий значения
 int previous_backlight_level; /* Уровень подсветки перед запуском eView */
 int suspended=FALSE; /* Текущее состояние книги */
 int was_in_picture_viewer=FALSE;
+pthread_t suspend_helper_tid;
+
 extern int framebuffer_descriptor;
 extern int QT;
 extern int enable_refresh;/*Принудительно запретить обновлять экран в особых случаях */
@@ -292,7 +296,7 @@ void set_led_state (int state)
     write_int_to_file(LED_path, state);
 }
 
-void suspend_hardware(void)
+void *suspend_hardware_helper(__attribute__((unused)) void* arg)
 {
   int count=0;
   (void)fflush (stdout);
@@ -364,4 +368,15 @@ void suspend_hardware(void)
   }
   while (TRUE);
   sync();
+  return NULL;
+}
+
+void suspend_hardware(void)
+{
+  if(pthread_create(&suspend_helper_tid, NULL, suspend_hardware_helper, NULL) != 0)
+  {
+    #ifdef debug_printf
+    printf("Unable to start hardware sleep helper!\n");
+    #endif
+  }
 }

@@ -17,6 +17,7 @@
 #include "ViewImageWindow.h" /* die_viewer_window() */
 #include "os-specific.h"
 #include "translations.h"
+#include "digma_hw.h"
 
 /* Various error message routines.*/
 const char msg_memory_exhausted[] = "memory exhausted";
@@ -779,4 +780,32 @@ char *itoa(long i)
   char *a = NULL;
   asprintf(&a, "%ld", i);
   return(a);
+}
+
+void preload_next_screensaver(void)
+{  
+  /* сохраняем предыдущие настройки смотрелки */
+  int saved_crop=crop;
+  int saved_rotate=rotate;
+  int saved_frame=frame;
+  int saved_preload_enable=preload_enable;
+  int saved_keepaspect=keepaspect;
+  int saved_suspended=suspended;
+  if (++suspend_count==screensavers_count-1) /* Закольцовываем список картинок для скринсейвера (последняя запись - фигня!) */
+    suspend_count=0;
+
+  #ifdef debug_printf
+  printf("Preloading screensaver %s\n", screensavers_array[suspend_count]);
+  #endif
+  
+  crop=rotate=frame=preload_enable=FALSE; /* Грязно перенастраиваем смотрелку */
+  suspended=keepaspect=TRUE;
+  (void)load_image(screensavers_array[suspend_count], active_panel, FALSE, &screensaver);
+  /* Восстанавливаем предыдущие настройки */
+  crop=saved_crop;
+  rotate=saved_rotate;
+  frame=saved_frame;
+  preload_enable=saved_preload_enable;
+  keepaspect=saved_keepaspect;
+  suspended=saved_suspended;
 }
