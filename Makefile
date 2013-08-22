@@ -1,7 +1,7 @@
 name ?= eView
-version ?= 063
+version ?= 063rc4
 lang ?= russian
-CFLAGS+=-std=c99 -D_GNU_SOURCE -Winit-self -Wformat=2 -Wmissing-include-dirs -Wswitch-default -fipa-pure-const -Wfloat-equal -Wundef -Wshadow -Wcast-qual -Wwrite-strings -Wlogical-op -Wall -Werror 
+CFLAGS+=-std=c99 -D_GNU_SOURCE -Winit-self -Wformat=2 -Wmissing-include-dirs -Wswitch-default -fipa-pure-const -Wfloat-equal -Wundef -Wshadow -Wcast-qual -Wwrite-strings -Wlogical-op -Wall -Werror -DVERSION="\"eView $(version) $(shell LANG=en_US date '+%d.%b.%Y')\""
 LDFLAGS+=-lX11 -ldl -lpthread
 DFLAGS = -MD
 ifeq ($(MAKECMDGOALS), arm)
