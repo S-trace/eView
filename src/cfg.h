@@ -23,6 +23,7 @@ extern gboolean loop_dir; /* Режим зацикливания при окон
 extern gboolean double_refresh;/*двойное обновление в смотрелке */
 extern gboolean viewed_pages;/*Статистика - число просмотренных страниц */
 extern gboolean preload_enable;/*Разрешить ли предзагружать спедующее изображение */
+extern gboolean caching_enable;/*Разрешить ли кэщировать предыдущее изображение */
 extern gboolean suppress_panel;/*Подавлять ли панель и сообщения об нехватке батареи */
 extern gboolean show_hidden_files;/*Показывать ли в файл-менеджере скрытные каталоги и файлы */
 extern gboolean LED_notify; /* Оповещение светодиодом об обновлении панелей и загрузке */

@@ -18,7 +18,7 @@ typedef struct {
   int frame;
   gboolean valid;
 } image;
-extern image current, preloaded, screensaver;
+extern image current, preloaded, cached, screensaver;
 extern int in_picture_viewer;
 
 gint which_key_press (GtkWidget *, GdkEventKey *, struct_panel *panel);

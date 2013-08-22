@@ -9,7 +9,7 @@
 #include "cfg.h"
 
 static char *cfg_directory; /*путь к файлу с настройками */
-int crop, rotate, frame, keepaspect, fm_toggle, move_toggle, speed_toggle, clock_toggle, top_panel_active, loop_dir, double_refresh, viewed_pages, preload_enable, suppress_panel, show_hidden_files, manga, HD_scaling,  LED_notify=TRUE;
+int crop, rotate, frame, keepaspect, fm_toggle, move_toggle, speed_toggle, clock_toggle, top_panel_active, loop_dir, double_refresh, viewed_pages, preload_enable, caching_enable, suppress_panel, show_hidden_files, manga, HD_scaling, LED_notify=TRUE;
 int backlight, sleep_timeout;
 char *system_sleep_timeout;
 
@@ -234,6 +234,7 @@ void create_cfg (void)  /*создание файлов настроек по у
   write_config_int("in_archive", FALSE);
   write_config_int("viewed_pages", 0);
   write_config_int("preload_enable", TRUE);
+  write_config_int("caching_enable", TRUE);
   write_config_int("suppress_panel", FALSE);
   write_config_int("show_hidden_files", FALSE);
   write_config_int("LED_notify", TRUE);
@@ -304,6 +305,7 @@ void read_configuration (void)
   double_refresh=read_config_int("double_refresh");
   viewed_pages=read_config_int("viewed_pages");
   preload_enable=read_config_int("preload_enable");
+  caching_enable=read_config_int("caching_enable");
   suppress_panel=read_config_int("suppress_panel");
   show_hidden_files=read_config_int("show_hidden_files");
   LED_notify=read_config_int("LED_notify");

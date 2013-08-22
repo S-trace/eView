@@ -20,7 +20,7 @@
 #include "translations.h"
 #include "interface.h"
 
-image current, screensaver, preloaded;
+image current, preloaded, cached, screensaver;
 GtkObject *adjust;
 GtkWidget *ImageWindow, *scrolled_window, *gimage;
 int shift_val; /*на сколько сдвигать картинку */
@@ -101,6 +101,22 @@ void copy_image_settings(image *target, image *source)
   target->valid=source->valid;
 }
 
+void copy_image(image *target, image *source)
+{  
+  strncpy(target->name, source->name, PATHSIZE);
+  target->pixbuf=source->pixbuf;
+  target->valid=source->valid;
+  copy_image_settings(target,source);
+}
+
+void swap_images(image *target, image *source)
+{
+  image temp;
+  copy_image(&temp, target);
+  copy_image(target, source);
+  copy_image(source, &temp);
+}
+
 void set_image_settings(image *target)
 {
   target->crop=crop;
@@ -125,19 +141,74 @@ void reset_image(image *const target)
 gboolean load_image(const char *const filename, const  struct_panel *const panel, const int enable_actions, image *const target) /* Загружаем и готовим к показу картинку */
 {
   if (filename==NULL || filename[0]=='\0') return FALSE; /*Если функция вызвана с пустым именем для загрузки*/
-    if ((strcmp(target->name,filename) == 0) && (check_image_settings(target) == TRUE)) /*Если уже загружено нужное изображение с нужными настройками*/
+    if ((strcmp(target->name, filename) == 0) && (check_image_settings(target) == TRUE)) /*Если уже загружено нужное изображение с нужными настройками*/
     {
       #ifdef debug_printf
       printf("Correct image is already loaded, nothing to do!\n");
       #endif
       return TRUE;
     }
-
-  reset_image(target); /* Сбрасываем изображение которое уже хранилось ранее в этом target */
+  else
+  {
+//     reset_image(target); /* Сбрасываем изображение которое уже хранилось ранее в этом target */
   #ifdef debug_printf
   printf("Going to load '%s' (enable_actions=%d)\n", filename, enable_actions);
   #endif
-  if ((strcmp(preloaded.name,filename) == 0) && (check_image_settings(&preloaded) == TRUE)) /*Если предзагруженное изображение и текущее совпали */
+  }
+  
+  #ifdef debug_printf
+  if (strcmp(cached.name, filename) != 0)
+  {
+    if (GDK_IS_PIXBUF(cached.pixbuf))/*Если в пиксбуфе что-то лежало */
+    {
+      if (check_image_settings(&cached))
+        printf("CACHED IMAGE SETTINGS IS WRONG!!!\n");
+      else
+        printf("CACHED IMAGE IS WRONG!!! have '%s', want '%s'\n",cached.name, filename);
+    }
+  }
+  else
+    printf("CACHED IMAGE IS CORRECT\n");
+  
+  if (strcmp(preloaded.name, filename) != 0)
+  {
+    if (GDK_IS_PIXBUF(preloaded.pixbuf))/*Если в пиксбуфе что-то лежало */
+    {
+      if (check_image_settings(&preloaded))
+        printf("PRELOADED IMAGE SETTINGS IS WRONG!!!\n");
+      else
+        printf("PRELOADED IMAGE IS WRONG!!! have '%s', want '%s'\n",preloaded.name, filename);
+    }
+  }
+  else
+    printf("PRELOADED IMAGE IS CORRECT\n");
+    #endif  
+  
+  
+  if ((strcmp(cached.name, filename) == 0) && (check_image_settings(&cached) == TRUE)) /*Если кэшированное изображение и текущее совпали */
+  {
+    #ifdef debug_printf
+    printf("USING CACHED IMAGE\n");    
+    #endif
+    if (GDK_IS_PIXBUF(cached.pixbuf))
+    {
+      #ifdef debug_printf
+      printf("cached_image correct\nLoading %s from cached image", filename);
+      #endif
+      
+      swap_images(target, &cached); // Просто меняем местами кэшированное и текущее (листнули назад)
+      return TRUE;
+    }
+    else
+    {
+      #ifdef debug_printf
+      printf("cached data is incorrect (should never happend), trying to load image standart way!\n");
+      #endif
+      reset_image(&cached);
+      return (load_image(filename, panel, enable_actions, target));
+    }
+  }
+  else if ((strcmp(preloaded.name,filename) == 0) && (check_image_settings(&preloaded) == TRUE)) /*Если предзагруженное изображение и текущее совпали */
   {
     #ifdef debug_printf
     printf("USING PRELOADED IMAGE\n");    
@@ -145,17 +216,10 @@ gboolean load_image(const char *const filename, const  struct_panel *const panel
     if (GDK_IS_PIXBUF(preloaded.pixbuf))
     {
       #ifdef debug_printf
-      printf("preloaded_image correct\n");
+      printf("preloaded_image correct\nLoading %s from preloaded!\n",filename);
       #endif
-      strncpy(target->name, preloaded.name, PATHSIZE);
-      target->name[PATHSIZE]='\0';
       
-      target->pixbuf=preloaded.pixbuf; /* Не копирование - только указатель! */
-      preloaded.name[0]='\0';
-      preloaded.pixbuf=NULL;
-      update_image_dimentions(target);
-      copy_image_settings(target,&preloaded);
-      reset_image(&preloaded);
+      swap_images(target, &preloaded); // Просто меняем местами предзагруженное и текущее (листнули вперёд)
       return TRUE;
     }
     else
@@ -163,24 +227,24 @@ gboolean load_image(const char *const filename, const  struct_panel *const panel
       #ifdef debug_printf
       printf("preloaded data is incorrect (should never happend), trying to load image standart way!\n");
       #endif
-      reset_image(target);
       reset_image(&preloaded);
       return (load_image(filename, panel, enable_actions, target));
     }
   }
   else
   {
-    char *name=NULL, *extracted_file_name=NULL;
     #ifdef debug_printf
-    if (GDK_IS_PIXBUF(preloaded.pixbuf))/*Если в пиксбуфе что-то лежало */
-    {
-      if (check_image_settings(&preloaded))
-        printf("PRELOADED IMAGE SETTINGS IS WRONG!!!\n");
-      else
-        printf("PRELOADED IMAGE IS WRONG!!! have '%s', want '%s'\n",preloaded.name,filename);
-    }
+    printf("Loading %s from file!\n", filename);
     #endif
+    char *name=NULL, *extracted_file_name=NULL;
+    
+    if(caching_enable) // Записываем текущее содержимое цели в кэш
+      swap_images(&cached, target); 
+    
+    reset_image(target); // Сбрасываем прошлое содержимое цели
+    
     name=strdup(filename);
+    
     strncpy(target->name,basename(name),PATHSIZE); // basename() - free() не требует
     target->name[PATHSIZE]='\0';
     free(name);
@@ -445,9 +509,9 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
           write_config_string("top_panel.last_name", panel->selected_name);
         else
           write_config_string("bottom_panel.last_name", panel->selected_name);
-        if(preload_enable) /* Предзагрузка */
+        if(preload_enable) /* Предзагрузка предыдущего по списку изображения */
         {
-          char *next=next_image(panel->selected_name, FALSE, panel);
+          char *next=prev_image(panel->selected_name, FALSE, panel);
           (void)load_image(next, panel, FALSE, &preloaded);
           free(next);
         }

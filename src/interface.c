@@ -16,7 +16,7 @@
 
 static GtkWidget *create, *copy, *moving, *del, *options, *exit_button; // Кнопки в главном меню
 static GtkWidget *fmanager, *move_chk, *clock_panel, *ink_speed, *show_hidden_files_chk, *LED_notify_checkbox, *reset_configuration, *backlight_scale, *sleep_timeout_scale, *about_program; // Пункты в настройках ФМ
-static GtkWidget *crop_image, *rotate_image, *manga_mode, *frame_image, *keepaspect_image, *double_refresh_image, *viewed, *preload_enabled_button, *suppress_panel_button, *HD_scaling_button; // Чекбоксы в настройках вьювера
+static GtkWidget *crop_image, *rotate_image, *manga_mode, *frame_image, *keepaspect_image, *double_refresh_image, *viewed, *preload_enabled_button, *caching_enabled_button, *suppress_panel_button, *HD_scaling_button; // Чекбоксы в настройках вьювера
 static GtkWidget *loop_dir_none, *loop_dir_loop, *loop_dir_next, *loop_dir_exit, *loop_dir_frame, *loop_dir_vbox; // Радиобаттон в настройках вьювера
 int need_refresh=FALSE;
 
@@ -172,6 +172,14 @@ void double_refresh_toggler () // Callback для галки двойного о
 void preload_toggler () // Callback для галки включения предзагрузки
 {
   write_config_int("preload_enable", preload_enable=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(preload_enabled_button)));
+  if (preload_enable == FALSE) reset_image(&preloaded);
+  e_ink_refresh_part ();
+}
+
+void caching_toggler () // Callback для галки включения кэширования
+{
+  write_config_int("caching_enable", caching_enable=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(caching_enabled_button)));
+  if (caching_enable  == FALSE) reset_image(&cached);
   e_ink_refresh_part ();
 }
 
@@ -358,6 +366,12 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
   gtk_button_set_relief (GTK_BUTTON(preload_enabled_button), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), preload_enabled_button, TRUE, TRUE, 0);
   (void)g_signal_connect (G_OBJECT (preload_enabled_button), "clicked", G_CALLBACK (preload_toggler), NULL);
+
+  caching_enabled_button = gtk_check_button_new_with_label(ALLOW_CACHING);
+  if (caching_enable) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(caching_enabled_button), TRUE);
+  gtk_button_set_relief (GTK_BUTTON(caching_enabled_button), GTK_RELIEF_NONE);
+  gtk_box_pack_start (GTK_BOX (menu_vbox), caching_enabled_button, TRUE, TRUE, 0);
+  (void)g_signal_connect (G_OBJECT (caching_enabled_button), "clicked", G_CALLBACK (caching_toggler), NULL);
 
   HD_scaling_button = gtk_check_button_new_with_label(HD_SCALING);
   if (HD_scaling) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(HD_scaling_button), TRUE);

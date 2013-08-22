@@ -504,9 +504,11 @@ void init (void)
   get_screensavers_list();  
   current.name[0]='\0';
   preloaded.name[0]='\0';
+  cached.name[0]='\0';
   screensaver.name[0]='\0';
   current.pixbuf=NULL;
   preloaded.pixbuf=NULL;
+  cached.pixbuf=NULL;
   screensaver.pixbuf=NULL;
 }
 
