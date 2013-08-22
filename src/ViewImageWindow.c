@@ -170,7 +170,7 @@ gboolean load_image(const char *const filename, const  struct_panel *const panel
   }
   else
   {
-    char *name=NULL, *extracted_file_name;
+    char *name=NULL, *extracted_file_name=NULL;
     #ifdef debug_printf
     if (GDK_IS_PIXBUF(preloaded.pixbuf))/*Если в пиксбуфе что-то лежало */
     {
