@@ -191,7 +191,7 @@ char **archive_get_directories_list(struct_panel *panel, const char *directory) 
 {
   char *bff = NULL,*command = NULL, **names, *escaped;
   escaped=escape(directory);
-  asprintf(&command, "grep '^%s[^/]*/$' %s > /tmp/dirs.list", escaped, panel->archive_list);
+  asprintf(&command, "grep '^%s[^/]*/$' %s | uniq > /tmp/dirs.list ", escaped, panel->archive_list);
   free(escaped);
   xsystem(command); /* Вызываем команду */
   xfree(&command);
