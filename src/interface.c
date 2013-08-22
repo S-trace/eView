@@ -258,8 +258,10 @@ void picture_menu_destroy (struct_panel *panel, GtkWidget *dialog) // Уничт
   //   gtk_widget_grab_focus (win);
   if (need_refresh)
   {
-    (void)load_image(current.name, panel, TRUE, &current); // Повторно загружаем и показываем картинку для учёта изменений
+    char *current_name=strdup(current.name);
+    (void)load_image(current_name, panel, TRUE, &current); // Повторно загружаем и показываем картинку для учёта изменений
     (void)show_image(&current, panel, TRUE); 
+    free(current_name);
     viewed_pages--; // Откатываем назад счётчик страниц - после открытия-закрытия меню он не должен изменяться
   }
   enable_refresh=TRUE;
