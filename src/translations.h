@@ -11,6 +11,7 @@
 #define GTK_PARTS_IS_OUTDATED "Ошибка eView: \nОбнаружены компоненты GTK версии %s, требуемая версия не ниже %d. \nПожалуйста, скачайте новейшую версию с http://raw.github.com/S-trace/eView/master/GTK_parts/GTK_parts.sh и обновите компоненты"
 #define FAILED_TO_START_XFBDEV "Ошибка eView: \nНе удалось запустить Xfbdev. Пожалуйста, свяжитесь с разработком (S-trace@list.ru) чтобы попытаться исправить это"
 #define FAILED_TO_OPEN_DEV_FB0 "Ошибка eView: \nНевозможно открыть /dev/fb0 - экран не будет обновляться! Пожалуйста, свяжитесь с разработком (S-trace@list.ru) чтобы попытаться исправить это"
+#define XFBDEV_STARTUP_TIMEOUT "Ошибка eView: \nНе удалось запустить Xfbdev - превышено время ожидания запуска. Пожалуйста, свяжитесь с разработком (S-trace@list.ru) чтобы попытаться исправить это"
 
 #define DELETE_CONFIRM "Подтвердите удаление"
 #define MOVE_CONFIRM "Подтвердите перемещение"
@@ -82,6 +83,7 @@
 #define GTK_PARTS_IS_OUTDATED "eView error: \nFound GTK_parts version %s, needed version is %d or upper. \nPlease, download from https://dl.dropboxusercontent.com/u/100376233/eView/GTK_parts.sh and upgrade Your GTK_parts."
 #define FAILED_TO_START_XFBDEV "eView error: \nXfbdev startup failed. Please contact eView developer (S-trace@list.ru) to try to fix it"
 #define FAILED_TO_OPEN_DEV_FB0 "eView error: \nUnable to open /dev/fb0 - display won't refresh! Please contact eView developer (S-trace@list.ru) to try to fix it"
+#define XFBDEV_STARTUP_TIMEOUT "eView error: \nXfbdev startup failed - wait for server timeout exceeded. Please contact eView developer (S-trace@list.ru) to try to fix it"
 
 #define DELETE_CONFIRM "Please confirm deletion"
 #define MOVE_CONFIRM "Please confirm moving"

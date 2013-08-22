@@ -467,31 +467,38 @@ void init (void)
     printf ("X is down! Assuming QT\nTrying to start Xfbdev\n");
     #endif
     xsystem("Xfbdev :0 -br -pn -hide-cursor -dpi 150 -rgba vrgb & ");
+    
       char *ROT=getenv("ROT"); // Получаем поворот экрана из переменной окружения
-      if (strcmp (ROT, "0") != 0)
-    {
-      (void)usleep(1000000);
-      xsystem("matchbox-window-manager -theme Sato -use_desktop_mode decorated &"); // На GMini C6LHD/Digma R60G вызывает серую рамку вокруг экрана, да и на других книгах тоже мало хорошего. Но нужен для корректного поворота через xrandr (по сути, ему нужен любой клиент, который до него будет подключен к Xfbdev).
-      (void)usleep(2000000);
+      int timer=0;
+      while (!XOpenDisplay(NULL))
+      {
+        usleep (1000);
+        if (++timer > 5000)
+        {
+          #ifdef debug_printf
+          printf ("Failed to start Xfbdev - timed out!\n");
+          #endif
+          Qt_error_message(XFBDEV_STARTUP_TIMEOUT);
+        }
+      }
       #ifdef debug_printf
-      printf ("ROT=%s\n", ROT);
+      printf ("Xfbdev started after 0,%d seconds\n", timer);
       #endif
-      if (strcmp (ROT, "90") == 0) xsystem("xrandr -d :0 -o left");
-      if (strcmp (ROT, "180") == 0) xsystem("xrandr -d :0 -o right");
-      if (strcmp (ROT, "270") == 0) xsystem("xrandr -d :0 -o inverted");      
-    }
+      if (strcmp (ROT, "0") != 0)
+      {
+        xsystem("matchbox-window-manager -theme Sato -use_desktop_mode decorated &"); // На GMini C6LHD/Digma R60G вызывает серую рамку вокруг экрана, да и на других книгах тоже мало хорошего. Но нужен для корректного поворота через xrandr (по сути, ему нужен любой клиент, который до него будет подключен к Xfbdev).
+        (void)usleep(2000000);
+        #ifdef debug_printf
+        printf ("ROT=%s\n", ROT);
+        #endif
+        if (strcmp (ROT, "90" ) == 0) xsystem("xrandr -d :0 -o left");
+        if (strcmp (ROT, "180") == 0) xsystem("xrandr -d :0 -o inverted");
+        if (strcmp (ROT, "270") == 0) xsystem("xrandr -d :0 -o right");
+      }
     else
     {
-    get_system_sleep_timeout();
-    set_system_sleep_timeout("86400"); /* Боремся со злостным усыплятором */
-    }
-    
-    if (! XOpenDisplay(NULL))
-    {
-      #ifdef debug_printf
-      printf ("Failed to start Xfbdev!\n");
-      #endif
-      Qt_error_message(FAILED_TO_START_XFBDEV);
+      get_system_sleep_timeout();
+      set_system_sleep_timeout("86400"); /* Боремся со злостным усыплятором */
     }
   }
   get_screensavers_list();  
@@ -566,8 +573,16 @@ int main (int argc, char **argv)
   #else /* -6 - ГРЯЗНЫЙ ХАК, потому как по умолчанию ViewImageWindow создаёт окно с рамкой в 3 пиксела вокруг картинки, так что она смещена на 3 пиксела вниз-вправо и 6 пикселов внизу-справа оказываются обрезаны. */
   GdkScreen *screen;
   screen = gdk_screen_get_default(); /* Текущий screen */
-  width_display = gdk_screen_get_width (screen) - 6; /* Ширина экрана */
-  height_display = gdk_screen_get_height (screen) - 6; /* Высота экрана */
+  if(hardware_has_backlight)
+  {
+    width_display = gdk_screen_get_width (screen) - 1; /* Ширина экрана без менеджера окон */
+    height_display = gdk_screen_get_height (screen) - 1; /* Высота экрана без менеджера окон*/
+  }
+  else
+  {    
+    width_display = gdk_screen_get_width (screen) - 6; /* Ширина экрана с менеджером окон*/
+    height_display = gdk_screen_get_height (screen) - 6; /* Высота экрана с менеджером окон*/
+  }
 //   free(screen); // Это не надо (сегфолт на книге)
   framebuffer_descriptor = open("/dev/fb0", O_RDWR); /* Открываем фреймбуффер */
   if (framebuffer_descriptor == 0)
