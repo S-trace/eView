@@ -192,7 +192,6 @@ gboolean load_image(const char *const filename, const  struct_panel *const panel
       extracted_file_name=xconcat("/tmp/", archive_file_name);
       free (archive_file_name);
       target->pixbuf=gdk_pixbuf_new_from_file (extracted_file_name, NULL);
-      free (extracted_file_name);
     }
     else
       target->pixbuf=gdk_pixbuf_new_from_file (filename, NULL);
@@ -217,9 +216,10 @@ gboolean load_image(const char *const filename, const  struct_panel *const panel
     if (panel->archive_depth > 0 && (suspended == FALSE))
     {
       #ifdef debug_printf
-      printf("Removing extracted '%s'\n",filename);
+      printf("Removing extracted '%s'\n",extracted_file_name);
       #endif
-      (void)remove(filename);
+      (void)remove(extracted_file_name);
+      free (extracted_file_name);
     }
     image_resize (target);
   }
