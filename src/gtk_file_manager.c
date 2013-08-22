@@ -467,19 +467,18 @@ void init (void)
     printf ("X is down! Assuming QT\nTrying to start Xfbdev\n");
     #endif
     xsystem("Xfbdev :0 -br -pn -hide-cursor -dpi 150 -rgba vrgb & ");
-    if (hardware_has_backlight == FALSE)
-    {
       char *ROT=getenv("ROT"); // Получаем поворот экрана из переменной окружения
+      if (strcmp (ROT, "0") != 0)
+    {
       (void)usleep(1000000);
       xsystem("matchbox-window-manager -theme Sato -use_desktop_mode decorated &"); // На GMini C6LHD/Digma R60G вызывает серую рамку вокруг экрана, да и на других книгах тоже мало хорошего. Но нужен для корректного поворота через xrandr (по сути, ему нужен любой клиент, который до него будет подключен к Xfbdev).
       (void)usleep(2000000);
       #ifdef debug_printf
-      printf ("$ROT=%s\n", ROT);
+      printf ("ROT=%s\n", ROT);
       #endif
       if (strcmp (ROT, "90") == 0) xsystem("xrandr -d :0 -o left");
       if (strcmp (ROT, "180") == 0) xsystem("xrandr -d :0 -o right");
       if (strcmp (ROT, "270") == 0) xsystem("xrandr -d :0 -o inverted");      
-      free (ROT);
     }
     else
     {
