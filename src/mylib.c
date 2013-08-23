@@ -440,7 +440,10 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       printf("Already on last file!\n");
       #endif
       if (allow_actions)
-        Message (INFORMATION,LAST_FILE_REACHED);
+      {
+        GtkWidget *message=Message (INFORMATION,LAST_FILE_REACHED);
+        MessageDieDelayed (message);
+      }
       free(next_name);
       return (strdup(panel->selected_name));
     }
@@ -450,7 +453,10 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       printf("Loop reached for forward\n");
       #endif
       if (allow_actions) 
-        Message (INFORMATION,LAST_FILE_REACHED_LOOP);
+      {
+        GtkWidget *message=Message (INFORMATION,LAST_FILE_REACHED_LOOP);
+        MessageDieDelayed (message);
+      }
       free(next_name);
       return find_first_picture_name(panel);
     }
@@ -520,7 +526,8 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       #endif
       if (allow_actions) 
       {
-        Message (INFORMATION,LAST_FILE_REACHED_EXIT);
+        GtkWidget *message=Message (INFORMATION,LAST_FILE_REACHED_EXIT);
+        MessageDieDelayed (message);
         die_viewer_window(); /* Если действия разрешены */
       }
       free(next_name);
@@ -561,7 +568,10 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       printf("Already on first image!\n");
       #endif
       if (allow_actions)
-        Message (INFORMATION,FIRST_FILE_REACHED);
+      {
+        GtkWidget *message=Message (INFORMATION,FIRST_FILE_REACHED);
+        MessageDieDelayed (message);
+      }
       free(prev_name);
       return find_first_picture_name(panel);
     }
@@ -571,7 +581,10 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       printf("Loop reached for backward\n");
       #endif
       if (allow_actions) 
-        Message (INFORMATION,FIRST_FILE_REACHED_LOOP);
+      {
+        GtkWidget *message=Message (INFORMATION,FIRST_FILE_REACHED_LOOP);
+        MessageDieDelayed (message);
+      }
       free(prev_name);
       return find_last_picture_name(panel);
     }
@@ -631,7 +644,8 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       #endif
       if (allow_actions) 
       {
-        Message (INFORMATION,FIRST_FILE_REACHED_EXIT);
+        GtkWidget *message=Message (INFORMATION,FIRST_FILE_REACHED_EXIT);
+        MessageDieDelayed (message);
         die_viewer_window(); /* Если действия разрешены */
       }
       free(prev_name);

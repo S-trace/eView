@@ -24,6 +24,7 @@ GtkWidget *MessageWindow;
 int enable_refresh=1;
 int suspend_count=-1; /* Счётчик засыпаний книги - для выбора номера заставки */
 static int need_full_refresh; /* Тип необходимого обновления экрана при перемещении курсора по меню */
+static guint MessageDie_idle_call_handler;
 
 int check_key_press(guint keyval, struct_panel *panel) /* Возвращает TRUE если всё сделано */
 {
@@ -177,6 +178,7 @@ void Qt_error_message(const char *message)
 
 int MessageDie (GtkWidget *Window)
 {
+  gtk_idle_remove (MessageDie_idle_call_handler); /* Удаляем вызов этой функции из очереди вызовов (иначе на ARM она будет вызываться вечно) */
   char *iter=iter_from_filename(active_panel->selected_name, active_panel);
   #ifdef debug_printf
   printf ("Destroying message window\n");
@@ -184,13 +186,20 @@ int MessageDie (GtkWidget *Window)
   gtk_widget_destroy(Window);
   move_selection(iter, active_panel);
   free(iter);
-  wait_for_draw(); /* Ожидаем отрисовки всего */
   e_ink_refresh_full();
   interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
   return TRUE;
 }
 
-void Message (const char *title, const char *message) {
+void *MessageDieDelayed (void *arg)
+{
+  (void)usleep(3000000); /* Спим 3 секунды */
+  MessageDie_idle_call_handler=g_idle_add ((GSourceFunc) MessageDie, GTK_WIDGET(arg));
+  return NULL;
+}
+
+
+GtkWidget *Message (const char *title, const char *message) {
   GtkWidget *label;
   /*   interface_is_locked=TRUE; //Блокируем остальной интерфейс программы */
   /* Создаём виджеты */
@@ -211,6 +220,7 @@ void Message (const char *title, const char *message) {
   gtk_container_add (GTK_CONTAINER (GTK_DIALOG(MessageWindow)->vbox), label);
   gtk_widget_show_all (MessageWindow);
   e_ink_refresh_full();
+  return MessageWindow;
 }
 
 void wait_for_draw (void) 
