@@ -770,8 +770,16 @@ gint keys_rotation_menu (__attribute__((unused))GtkWidget *window, GdkEventKey *
   if (check_key_press(event->keyval, active_panel)) return TRUE;
   switch (event->keyval){
     case   KEY_UP:
+      
       if (gtk_widget_is_focus (create))
       {
+        printf("create\n");
+        gtk_widget_grab_focus (exit_button);
+        return TRUE;
+      }
+      else if (gtk_widget_is_focus(options) && GTK_WIDGET_SENSITIVE(create) == FALSE)
+      {
+        printf("options\n");
         gtk_widget_grab_focus (exit_button);
         return TRUE;
       }
@@ -781,7 +789,10 @@ gint keys_rotation_menu (__attribute__((unused))GtkWidget *window, GdkEventKey *
     case   KEY_DOWN:
       if (gtk_widget_is_focus (exit_button))
       {
-        gtk_widget_grab_focus (create);
+        if (GTK_WIDGET_SENSITIVE(create)) 
+          gtk_widget_grab_focus (create);
+        else 
+          gtk_widget_grab_focus (options);
         return TRUE;
       }
       else
@@ -829,7 +840,7 @@ void start_main_menu (struct_panel *panel)
   gtk_button_set_alignment (GTK_BUTTON(create), (gfloat)0.0, (gfloat)0.0);
   gtk_button_set_relief (GTK_BUTTON(create), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), create, FALSE, FALSE, 0);
-  if (top_panel.archive_depth > 0 || bottom_panel.archive_depth > 0) gtk_widget_set_sensitive(create, FALSE); // В архиве не поддерживается
+  if (active_panel->archive_depth > 0 ) gtk_widget_set_sensitive(create, FALSE); // В архиве не поддерживается
   (void)g_signal_connect (G_OBJECT (create), "clicked", G_CALLBACK (create_folder), NULL);
   (void)g_signal_connect (G_OBJECT (create), "key_press_event", G_CALLBACK (keys_rotation_menu), NULL);
   
@@ -861,6 +872,7 @@ void start_main_menu (struct_panel *panel)
   gtk_button_set_relief (GTK_BUTTON(options), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), options, FALSE, FALSE, 0);
   (void)g_signal_connect_swapped (G_OBJECT (options), "clicked", G_CALLBACK (options_menu_create), dialog);
+  (void)g_signal_connect (G_OBJECT (options), "key_press_event", G_CALLBACK (keys_rotation_menu), NULL);
   
   exit_button = gtk_button_new_with_label (EXIT);
   gtk_button_set_alignment (GTK_BUTTON(exit_button), (gfloat)0.0, (gfloat)0.0);
