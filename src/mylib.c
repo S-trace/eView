@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 #include "gtk_file_manager.h"
 #include "mylib.h"
@@ -442,7 +443,8 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       if (allow_actions)
       {
         GtkWidget *message=Message (INFORMATION,LAST_FILE_REACHED);
-        MessageDieDelayed (message);
+        pthread_t MessageDieDelayed_tid;
+        pthread_create(&MessageDieDelayed_tid, NULL, MessageDieDelayed, (void *)message);
       }
       free(next_name);
       return (strdup(panel->selected_name));
@@ -455,7 +457,8 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       if (allow_actions) 
       {
         GtkWidget *message=Message (INFORMATION,LAST_FILE_REACHED_LOOP);
-        MessageDieDelayed (message);
+        pthread_t MessageDieDelayed_tid;
+        pthread_create(&MessageDieDelayed_tid, NULL, MessageDieDelayed, (void *)message);
       }
       free(next_name);
       return find_first_picture_name(panel);
@@ -570,7 +573,8 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       if (allow_actions)
       {
         GtkWidget *message=Message (INFORMATION,FIRST_FILE_REACHED);
-        MessageDieDelayed (message);
+        pthread_t MessageDieDelayed_tid;
+        pthread_create(&MessageDieDelayed_tid, NULL, MessageDieDelayed, (void *)message);
       }
       free(prev_name);
       return find_first_picture_name(panel);
@@ -583,7 +587,8 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       if (allow_actions) 
       {
         GtkWidget *message=Message (INFORMATION,FIRST_FILE_REACHED_LOOP);
-        MessageDieDelayed (message);
+        pthread_t MessageDieDelayed_tid;
+        pthread_create(&MessageDieDelayed_tid, NULL, MessageDieDelayed, (void *)message);
       }
       free(prev_name);
       return find_last_picture_name(panel);
@@ -645,7 +650,8 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       if (allow_actions) 
       {
         GtkWidget *message=Message (INFORMATION,FIRST_FILE_REACHED_EXIT);
-        MessageDieDelayed (message);
+        pthread_t MessageDieDelayed_tid;
+        pthread_create(&MessageDieDelayed_tid, NULL, MessageDieDelayed, (void *)message);
         die_viewer_window(); /* Если действия разрешены */
       }
       free(prev_name);
