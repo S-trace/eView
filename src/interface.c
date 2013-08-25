@@ -244,13 +244,28 @@ gint keys_rotation_picture_menu (__attribute__((unused))GtkWidget *window, GdkEv
         gtk_widget_grab_focus (viewed);
         return TRUE;
       }
-      else
+      else if (gtk_widget_is_focus (frame_image) && GTK_WIDGET_SENSITIVE(crop_image) == FALSE)
+      {
+        gtk_widget_grab_focus (viewed);
+        return TRUE;
+      }        
+      else if (gtk_widget_is_focus (manga_mode) && GTK_WIDGET_SENSITIVE(frame_image) == FALSE)
+      {
+        gtk_widget_grab_focus (viewed);
+        return TRUE;
+      }        
+      
         return FALSE;
       
     case   KEY_DOWN:
       if (gtk_widget_is_focus (viewed))
       {
-        gtk_widget_grab_focus (crop_image);
+        if (GTK_WIDGET_SENSITIVE(crop_image))
+          gtk_widget_grab_focus (crop_image);
+        else if (GTK_WIDGET_SENSITIVE(frame_image))
+          gtk_widget_grab_focus (frame_image);
+        else 
+          gtk_widget_grab_focus (manga_mode);
         return TRUE;
       }
       else
@@ -327,12 +342,14 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
   gtk_button_set_relief (GTK_BUTTON(frame_image), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), frame_image, TRUE, TRUE, 0);
   (void)g_signal_connect (G_OBJECT (frame_image), "clicked", G_CALLBACK (frame_image_toggler), NULL);
+  (void)g_signal_connect (G_OBJECT (frame_image), "key_press_event",G_CALLBACK (keys_rotation_picture_menu), NULL);
   
   manga_mode = gtk_check_button_new_with_label(MANGA_MODE);
   if (manga) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(manga_mode), TRUE);
   gtk_button_set_relief (GTK_BUTTON(manga_mode), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), manga_mode, TRUE, TRUE, 0);
   (void)g_signal_connect (G_OBJECT (manga_mode), "clicked", G_CALLBACK (manga_mode_toggler), NULL);
+  (void)g_signal_connect (G_OBJECT (manga_mode), "key_press_event",G_CALLBACK (keys_rotation_picture_menu), NULL);
   
   keepaspect_image = gtk_check_button_new_with_label(KEEP_ASPECT);
   if (keepaspect) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(keepaspect_image), TRUE);
