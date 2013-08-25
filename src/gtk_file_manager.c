@@ -39,7 +39,6 @@
 int interface_is_locked=TRUE; /* Сразу блокируем интерфейс программы, чтобы при запуске она не падала если зажата клавиша */
 struct_panel top_panel, bottom_panel, *active_panel, *inactive_panel;
 GtkWidget *main_window, *panels_vbox; /* Окно файлменеджера */
-static int table_visible; /*видима нижняя панель или нет */
 int width_display, height_display;
 int framebuffer_descriptor=0; /* Дескриптор файла фреймбуффера (для обновления) */
 int QT=FALSE; /* Обнаружен ли QT (влияет на IOCTL обновления и запуск Xfbdev) */
@@ -374,18 +373,15 @@ void move_dir_or_file (void)
 void copy_dir_or_file (void)
 {
   if (strcmp (active_panel->selected_name, "../") == 0) return;
-  if (table_visible)
-  {
-    char *src, *str_iter;
-    asprintf (&src, "cp -fpR \"%s\" \"%s\"", active_panel->selected_name, inactive_panel->path);
-    xsystem(src);
-    xfree (&src);
-    str_iter=get_current_iter(inactive_panel);
-    update(inactive_panel);
-    move_selection (str_iter, inactive_panel);
-    free(str_iter);
-    (void)chdir (active_panel->path);
-  }
+  char *src, *str_iter;
+  asprintf (&src, "cp -fpR \"%s\" \"%s\"", active_panel->selected_name, inactive_panel->path);
+  xsystem(src);
+  xfree (&src);
+  str_iter=get_current_iter(inactive_panel);
+  update(inactive_panel);
+  move_selection (str_iter, inactive_panel);
+  free(str_iter);
+  (void)chdir (active_panel->path);
 }
 
 void panel_selector (struct_panel *focus_to) /* Принимает указатель на panel - &top_panel, &bottom_panel или inactive_struct_panel */
