@@ -186,6 +186,8 @@ int MessageDie (GtkWidget *Window)
   gtk_widget_destroy(Window);
   move_selection(iter, active_panel);
   free(iter);
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_full();
   interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
   return TRUE;
@@ -307,6 +309,8 @@ void enter_subdir(char *name, struct_panel *panel)/* Переход на уро�
   }
   gtk_widget_queue_draw(GTK_WIDGET(panel->list)); /* Заставляем GTK перерисовать список каталогов */
   enable_refresh=TRUE;
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
 }
 
 void dirlist_select(GtkWidget *const widget, struct_panel *const panel) /* Что происходит при перемещении выделенной строки по списку */
@@ -436,6 +440,9 @@ void go_upper(struct_panel *panel) /* Переход на уровень вве�
   gtk_widget_queue_draw(GTK_WIDGET(panel->list)); /* Заставляем GTK перерисовать список каталогов */
   wait_for_draw();
   enable_refresh=TRUE;
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
+  e_ink_refresh_full();
 }
 
 void actions(struct_panel *panel) /*выбор что делать по клику переход или запуск */
@@ -597,7 +604,6 @@ gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
     
     case KEY_BACK:/*GDK_x: */
       go_upper(panel);
-      e_ink_refresh_local();
       return TRUE;
       
     case KEY_PGDOWN:

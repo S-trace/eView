@@ -89,6 +89,8 @@ void crop_image_toggler () // Callback для галки обрезки поле
 {
   write_config_int("crop", crop=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(crop_image)));
   need_refresh=TRUE;
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_part ();
 }
 
@@ -111,6 +113,8 @@ void rotate_image_toggler () // Callback для галки поворота
   }
   write_config_int("rotate", rotate); // Сохраняем конфиги
   need_refresh=TRUE;
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_part ();
 }
 
@@ -132,6 +136,8 @@ void frame_image_toggler () // Callback для галки умного лист�
   write_config_int("crop", crop);   // Сохраняем конфиги
   write_config_int("frame", frame); // Сохраняем конфиги
   need_refresh=TRUE;
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_part ();
 }
 
@@ -153,6 +159,8 @@ void manga_mode_toggler () // Callback для галки просмотра ка
   write_config_int("crop", crop);   // Сохраняем конфиги
   write_config_int("manga", manga); // Сохраняем конфиги
   need_refresh=TRUE;
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_part ();
 }
 
@@ -160,12 +168,16 @@ void keepaspect_image_toggler () // Callback для галки сохранен�
 {
   write_config_int("keepaspect", keepaspect = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(keepaspect_image)));
   need_refresh=TRUE;
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_part ();
 }
 
 void double_refresh_toggler () // Callback для галки двойного обновления
 {
   write_config_int("double_refresh", double_refresh=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(double_refresh_image)));
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_part ();
 }
 
@@ -173,6 +185,8 @@ void preload_toggler () // Callback для галки включения пре�
 {
   write_config_int("preload_enable", preload_enable=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(preload_enabled_button)));
   if (preload_enable == FALSE) reset_image(&preloaded);
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_part ();
 }
 
@@ -180,6 +194,8 @@ void caching_toggler () // Callback для галки включения кэш�
 {
   write_config_int("caching_enable", caching_enable=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(caching_enabled_button)));
   if (caching_enable  == FALSE) reset_image(&cached);
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_part ();
 }
 
@@ -193,6 +209,8 @@ void suppress_panel_callback () // Callback для галки подавлени
     start_panel();
   }
   write_config_int("suppress_panel", suppress_panel); // Сохраняем конфиги
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_part ();
 }
 
@@ -200,6 +218,8 @@ void HD_scaling_callback () // Callback для галки качественно
 {
   write_config_int("HD_scaling", HD_scaling=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(HD_scaling_button)));
   need_refresh=TRUE;
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_part ();
 }
 
@@ -207,9 +227,10 @@ void boost_contrast_callback () // Callback для галки качествен
 {
   write_config_int("boost_contrast", boost_contrast=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(boost_contrast_button)));
   need_refresh=TRUE;
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_part ();
 }
-
 
 void loop_dir_toggler () // Callback для радиобаттона по действию при окончании каталога
 {
@@ -218,6 +239,8 @@ void loop_dir_toggler () // Callback для радиобаттона по дей
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_next))) loop_dir = LOOP_NEXT; 
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_exit))) loop_dir = LOOP_EXIT; 
   write_config_int("loop_dir", loop_dir);
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_part ();
 }
 
@@ -230,6 +253,8 @@ void reset_statistics() // Callback для кнопки статистики (с
     #endif
     write_config_int("viewed_pages", viewed_pages=0);
     gtk_button_set_label(GTK_BUTTON(viewed), VIEWED_PAGES" 0");
+    wait_for_draw();
+    if (QT) usleep (QT_REFRESH_DELAY);
     e_ink_refresh_part();
   }
 }
@@ -252,6 +277,8 @@ gint keys_rotation_picture_menu (__attribute__((unused))GtkWidget *window, GdkEv
       else if (gtk_widget_is_focus (manga_mode) && GTK_WIDGET_SENSITIVE(frame_image) == FALSE)
       {
         gtk_widget_grab_focus (viewed);
+        wait_for_draw();
+        if (QT) usleep (QT_REFRESH_DELAY);
         return TRUE;
       }        
       
@@ -266,6 +293,8 @@ gint keys_rotation_picture_menu (__attribute__((unused))GtkWidget *window, GdkEv
           gtk_widget_grab_focus (frame_image);
         else 
           gtk_widget_grab_focus (manga_mode);
+        wait_for_draw();
+        if (QT) usleep (QT_REFRESH_DELAY);
         return TRUE;
       }
       else
@@ -290,6 +319,8 @@ void picture_menu_destroy (struct_panel *panel, GtkWidget *dialog) // Уничт
     viewed_pages--; // Откатываем назад счётчик страниц - после открытия-закрытия меню он не должен изменяться
   }
   enable_refresh=TRUE;
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_local();
   //   g_signal_handlers_unblock_by_func( win, focus_in_callback, NULL );
   //   g_signal_handlers_unblock_by_func( win, focus_out_callback, NULL );
@@ -586,9 +617,11 @@ void about_program_callback() // Callback для кнопки информаци
   Message(ABOUT_PROGRAM, ABOUT_PROGRAM_TEXT);
 }
 
-void options_destroy (GtkWidget *dialog) // Уничтожаем меню настроек отображения
+void options_destroy (GtkWidget *dialog) // Уничтожаем меню настроек ФМ
 {
   gtk_widget_destroy(dialog);
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_local();
 }
 
@@ -906,4 +939,3 @@ void start_main_menu (struct_panel *panel)
   (void)g_signal_connect (GTK_WIDGET(dialog), "key_press_event", G_CALLBACK (keys_in_main_menu), panel);
   e_ink_refresh_local();
 }
-
