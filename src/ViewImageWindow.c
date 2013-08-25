@@ -295,7 +295,7 @@ gboolean load_image(const char *const filename, const  struct_panel *const panel
     }
     image_resize (target);
     if (boost_contrast)
-      adjust_contrast (target, 512); // Увеличиваем контраст в полтора раза    
+      adjust_contrast (target, 512); // Увеличиваем контраст в два раза    
   }
   
   return TRUE;
