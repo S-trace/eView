@@ -13,6 +13,7 @@
 #include "ViewImageWindow.h"
 #include "crop.h"
 #include "cfg.h"
+#include "contrast.h"
 /* #include "debug_msg_win.h" */
 #include "frames_search.h"
 #include "shift.h"
@@ -75,6 +76,9 @@ int check_image_settings(const image *const target)
     if (target->frame != frame)  return FALSE;
     if (target->rotate!= rotate) return FALSE;
     if (target->keepaspect != keepaspect) return FALSE;
+    if (target->HD_scaling != HD_scaling) return FALSE;
+    if (target->boost_contrast != boost_contrast) return FALSE;
+    
     #ifdef debug_printf
     printf("Image %p is correct!\n", target);
     #endif
@@ -98,6 +102,8 @@ void copy_image_settings(image *target, image *source)
   target->height=source->height;
   target->width=source->width;
   target->aspect_rate=source->aspect_rate;
+  target->HD_scaling=source->HD_scaling;
+  target->boost_contrast=source->boost_contrast;
   target->valid=source->valid;
 }
 
@@ -123,6 +129,8 @@ void set_image_settings(image *target)
   target->frame=frame;
   target->rotate=rotate;
   target->keepaspect=keepaspect;
+  target->HD_scaling=HD_scaling;
+  target->boost_contrast=boost_contrast;  
   target->valid=TRUE;
 }
 
@@ -286,6 +294,8 @@ gboolean load_image(const char *const filename, const  struct_panel *const panel
       free (extracted_file_name);
     }
     image_resize (target);
+    if (boost_contrast)
+      adjust_contrast (target, 512); // Увеличиваем контраст в полтора раза    
   }
   
   return TRUE;
@@ -531,6 +541,14 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
           
         case   KEY_REFRESH_LIBROII:
         case   KEY_REFRESH_QT:
+          e_ink_refresh_full();
+          return FALSE;
+          
+        case   KEY_OK:
+          if (boost_contrast) write_config_int("boost_contrast", boost_contrast=FALSE);
+          else write_config_int("boost_contrast", boost_contrast=TRUE);
+          load_image(panel->last_name, panel, TRUE, &current);
+          show_image(&current, panel, TRUE);
           e_ink_refresh_full();
           return FALSE;
           

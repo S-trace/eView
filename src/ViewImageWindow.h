@@ -16,6 +16,8 @@ typedef struct {
   int crop;
   int rotate;
   int frame;
+  int HD_scaling;
+  int boost_contrast;
   gboolean valid;
 } image;
 extern image current, preloaded, cached, screensaver;

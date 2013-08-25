@@ -794,7 +794,8 @@ void enter_suspend(struct_panel *panel)
   int saved_frame=frame;
   int saved_preload_enable=preload_enable;
   int saved_keepaspect=keepaspect;
-
+  int saved_boost_contrast=boost_contrast;
+  
   gtk_idle_remove (idle_call_handler); /* Удаляем вызов этой функции из очереди вызовов (иначе на ARM она будет вызываться вечно) */
   if (suspended == FALSE)
   {
@@ -806,7 +807,7 @@ void enter_suspend(struct_panel *panel)
     printf("DBUS sent\n");
     #endif
     
-    crop=rotate=frame=preload_enable=FALSE; /* Грязно перенастраиваем смотрелку */
+    boost_contrast=crop=rotate=frame=preload_enable=FALSE; /* Грязно перенастраиваем смотрелку */
     suspended=keepaspect=TRUE;
     if (in_picture_viewer)
     {
@@ -822,6 +823,7 @@ void enter_suspend(struct_panel *panel)
     frame=saved_frame;
     preload_enable=saved_preload_enable;
     keepaspect=saved_keepaspect;
+    boost_contrast=saved_boost_contrast;
     set_brightness(0);
     preload_next_screensaver();
     suspend_hardware();  

@@ -16,7 +16,7 @@
 
 static GtkWidget *create, *copy, *moving, *del, *options, *exit_button; // Кнопки в главном меню
 static GtkWidget *fmanager, *move_chk, *clock_panel, *ink_speed, *show_hidden_files_chk, *LED_notify_checkbox, *reset_configuration, *backlight_scale, *sleep_timeout_scale, *about_program; // Пункты в настройках ФМ
-static GtkWidget *crop_image, *rotate_image, *manga_mode, *frame_image, *keepaspect_image, *double_refresh_image, *viewed, *preload_enabled_button, *caching_enabled_button, *suppress_panel_button, *HD_scaling_button; // Чекбоксы в настройках вьювера
+static GtkWidget *crop_image, *rotate_image, *manga_mode, *frame_image, *keepaspect_image, *double_refresh_image, *viewed, *preload_enabled_button, *caching_enabled_button, *suppress_panel_button, *HD_scaling_button, *boost_contrast_button; // Чекбоксы в настройках вьювера
 static GtkWidget *loop_dir_none, *loop_dir_loop, *loop_dir_next, *loop_dir_exit, *loop_dir_frame, *loop_dir_vbox; // Радиобаттон в настройках вьювера
 int need_refresh=FALSE;
 
@@ -199,7 +199,17 @@ void suppress_panel_callback () // Callback для галки подавлени
 void HD_scaling_callback () // Callback для галки качественного скалирования
 {
   write_config_int("HD_scaling", HD_scaling=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(HD_scaling_button)));
+  need_refresh=TRUE;
+  e_ink_refresh_part ();
 }
+
+void boost_contrast_callback () // Callback для галки качественного скалирования
+{
+  write_config_int("boost_contrast", boost_contrast=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(boost_contrast_button)));
+  need_refresh=TRUE;
+  e_ink_refresh_part ();
+}
+
 
 void loop_dir_toggler () // Callback для радиобаттона по действию при окончании каталога
 {
@@ -380,6 +390,12 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
   gtk_button_set_relief (GTK_BUTTON(HD_scaling_button), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), HD_scaling_button, TRUE, TRUE, 0);
   (void)g_signal_connect (G_OBJECT (HD_scaling_button), "clicked", G_CALLBACK (HD_scaling_callback), NULL);
+
+  boost_contrast_button = gtk_check_button_new_with_label(BOOST_CONTRAST);
+  if (boost_contrast) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(boost_contrast_button), TRUE);
+  gtk_button_set_relief (GTK_BUTTON(boost_contrast_button), GTK_RELIEF_NONE);
+  gtk_box_pack_start (GTK_BOX (menu_vbox), boost_contrast_button, TRUE, TRUE, 0);
+  (void)g_signal_connect (G_OBJECT (boost_contrast_button), "clicked", G_CALLBACK (boost_contrast_callback), NULL);
   
   if (QT == FALSE)
   {
@@ -659,7 +675,7 @@ void options_menu_create(GtkWidget *main_menu) //Создание меню оп�
   (void)g_signal_connect (G_OBJECT (fmanager), "key_press_event", G_CALLBACK (keys_rotation_options), NULL);
   
   ink_speed = gtk_check_button_new_with_label (PARTIAL_UPDATE);
-  if (speed_toggle == FALSE) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ink_speed), TRUE);
+  if (speed_toggle) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ink_speed), TRUE);
   gtk_button_set_relief (GTK_BUTTON(ink_speed), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), ink_speed, FALSE, FALSE, 0);
   (void)g_signal_connect (G_OBJECT (ink_speed), "clicked", G_CALLBACK (type_refresh), NULL);

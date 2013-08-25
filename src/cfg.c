@@ -9,7 +9,7 @@
 #include "cfg.h"
 
 static char *cfg_directory; /*путь к файлу с настройками */
-int crop, rotate, frame, keepaspect, fm_toggle, move_toggle, speed_toggle, clock_toggle, top_panel_active, loop_dir, double_refresh, viewed_pages, preload_enable, caching_enable, suppress_panel, show_hidden_files, manga, HD_scaling, LED_notify=TRUE;
+int crop, rotate, frame, keepaspect, fm_toggle, move_toggle, speed_toggle, clock_toggle, top_panel_active, loop_dir, double_refresh, viewed_pages, preload_enable, caching_enable, suppress_panel, show_hidden_files, manga, HD_scaling, boost_contrast, LED_notify=TRUE;
 int backlight, sleep_timeout;
 char *system_sleep_timeout;
 
@@ -240,7 +240,9 @@ void create_cfg (void)  /*создание файлов настроек по у
   write_config_int("LED_notify", TRUE);
   write_config_int("backlight", FALSE);
   write_config_int("sleep_timeout", 60);
-  write_config_int("HD_scaling", 0);
+  write_config_int("HD_scaling", FALSE);
+  write_config_int("boost_contrast", FALSE);
+  
   write_config_string("top_panel.path", cfg_directory); // Хз почему, но если установить "/" - прога крашится при первом запуске
   write_config_string("top_panel.selected_name", "../");
   write_config_string("top_panel.archive_cwd", "");
@@ -312,6 +314,7 @@ void read_configuration (void)
   backlight=read_config_int("backlight");
   sleep_timeout=read_config_int("sleep_timeout");
   HD_scaling=read_config_int("HD_scaling");
+  boost_contrast=read_config_int("boost_contrast");
   
   read_panel_configuration(&top_panel);
   read_panel_configuration(&bottom_panel);

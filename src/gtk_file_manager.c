@@ -264,7 +264,7 @@ void update(struct_panel *panel) /*обновление списка */
   while (valid) 
     valid = gtk_tree_model_iter_next (model, &iter);
   /*инфа о числе папок и файлов в загловок окна */
-  asprintf(&title, "Dirs: %d  Files: %d %s", panel->dirs_num-1, panel->files_num, "  "VERSION);
+  asprintf(&title, "Dirs: %d Files: %d  %s", panel->dirs_num-1, panel->files_num, VERSION);
   gtk_window_set_title(GTK_WINDOW(main_window), title);
   xfree (&title);
   if (panel->archive_depth > 0)
