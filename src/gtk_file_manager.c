@@ -373,15 +373,18 @@ void move_dir_or_file (void)
 void copy_dir_or_file (void)
 {
   if (strcmp (active_panel->selected_name, "../") == 0) return;
-  char *src, *str_iter;
-  asprintf (&src, "cp -fpR \"%s\" \"%s\"", active_panel->selected_name, inactive_panel->path);
-  xsystem(src);
-  xfree (&src);
-  str_iter=get_current_iter(inactive_panel);
-  update(inactive_panel);
-  move_selection (str_iter, inactive_panel);
-  free(str_iter);
-  (void)chdir (active_panel->path);
+  if (fm_toggle)
+  {
+    char *src, *str_iter;
+    asprintf (&src, "cp -fpR \"%s\" \"%s\"", active_panel->selected_name, inactive_panel->path);
+    xsystem(src);
+    xfree (&src);
+    str_iter=get_current_iter(inactive_panel);
+    update(inactive_panel);
+    move_selection (str_iter, inactive_panel);
+    free(str_iter);
+    (void)chdir (active_panel->path);
+  }
 }
 
 void panel_selector (struct_panel *focus_to) /* Принимает указатель на panel - &top_panel, &bottom_panel или inactive_struct_panel */
