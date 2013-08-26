@@ -1,6 +1,6 @@
 #!/bin/sh 
 PRGNAME=eView
-rm /usr/bin/$PRGNAME /usr/share/applications/$PRGNAME.desktop /usr/local/share/applications/${PRGNAME}.desktop /usr/share/filemanager/pixmaps/desktop_$PRGNAME.png /usr/local/share/desktop/icons/$PRGNAME.png
+rm -r /usr/bin/$PRGNAME /usr/share/applications/$PRGNAME.desktop /usr/local/share/applications/${PRGNAME}.desktop /usr/share/filemanager/pixmaps/desktop_$PRGNAME.png /usr/local/share/desktop/icons/$PRGNAME.png .$PRGNAME
 echo '[Desktop Entry]
 Name=Manual
 GenericName=Manual
