@@ -450,7 +450,7 @@ void actions(struct_panel *panel) /*выбор что делать по клик
   #ifdef debug_printf
   printf("CWD=%s\n", panel->path);
   #endif
-  if (strcmp(panel->selected_size, "dir") == 0) /* Если кликнули не каталог */
+  if (strcmp(panel->selected_size, "dir ") == 0) /* Если кликнули не каталог */
   {
     if (panel == &top_panel) /* Сбрасываем имя последнего просмотренного файла, чтобы при следующем запуске не было ошибки */
     {

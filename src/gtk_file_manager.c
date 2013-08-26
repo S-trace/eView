@@ -106,7 +106,7 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
   {
     char const *back="../";
     char **namelist, *text;
-    add_data_to_list(panel->list, back, 1, NO_AUTOSCROLL, "dir");
+    add_data_to_list(panel->list, back, 1, NO_AUTOSCROLL, "dir ");
     panel->dirs_num++;
     namelist=archive_get_directories_list(panel, panel->archive_cwd);
     if ( namelist[0] != NULL)
@@ -125,7 +125,7 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
         printf("Adding %d archive file '%s'\n", i, text_basename);
         fflush(stdout);
         #endif
-        add_data_to_list(panel->list, full_name, 1, NO_AUTOSCROLL, "dir");
+        add_data_to_list(panel->list, full_name, 1, NO_AUTOSCROLL, "dir ");
         xfree(&namelist[i]);
         free(full_name);
         i++;
@@ -141,7 +141,7 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
       {
         if ((show_hidden_files == FALSE) && namelist[i][0] == '.') {continue;}
         text=basename(namelist[i]);
-        add_data_to_list(panel->list, text, 1, NO_AUTOSCROLL, "file");
+        add_data_to_list(panel->list, text, 1, NO_AUTOSCROLL, "file ");
         panel->files_num++;
         xfree (&namelist[i]);
 //         free(text); // basename() - free() противопоказан!
@@ -176,7 +176,7 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
           printf("Adding %d dir '%s'\n", i, text);
           fflush(stdout);
           #endif
-          add_data_to_list(panel->list, text, 1, NO_AUTOSCROLL, "dir");
+          add_data_to_list(panel->list, text, 1, NO_AUTOSCROLL, "dir ");
           free(text);
         }
       }

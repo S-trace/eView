@@ -144,20 +144,20 @@ char *get_natural_size(long size) /* Возвращает размер стро�
   char *value;
   if (size>=KILOBYTE && size<MEGABYTE)
   {
-    asprintf(&value, "%0.2f K  ", size/(float)KILOBYTE); /*Пробелы в конце нужны, чтобы скроллбар не перекрывал величину измерения */
+    asprintf(&value, "%0.2f K ", size/(float)KILOBYTE); /*Пробел в конце нужен, чтобы скроллбар не перекрывал величину измерения */
     return(value);
   }
   if (size>=MEGABYTE && size<GIGABYTE)
   {
-    asprintf(&value, "%0.2f M  ", size/(float)MEGABYTE);
+    asprintf(&value, "%0.2f M ", size/(float)MEGABYTE);
     return(value);
   }
   if (size>=GIGABYTE)
   {
-    asprintf(&value, "%0.2f G  ", size/(float)GIGABYTE);
+    asprintf(&value, "%0.2f G ", size/(float)GIGABYTE);
     return(value);
   }
-  asprintf(&value, "%ld B  ", size);
+  asprintf(&value, "%ld B ", size);
   return(value); /* Надеюсь, что эта книга никогда не столкнётся с файлами терабайтного размера */
 }
 
