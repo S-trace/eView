@@ -113,10 +113,10 @@ void read_string(const char *name, char **destination) /*Чтение строк
     }
     *destination=strdup(temp);
     (void)fclose(file_descriptor);
-    #ifdef debug_printf
-    #endif
     trim_line(*destination);
+    #ifdef debug_printf
     printf("Read '%s' from %s\n", *destination, name);
+    #endif
     return;
   }
 }
