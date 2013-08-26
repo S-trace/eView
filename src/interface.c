@@ -582,6 +582,10 @@ void reset_configuration_callback() // Callback для кнопки сброса
     #endif
     reset_config();
     gtk_main_quit();
+    if (QT) xsystem("killall Xfbdev");
+    #ifdef debug_printf
+    printf("Resetting configuration done, bye!\n");
+    #endif    
   }
 }
 
