@@ -441,15 +441,6 @@ void init (void)
   #endif
   /* Ранняя инициализация программы */
   detect_hardware();
-  #ifndef __amd64
-  char *string, *message;
-  read_string("/home/root/.GTK_parts.version", &string);
-  if (atoi(string) < NEEDED_GTK_PARTS_VERSION)
-  {
-    asprintf(&message, GTK_PARTS_IS_OUTDATED, string, NEEDED_GTK_PARTS_VERSION);
-    Qt_error_message(message);
-  }
-  #endif
   #ifdef debug_printf
   set_led_state (LED_state[LED_ON]);
   #endif
@@ -463,7 +454,18 @@ void init (void)
   {
     QT=TRUE;
     #ifdef debug_printf
-    printf ("X is down! Assuming QT\nTrying to start Xfbdev\n");
+    printf ("X is down! Assuming QT\n");
+    #endif
+    char *string, *message;
+    read_string("/home/root/.GTK_parts.version", &string);
+    if (atoi(string) < NEEDED_GTK_PARTS_VERSION)
+    {
+      asprintf(&message, GTK_PARTS_IS_OUTDATED, string, NEEDED_GTK_PARTS_VERSION);
+      Qt_error_message(message);
+    }
+    
+    #ifdef debug_printf
+    printf ("Trying to start Xfbdev\n");
     #endif
     xsystem("Xfbdev :0 -br -pn -hide-cursor -dpi 150 -rgba vrgb & ");
     
