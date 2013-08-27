@@ -501,8 +501,9 @@ void init (void)
       get_system_sleep_timeout();
       set_system_sleep_timeout("86400"); /* Боремся со злостным усыплятором */
     }
+    get_screensavers_list();  
+    
   }
-  get_screensavers_list();  
   current.name[0]='\0';
   preloaded.name[0]='\0';
   cached.name[0]='\0';
@@ -695,7 +696,8 @@ int main (int argc, char **argv)
   /*   g_signal_connect (G_OBJECT (window), "show", G_CALLBACK (e_ink_refresh_full), NULL); */
   /*   g_signal_connect_after (current_panel->list, "move_cursor", G_CALLBACK (e_ink_refresh_default), NULL ); // Обновление экрана при сдвиге выделения */
   interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
-  preload_next_screensaver(); // Загружаем первую заставку в память для мгновенного отображения
+  if (QT)
+    preload_next_screensaver(); // Загружаем первую заставку в память для мгновенного отображения
   if (LED_notify)
     set_led_state (LED_state[LED_OFF]);
   start_sleep_timer();
