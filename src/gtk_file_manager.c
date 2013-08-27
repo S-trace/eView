@@ -607,7 +607,7 @@ int main (int argc, char **argv)
     (void)chdir("/media/mmcblk0p1/"); /* Для новых книг */
     (void)chdir("/userdata/media/mmcblk0p1/"); /* Для старых книг */
     /* Неизвестно, где мы оказались после предыдущих двух переходов (сработал только один):  */
-    top_panel.path = xgetcwd(top_panel.path);
+    top_panel.path = xgetcwd(NULL);
     write_config_string("top_panel.path", top_panel.path ); 
   }
   else 
