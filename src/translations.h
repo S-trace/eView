@@ -33,7 +33,7 @@
 #define FILEMANAGER_MODE "Файлменеджер (две панели)"
 #define PARTIAL_UPDATE "Быстрое обновление"
 #define CONFIRM_MOVE "Подтверждать перемещение"
-#define SHOW_HIDDEN_FILES "Показывать скрытные файлы"
+#define SHOW_HIDDEN_FILES "Показывать скрытые файлы"
 #define SHOW_PANEL "Показывать время и заряд"
 #define LED_NOTIFY "Уведомления светодиодом"
 #define RESET_CONFIGURATION "Сбросить конфигурацию"
