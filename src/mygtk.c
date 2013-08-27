@@ -500,6 +500,7 @@ void actions(struct_panel *panel) /*выбор что делать по клик
         enable_refresh=FALSE;
         enter_archive(panel->selected_name, panel, TRUE); /* Вход в архив, если не в архиве */
         enable_refresh=TRUE;
+        if (QT) usleep (QT_REFRESH_DELAY);
         e_ink_refresh_full();
       }
       else
@@ -507,6 +508,7 @@ void actions(struct_panel *panel) /*выбор что делать по клик
         char *subarchive=xconcat(panel->archive_cwd, panel->selected_name);
         enter_subarchive(subarchive, panel);
         free(subarchive);
+        if (QT) usleep (QT_REFRESH_DELAY);
         e_ink_refresh_local();
       }
     }

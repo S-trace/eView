@@ -232,18 +232,6 @@ void boost_contrast_callback () // Callback для галки качествен
   e_ink_refresh_part ();
 }
 
-void loop_dir_toggler () // Callback для радиобаттона по действию при окончании каталога
-{
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_none))) loop_dir = LOOP_NONE; 
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_loop))) loop_dir = LOOP_LOOP; 
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_next))) loop_dir = LOOP_NEXT; 
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_exit))) loop_dir = LOOP_EXIT; 
-  write_config_int("loop_dir", loop_dir);
-  wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
-  e_ink_refresh_part ();
-}
-
 void reset_statistics() // Callback для кнопки статистики (сбросс)
 {
   if(confirm_request(RESET_VIEWED_PAGES, GTK_STOCK_OK, GTK_STOCK_CANCEL))
@@ -326,6 +314,41 @@ void picture_menu_destroy (struct_panel *panel, GtkWidget *dialog) // Уничт
   //   g_signal_handlers_unblock_by_func( win, focus_out_callback, NULL );
 }
 
+gint keys_in_loop_dir (GtkWidget *dialog, GdkEventKey *event) //задействует кнопки
+{
+  if (check_key_press(event->keyval, active_panel)) return TRUE;
+  switch (event->keyval){
+    case   KEY_OK:
+      if (dialog==loop_dir_none) loop_dir = LOOP_NONE; 
+      if (dialog==loop_dir_loop) loop_dir = LOOP_LOOP; 
+      if (dialog==loop_dir_next) loop_dir = LOOP_NEXT; 
+      if (dialog==loop_dir_exit) loop_dir = LOOP_EXIT;
+      write_config_int("loop_dir", loop_dir);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog), TRUE);
+      wait_for_draw();
+      if (QT) usleep (QT_REFRESH_DELAY);
+      e_ink_refresh_part ();
+      return TRUE;
+      
+    case   KEY_UP:
+      if (dialog == loop_dir_none) gtk_widget_grab_focus(double_refresh_image);
+      if (dialog == loop_dir_loop) gtk_widget_grab_focus(loop_dir_none);
+      if (dialog == loop_dir_next) gtk_widget_grab_focus(loop_dir_loop);
+      if (dialog == loop_dir_exit) gtk_widget_grab_focus(loop_dir_next);
+      return TRUE;
+      
+    case   KEY_DOWN:
+      if (dialog == loop_dir_none) gtk_widget_grab_focus(loop_dir_loop);
+      if (dialog == loop_dir_loop) gtk_widget_grab_focus(loop_dir_next);
+      if (dialog == loop_dir_next) gtk_widget_grab_focus(loop_dir_exit);
+      if (dialog == loop_dir_exit) gtk_widget_grab_focus(preload_enabled_button);
+      return TRUE;
+      
+    default:
+      return FALSE;
+  }
+}
+
 gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel) //задействует кнопки
 {
   if (check_key_press(event->keyval, panel)) return TRUE;
@@ -344,6 +367,7 @@ gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *
       return FALSE;
     
     default:
+      if (QT) usleep (QT_REFRESH_DELAY);
       e_ink_refresh_part();
       return FALSE;
   }
@@ -404,22 +428,25 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
   if (loop_dir == LOOP_NONE) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_none), TRUE);
   gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_none, TRUE, TRUE, 0);
   gtk_button_set_relief (GTK_BUTTON(loop_dir_none), GTK_RELIEF_NONE);
+  (void)g_signal_connect (G_OBJECT (loop_dir_none), "key_press_event",G_CALLBACK (keys_in_loop_dir), NULL);
   
   loop_dir_loop = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (loop_dir_none), LOOP_DIRECTORY);
   if (loop_dir == LOOP_LOOP) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_loop), TRUE);
   gtk_button_set_relief (GTK_BUTTON(loop_dir_loop), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_loop, TRUE, TRUE, 0);
+  (void)g_signal_connect (G_OBJECT (loop_dir_loop), "key_press_event",G_CALLBACK (keys_in_loop_dir), NULL);
   
   loop_dir_next = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (loop_dir_none), NEXT_DIRECTORY);
   if (loop_dir == LOOP_NEXT) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_next), TRUE);
   gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_next, TRUE, TRUE, 0);
   gtk_button_set_relief (GTK_BUTTON(loop_dir_next), GTK_RELIEF_NONE);
+  (void)g_signal_connect (G_OBJECT (loop_dir_next), "key_press_event",G_CALLBACK (keys_in_loop_dir), NULL);
   
   loop_dir_exit = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (loop_dir_none), EXIT_TO_FILEMANAGER);
   if (loop_dir == LOOP_EXIT) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_exit), TRUE);
   gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_exit, TRUE, TRUE, 0);
   gtk_button_set_relief (GTK_BUTTON(loop_dir_exit), GTK_RELIEF_NONE);
-  (void)g_signal_connect (G_OBJECT (loop_dir_none), "group-changed", G_CALLBACK (loop_dir_toggler), NULL); // Один callback на всех
+  (void)g_signal_connect (G_OBJECT (loop_dir_exit), "key_press_event",G_CALLBACK (keys_in_loop_dir), NULL);
   
   preload_enabled_button = gtk_check_button_new_with_label(ALLOW_PRELOADING);
   if (preload_enable) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(preload_enabled_button), TRUE);
@@ -827,7 +854,6 @@ gint keys_rotation_menu (__attribute__((unused))GtkWidget *window, GdkEventKey *
       
       if (gtk_widget_is_focus (create))
       {
-        printf("create\n");
         gtk_widget_grab_focus (exit_button);
         return TRUE;
       }
