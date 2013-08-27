@@ -204,10 +204,10 @@ void detect_hardware(void) /* Обнаружение оборудования и
       error = dlerror();
       if (error != NULL)  
       {
-        free(error);
         #ifdef debug_printf
         printf("dlopen failed because %s\n", error);
         #endif
+//         free(error); // Не надо - карается сегфолтом в GTK гораздо позже!
         hardware_has_APM=FALSE; /* Не можем управлять через APM, хотя существование файла в /dev/ даёт робкую надежду */
       }
       else
@@ -219,8 +219,8 @@ void detect_hardware(void) /* Обнаружение оборудования и
           #ifdef debug_printf
           printf("dlsym failed because %s\n", error);
           #endif
+          //         free(error); // Не надо - карается сегфолтом в GTK гораздо позже!
           hardware_has_APM=FALSE;
-          free(error);
         }
         else
         {
