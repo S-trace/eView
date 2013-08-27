@@ -127,6 +127,10 @@ int read_int_from_file(const char *name) /*Чтение числа из файл
 
 void detect_hardware(void) /* Обнаружение оборудования и его возможностей */
 {  
+  #ifdef debug_printf
+  printf("Detecting hardware\n");
+  #endif
+  
   if (hardware_has_backlight == FALSE) /* Digma R60G/GMini C6LHD (Qt) */
   {    
     hardware_has_backlight=check_for_file ("/sys/class/backlight/boeye_backlight/brightness");
@@ -197,38 +201,47 @@ void detect_hardware(void) /* Обнаружение оборудования и
       char *error;
       (void)dlerror();    /* Clear any existing error */
       libapm_handle=dlopen("libapm.so", RTLD_NOW);
-      if ((error = dlerror()) != 0)  
+      error = dlerror();
+      if (error != NULL)  
       {
+        free(error);
         #ifdef debug_printf
         printf("dlopen failed because %s\n", error);
         #endif
         hardware_has_APM=FALSE; /* Не можем управлять через APM, хотя существование файла в /dev/ даёт робкую надежду */
       }
-      free(error);
-      free(dlerror());
-      apm_suspend=(int (*)(int))dlsym(libapm_handle,"apm_suspend");
-      error = dlerror();
-      if (error != NULL)  
+      else
       {
-        #ifdef debug_printf
-        printf("dlsym failed because %s\n", error);
-        #endif
-        hardware_has_APM=FALSE;
+        apm_suspend=(int (*)(int))dlsym(libapm_handle,"apm_suspend");
+        error = dlerror();
+        if (error != NULL)  
+        {
+          #ifdef debug_printf
+          printf("dlsym failed because %s\n", error);
+          #endif
+          hardware_has_APM=FALSE;
+          free(error);
+        }
+        else
+        {
+          #ifdef debug_printf
+          printf("Found APM power control via libapm\n");
+          #endif
+        }
+        //       free(libapm_handle); // Не надо - карается МОЛЧАЛИВЫМ сегфолтом 
       }
-      free(error);
-//       free(libapm_handle); // Не надо - карается МОЛЧАЛИВЫМ сегфолтом 
     }
-    
-    if (!hardware_has_sysfs_sleep) 
-    {    
-      hardware_has_sysfs_sleep=check_for_file ("/sys/power/state");
-      if (hardware_has_sysfs_sleep) 
-      {
-        sysfs_sleep_path="/sys/power/state";
-        #ifdef debug_printf
-        printf ("Found sysfs sleep trigger at file %s\n", sysfs_sleep_path);
-        #endif
-      }
+  }
+
+  if (!hardware_has_sysfs_sleep) 
+  {    
+    hardware_has_sysfs_sleep=check_for_file ("/sys/power/state");
+    if (hardware_has_sysfs_sleep) 
+    {
+      sysfs_sleep_path="/sys/power/state";
+      #ifdef debug_printf
+      printf ("Found sysfs sleep trigger at file %s\n", sysfs_sleep_path);
+      #endif
     }
   }
   
@@ -241,7 +254,9 @@ void detect_hardware(void) /* Обнаружение оборудования и
     printf ("APM not found\n");
   if (! hardware_has_sysfs_sleep)
     printf ("Sysfs sleep trigger not found\n");
+  printf("Hardware detect finished\n");
   #endif
+  
 }
 
 void write_int_to_file(const char *file, int value)
