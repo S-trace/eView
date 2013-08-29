@@ -13,14 +13,6 @@ int crop, rotate, frame, keepaspect, fm_toggle, move_toggle, speed_toggle, clock
 int backlight, sleep_timeout;
 char *system_sleep_timeout;
 
-char *cfg_file_path (void)
-{
-  char *current_dir=xgetcwd (cfg_directory);
-  cfg_directory = xconcat_path_file(current_dir, ".eView");
-  xfree(&current_dir);
-  return (strdup(cfg_directory));
-}
-
 int read_config_int(const char *name) /*Чтение числового параметра конфига */
 {
   char *config_file_single = xconcat_path_file(cfg_directory, name); /* Имя файла с настройкой */
@@ -211,7 +203,9 @@ void write_archive_stack(const char *name, struct_panel *panel) /*Запись �
 
 void create_cfg (void)  /*создание файлов настроек по умолчанию */
 {
-  char *current_dir;
+  char *current_dir=xgetcwd (cfg_directory);
+  cfg_directory = xconcat_path_file(current_dir, ".eView");
+  xfree(&current_dir);
   if ((mkdir (cfg_directory, S_IRWXU)) == -1)
   {
     #ifdef debug_printf
@@ -293,6 +287,9 @@ void read_panel_configuration(struct_panel *panel)
 
 void read_configuration (void)
 {
+  char *current_dir=xgetcwd (cfg_directory);
+  cfg_directory = xconcat_path_file(current_dir, ".eView");
+  
   crop=read_config_int("crop");
   rotate=read_config_int("rotate");
   frame=read_config_int("frame");
@@ -318,6 +315,7 @@ void read_configuration (void)
   
   read_panel_configuration(&top_panel);
   read_panel_configuration(&bottom_panel);
+  free (current_dir);
 }
 
 void reset_config(void)

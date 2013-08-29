@@ -566,7 +566,6 @@ void sigsegv_handler(void) /* Обработчик для вывода Backtrace
 
 int main (int argc, char **argv)
 {
-  FILE *fp;
   signal(SIGSEGV, (__sighandler_t)sigsegv_handler);
   signal(SIGABRT, (__sighandler_t)sigsegv_handler);
   init();
@@ -603,23 +602,19 @@ int main (int argc, char **argv)
   free (directory);
   #endif
   Message(EVIEW_IS_STARTING, PLEASE_WAIT);
-  top_panel.path=cfg_file_path (); /* Получаем месторасположения конфига (текущий каталог в момент запуска)*/
   
-  if ((fp = fopen (top_panel.path, "rb"))==NULL) /* Действия когда каталог не существует:  */
+  if (access(".eView/", F_OK) != 0) /* Действия когда каталог не существует:  */
   {
     create_cfg ();
     read_configuration();
     (void)chdir("/media/mmcblk0p1/"); /* Для новых книг */
     (void)chdir("/userdata/media/mmcblk0p1/"); /* Для старых книг */
     /* Неизвестно, где мы оказались после предыдущих двух переходов (сработал только один):  */
-    top_panel.path = xgetcwd(NULL);
+    top_panel.path = xgetcwd(top_panel.path);
     write_config_string("top_panel.path", top_panel.path ); 
   }
   else 
-  {
-    (void)fclose(fp);
     read_configuration();
-  }
   /*debug_msg_win (); //окно только для отладки */
   set_brightness(backlight);  
   main_window = window_create(width_display, height_display, 0, VERSION, NOT_MODAL);
