@@ -598,7 +598,9 @@ int main (int argc, char **argv)
   }
   #endif
   #ifdef debug_printf
-  printf ("Starting eView in directory '%s'\n", xgetcwd(NULL));
+  char *directory=xgetcwd(NULL);
+  printf ("Starting eView in directory '%s'\n",directory);
+  free (directory);
   #endif
   Message(EVIEW_IS_STARTING, PLEASE_WAIT);
   top_panel.path=cfg_file_path (); /* Получаем месторасположения конфига (текущий каталог в момент запуска)*/
