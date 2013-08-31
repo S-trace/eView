@@ -61,7 +61,9 @@ void die_viewer_window (void)
   if ((suppress_panel == TRUE) && QT != TRUE)
     start_panel();
   wait_for_draw();
+  if (!QT) usleep(GTK_REFRESH_DELAY);
   enable_refresh=TRUE;
+  e_ink_refresh_full();
 }
 
 int check_image_settings(const image *const target) __attribute__((pure));

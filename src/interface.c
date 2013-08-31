@@ -326,7 +326,7 @@ gint keys_in_loop_dir (GtkWidget *dialog, GdkEventKey *event) //задейств
       write_config_int("loop_dir", loop_dir);
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog), TRUE);
       wait_for_draw();
-      if (QT) usleep (QT_REFRESH_DELAY);
+      if (QT) usleep (QT_REFRESH_DELAY); else usleep(GTK_REFRESH_DELAY);
       e_ink_refresh_part ();
       return TRUE;
 
@@ -335,6 +335,8 @@ gint keys_in_loop_dir (GtkWidget *dialog, GdkEventKey *event) //задейств
       if (dialog == loop_dir_loop) gtk_widget_grab_focus(loop_dir_none);
       if (dialog == loop_dir_next) gtk_widget_grab_focus(loop_dir_loop);
       if (dialog == loop_dir_exit) gtk_widget_grab_focus(loop_dir_next);
+      if (QT) usleep (QT_REFRESH_DELAY); else usleep(GTK_REFRESH_DELAY);
+      e_ink_refresh_part ();
       return TRUE;
 
     case   KEY_DOWN:
@@ -342,6 +344,8 @@ gint keys_in_loop_dir (GtkWidget *dialog, GdkEventKey *event) //задейств
       if (dialog == loop_dir_loop) gtk_widget_grab_focus(loop_dir_next);
       if (dialog == loop_dir_next) gtk_widget_grab_focus(loop_dir_exit);
       if (dialog == loop_dir_exit) gtk_widget_grab_focus(preload_enabled_button);
+      if (QT) usleep (QT_REFRESH_DELAY); else usleep(GTK_REFRESH_DELAY);
+      e_ink_refresh_part ();
       return TRUE;
 
     default:
@@ -525,12 +529,13 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
   }
   dialog = gtk_dialog_new_with_buttons (SETTINGS,
                                         GTK_WINDOW(win),
-                                        GTK_DIALOG_MODAL /*|GTK_DIALOG_DESTROY_WITH_PARENT*/,
+                                        GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT|GTK_DIALOG_NO_SEPARATOR,
                                         NULL);
   gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), menu_vbox);
   gtk_window_set_position (GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_widget_show_all (dialog);
-
+  wait_for_draw();
+  
   (void)g_signal_connect (G_OBJECT (dialog), "key_press_event", G_CALLBACK (keys_in_picture_menu), panel);
   e_ink_refresh_local();
 }
@@ -638,11 +643,12 @@ void sleep_timeout_changed(GtkWidget *scalebutton)
 
 }
 
-
-// static void led_changed(GtkWidget *scalebutton)
-// {
-//   set_led_state(gtk_range_get_value(GTK_RANGE(scalebutton)));
-// }
+#ifdef debug_printf
+static void led_changed(GtkWidget *scalebutton)
+{
+  set_led_state(gtk_range_get_value(GTK_RANGE(scalebutton)));
+}
+#endif
 
 void about_program_callback() // Callback для кнопки информации о программе
 {
@@ -745,7 +751,7 @@ void options_menu_create(GtkWidget *main_menu) //Создание меню оп�
   GtkWidget *sleep_timeout_frame;
   GtkWidget *options_dialog = gtk_dialog_new_with_buttons (SETTINGS,
                                                            GTK_WINDOW(main_menu),
-                                                           GTK_DIALOG_MODAL /*|GTK_DIALOG_DESTROY_WITH_PARENT*/,
+                                                           GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT|GTK_DIALOG_NO_SEPARATOR,
                                                            NULL);
   GtkWidget *menu_vbox = gtk_vbox_new (FALSE, 0);
 
@@ -799,21 +805,26 @@ void options_menu_create(GtkWidget *main_menu) //Создание меню оп�
     gtk_container_add (GTK_CONTAINER (backlight_frame), backlight_scale);
     (void)g_signal_connect (G_OBJECT (backlight_frame), "key_press_event", G_CALLBACK (keys_updown_backlight), NULL);
   }
-  sleep_timeout_frame = gtk_frame_new (SLEEP_TIMEOUT);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), sleep_timeout_frame, FALSE, TRUE, 0);
-  sleep_timeout_scale = gtk_hscale_new_with_range ((gdouble)0,(gdouble) 600,(gdouble) 5);
-  gtk_range_set_value (GTK_RANGE(sleep_timeout_scale), (gdouble)sleep_timeout);
-  (void)g_signal_connect (G_OBJECT (sleep_timeout_scale), "key_press_event", G_CALLBACK (keys_updown_sleep_timeout), NULL);
-  (void)g_signal_connect(sleep_timeout_scale, "value-changed", G_CALLBACK(sleep_timeout_changed), NULL);
-  gtk_container_add (GTK_CONTAINER (sleep_timeout_frame), sleep_timeout_scale);
+  
+  if (QT)
+  {
+    sleep_timeout_frame = gtk_frame_new (SLEEP_TIMEOUT);
+    gtk_box_pack_start (GTK_BOX (menu_vbox), sleep_timeout_frame, FALSE, TRUE, 0);
+    sleep_timeout_scale = gtk_hscale_new_with_range ((gdouble)0,(gdouble) 600,(gdouble) 5);
+    gtk_range_set_value (GTK_RANGE(sleep_timeout_scale), (gdouble)sleep_timeout);
+    (void)g_signal_connect (G_OBJECT (sleep_timeout_scale), "key_press_event", G_CALLBACK (keys_updown_sleep_timeout), NULL);
+    (void)g_signal_connect(sleep_timeout_scale, "value-changed", G_CALLBACK(sleep_timeout_changed), NULL);
+    gtk_container_add (GTK_CONTAINER (sleep_timeout_frame), sleep_timeout_scale);
+  }
 
-
-  //   GtkWidget *LED_test_frame = gtk_frame_new ("LED_TEST");
-  //   gtk_box_pack_start (GTK_BOX (menu_vbox), LED_test_frame, FALSE, TRUE, 0);
-  //   GtkWidget *led_test_scale = gtk_hscale_new_with_range (0, 255, 1);
-  //   g_signal_connect(led_test_scale, "value-changed", G_CALLBACK(led_changed), NULL);
-  //   gtk_container_add (GTK_CONTAINER (LED_test_frame), led_test_scale);
-
+  #ifdef debug_printf
+  GtkWidget *LED_test_frame = gtk_frame_new ("LED_TEST");
+  gtk_box_pack_start (GTK_BOX (menu_vbox), LED_test_frame, FALSE, TRUE, 0);
+  GtkWidget *led_test_scale = gtk_hscale_new_with_range (0, 255, 1);
+  g_signal_connect(led_test_scale, "value-changed", G_CALLBACK(led_changed), NULL);
+  gtk_container_add (GTK_CONTAINER (LED_test_frame), led_test_scale);
+  #endif
+    
   reset_configuration = gtk_button_new_with_label ("   "RESET_CONFIGURATION);
   gtk_button_set_alignment (GTK_BUTTON(reset_configuration), (gfloat)0.0, (gfloat)0.0);
   gtk_button_set_relief (GTK_BUTTON(reset_configuration), GTK_RELIEF_NONE);
@@ -913,7 +924,7 @@ void start_main_menu (struct_panel *panel)
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons (MAIN_MENU,
                                                    GTK_WINDOW(main_window),
-                                                   GTK_DIALOG_MODAL /*|GTK_DIALOG_DESTROY_WITH_PARENT*/,
+                                                   GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT|GTK_DIALOG_NO_SEPARATOR,
                                                    NULL);
   GtkWidget *menu_vbox = gtk_vbox_new (TRUE, 0);
 
@@ -963,10 +974,11 @@ void start_main_menu (struct_panel *panel)
   (void)g_signal_connect (G_OBJECT (exit_button), "key_press_event", G_CALLBACK (keys_rotation_menu), NULL);
 
   gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), menu_vbox);
-  gtk_widget_queue_draw(GTK_DIALOG(dialog)->vbox);
   gtk_window_set_position (GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_widget_show_all (dialog);
-
+  
+  wait_for_draw();
   (void)g_signal_connect (GTK_WIDGET(dialog), "key_press_event", G_CALLBACK (keys_in_main_menu), panel);
+  if (!QT) usleep(GTK_REFRESH_DELAY);
   e_ink_refresh_local();
 }

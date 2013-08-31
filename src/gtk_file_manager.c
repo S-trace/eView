@@ -79,23 +79,22 @@ void /*@null@*/  *sleep_thread(__attribute__((unused)) /*@unused@*/ void* arg)
   return(NULL);
 }
 
-void wait_state(GtkWidget *window) /* Возврат после смотрелки */
-{
-  #ifdef debug_printf
-  printf("wait_state called\n");
-  #endif
-
-  update(active_panel);
-  gtk_widget_show_all(window);
-  select_file_by_name(active_panel->selected_name, active_panel);
-  gtk_widget_queue_draw(GTK_WIDGET(active_panel->list)); /* Заставляем GTK перерисовать список каталогов */
-
-  /*   g_signal_connect (G_OBJECT (window), "focus_in_event", */
-  /*                     G_CALLBACK (focus_in_callback), NULL); */
-  /*   g_signal_connect (G_OBJECT (window), "focus_out_event", */
-  /*                     G_CALLBACK (focus_out_callback), NULL); */
-  /*   printf ("FMAN CONNECTED!\n"); */
-}
+// void wait_state(GtkWidget *window) /* Возврат после смотрелки */
+// {
+//   #ifdef debug_printf
+//   printf("wait_state called\n");
+//   #endif
+//   enable_refresh=FALSE;
+//   update(active_panel);
+//   gtk_widget_show_all(window);
+//   select_file_by_name(active_panel->selected_name, active_panel);
+//   gtk_widget_queue_draw(GTK_WIDGET(active_panel->list)); /* Заставляем GTK перерисовать список каталогов */
+//   /*   g_signal_connect (G_OBJECT (window), "focus_in_event", */
+//   /*                     G_CALLBACK (focus_in_callback), NULL); */
+//   /*   g_signal_connect (G_OBJECT (window), "focus_out_event", */
+//   /*                     G_CALLBACK (focus_out_callback), NULL); */
+//   /*   printf ("FMAN CONNECTED!\n"); */
+// }
 
 void list_fd(struct_panel *panel) /*добавление списка имен каталогов, файлов и их размеров в панель struct_panel */
 {
