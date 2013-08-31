@@ -457,47 +457,47 @@ int find_next_archive_directory(struct_panel *panel)
 
   /*Очищаем оставшийся список каталогов*/
   do free(directories_list[i++]);
-          while (directories_list[i] != NULL);
-          free(directories_list);
+  while (directories_list[i] != NULL);
+  free(directories_list);
 
   return FALSE; /* И возвращаем значение текущего каталога */
 }
 
 void archive_go_upper(struct_panel *panel) /* Переходим на уровень выше внутри архива */
 {
-  if (panel->archive_cwd[0] == '\0') /* Если на верхнем уровне архива */
-    leave_archive(panel); /* То покидаем его */
-    else /* А если нет - */
+  if (panel->archive_cwd[0] == '\0') /* Если на верхнем уровне архива - то покидаем его*/
+    leave_archive(panel);
+  else /* А если нет - */
+  {
+    char *slash=NULL, *path, *iter;
+    trim_line(panel->archive_cwd); /* Удяляем последний символ (слэш) из текущего имени */
+    archive_cwd_prev=xconcat(basename(panel->archive_cwd),"/");
+    slash=strrchr(panel->archive_cwd, '/'); /* Ищем последний слэш в пути */
+    if (slash==NULL) /* Если значение пути вырождается в NULL (слэша больше не оказалось) то делаем archive_cwd нулевой строкой*/
+      panel->archive_cwd[0]='\0';
+    else /* А иначе просто обрезаем путь в архиве на один уровень */
+      *(slash+1)='\0';
+    
+    if (panel == &top_panel)
     {
-      char *slash=NULL, *path, *iter;
-      trim_line(panel->archive_cwd); /* Удяляем последний символ (слэш) из текущего имени */
-      archive_cwd_prev=xconcat(basename(panel->archive_cwd),"/");
-      slash=strrchr(panel->archive_cwd, '/'); /* Ищем последний слэш в пути */
-      if (slash==NULL) /* Если значение пути вырождается в NULL (слэша больше не оказалось) то делаем archive_cwd нулевой строкой*/
-        panel->archive_cwd[0]='\0';
-      else /* А иначе просто обрезаем путь в архиве на один уровень */
-        *(slash+1)='\0';
-
-      if (panel == &top_panel)
-      {
-        write_config_string("top_panel.archive_cwd", panel->archive_cwd);
-        top_panel.last_name[0]='\0';
-  write_config_string("top_panel.last_name", top_panel.last_name);
-      }
-      else
-      {
-        write_config_string("bottom_panel.archive_cwd", panel->archive_cwd);
-        bottom_panel.last_name[0]='\0';
-  write_config_string("bottom_panel.last_name", bottom_panel.last_name);
-      }
-      update(panel); /* Перерисовываем список */
-      iter=iter_from_filename (archive_cwd_prev, panel);
-      move_selection(iter, panel); /* И выделяем предыдущий каталог в архиве */
-      free(iter);
-      path=xconcat_path_file(panel->archive_stack[panel->archive_depth],panel->archive_cwd);
-      gtk_label_set_text (GTK_LABEL(panel->path_label), path); /* Пишем имя архива с путём в поле снизу */
-      free(path);
+      write_config_string("top_panel.archive_cwd", panel->archive_cwd);
+      top_panel.last_name[0]='\0';
+      write_config_string("top_panel.last_name", top_panel.last_name);
     }
+    else
+    {
+      write_config_string("bottom_panel.archive_cwd", panel->archive_cwd);
+      bottom_panel.last_name[0]='\0';
+      write_config_string("bottom_panel.last_name", bottom_panel.last_name);
+    }
+    update(panel); /* Перерисовываем список */
+    iter=iter_from_filename (archive_cwd_prev, panel);
+    move_selection(iter, panel); /* И выделяем предыдущий каталог в архиве */
+    free(iter);
+    path=xconcat_path_file(panel->archive_stack[panel->archive_depth],panel->archive_cwd);
+    gtk_label_set_text (GTK_LABEL(panel->path_label), path); /* Пишем имя архива с путём в поле снизу */
+    free(path);
+  }
 }
 
 void archive_enter_subdir(const char *subdir, struct_panel *panel)
