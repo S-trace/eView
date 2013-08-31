@@ -295,6 +295,7 @@ void second_panel_hide(void)
   panel_selector(active_panel);
   write_config_string("bottom_panel.selected_name", bottom_panel.selected_name);
   write_config_int ("top_panel_active", top_panel_active);
+  wait_for_draw();
   e_ink_refresh_local();
 }
 
@@ -409,10 +410,11 @@ void second_panel_show(void)
   create_panel(&bottom_panel);
   iter=iter_from_filename (bottom_panel.selected_name, &bottom_panel);
   move_selection(iter, &bottom_panel); /* Восстанавливаем позицию указателя */
+  free(iter);
   gtk_widget_show_all (main_window);
   (void)g_signal_connect_swapped (G_OBJECT (bottom_panel.table), "destroy", G_CALLBACK (panel_selector), &top_panel);
-  e_ink_refresh_local();
-  free(iter);
+  wait_for_draw();
+//   e_ink_refresh_local();
 }
 
 void init (void)

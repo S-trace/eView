@@ -84,12 +84,11 @@ gboolean confirm_request(const char *title, const char *confirm_button, const ch
   dialog = gtk_dialog_new_with_buttons (title, NULL,
                                         GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT, reject_button, GTK_RESPONSE_REJECT, confirm_button, GTK_RESPONSE_ACCEPT, NULL);
   gtk_dialog_set_default_response (GTK_DIALOG(dialog),GTK_RESPONSE_REJECT);
-  (void)g_signal_connect (G_OBJECT (dialog), "map-event", G_CALLBACK (e_ink_refresh_local), NULL);
   (void)g_signal_connect (G_OBJECT (dialog), "key-release-event", G_CALLBACK (e_ink_refresh_default), NULL);
-
-  result = gtk_dialog_run (GTK_DIALOG (dialog));
-  e_ink_refresh_local ();
+  (void)g_signal_connect (G_OBJECT (dialog), "map-event", G_CALLBACK (e_ink_refresh_local), NULL);
   gtk_widget_show_all (dialog);
+  wait_for_draw();
+  result = gtk_dialog_run (GTK_DIALOG (dialog));
   switch (result)
   {
     case GTK_RESPONSE_ACCEPT:
@@ -100,7 +99,6 @@ gboolean confirm_request(const char *title, const char *confirm_button, const ch
       break;
   }
   gtk_widget_destroy (dialog);
-  e_ink_refresh_local();
   return answer;
 }
 
@@ -190,7 +188,7 @@ int MessageDie (GtkWidget *Window)
   wait_for_draw();
   if (QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_full();
-  interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
+//   interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
   return TRUE;
 }
 
@@ -201,8 +199,8 @@ void *MessageDieDelayed (void *arg)
   return NULL;
 }
 
-
-GtkWidget *Message (const char *title, const char *message) {
+GtkWidget *Message (const char *title, const char *message) 
+{
   GtkWidget *label;
   /*   interface_is_locked=TRUE; //Блокируем остальной интерфейс программы */
   /* Создаём виджеты */
@@ -222,6 +220,7 @@ GtkWidget *Message (const char *title, const char *message) {
   /* Добавляет ярлык и отображает всё что мы добавили к диалогу. */
   gtk_container_add (GTK_CONTAINER (GTK_DIALOG(MessageWindow)->vbox), label);
   gtk_widget_show_all (MessageWindow);
+  if (!QT) usleep(GTK_REFRESH_DELAY*2);
   e_ink_refresh_full();
   return MessageWindow;
 }
@@ -405,6 +404,7 @@ void panel_focussed(struct_panel *panel)
 void go_upper(struct_panel *panel) /* Переход на уровень вверх в дереве */
 {
   enable_refresh=FALSE;
+  interface_is_locked=TRUE;
   if (panel->archive_depth > 0) /* Если мы в архиве */
     archive_go_upper(panel);
   else
@@ -439,6 +439,7 @@ void go_upper(struct_panel *panel) /* Переход на уровень вве�
   gtk_widget_queue_draw(GTK_WIDGET(panel->list)); /* Заставляем GTK перерисовать список каталогов */
   wait_for_draw();
   enable_refresh=TRUE;
+  interface_is_locked=FALSE;
   wait_for_draw();
   if (QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_full();

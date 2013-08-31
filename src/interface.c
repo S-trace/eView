@@ -16,9 +16,22 @@
 
 static GtkWidget *create, *copy, *moving, *del, *options, *exit_button; // Кнопки в главном меню
 static GtkWidget *fmanager, *move_chk, *clock_panel, *ink_speed, *show_hidden_files_chk, *LED_notify_checkbox, *reset_configuration, *backlight_scale, *sleep_timeout_scale, *about_program; // Пункты в настройках ФМ
-static GtkWidget *crop_image, *rotate_image, *manga_mode, *frame_image, *keepaspect_image, *double_refresh_image, *viewed, *preload_enabled_button, *caching_enabled_button, *suppress_panel_button, *HD_scaling_button, *boost_contrast_button; // Чекбоксы в настройках вьювера
+static GtkWidget *crop_image, *rotate_image, *manga_mode, *frame_image, *keepaspect_image, *double_refresh_image, *viewed, *preload_enabled_button, *caching_enabled_button, *suppress_panel_button, *HD_scaling_button, *boost_contrast_button, *power_information_button; // Чекбоксы в настройках вьювера
 static GtkWidget *loop_dir_none, *loop_dir_loop, *loop_dir_next, *loop_dir_exit, *loop_dir_frame, *loop_dir_vbox; // Радиобаттон в настройках вьювера
+static GtkWidget *picture_menu, *main_menu, *options_menu;
 int need_refresh=FALSE;
+
+void add_toggle_button_to_menu(GtkWidget *widget, GtkWidget *menu_vbox, void *clicked_callback, void *keypress_callback, int is_active, struct_panel *panel)
+{
+  if (is_active) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(widget), TRUE);
+  gtk_button_set_relief (GTK_BUTTON(widget), GTK_RELIEF_NONE);
+  gtk_button_set_alignment (GTK_BUTTON(widget), (gfloat)0.0, (gfloat)0.0);
+  gtk_box_pack_start (GTK_BOX (menu_vbox), widget, TRUE, TRUE, 0);
+  (void)g_signal_connect (G_OBJECT (widget), "focus-in-event", G_CALLBACK (e_ink_refresh_part), NULL);
+  (void)g_signal_connect (G_OBJECT (widget), "key_press_event", G_CALLBACK (keypress_callback), panel);
+  if (clicked_callback)
+    (void)g_signal_connect (G_OBJECT (widget), "clicked", G_CALLBACK (clicked_callback), NULL);
+}
 
 
 // **************************************************  Picture menu  ***********************************************************
@@ -82,7 +95,6 @@ void power_information(void)
   xfree(&battery_current);
   xfree(&battery_temp);
   xfree(&battery_voltage);
-  e_ink_refresh_full();
 }
 
 void crop_image_toggler () // Callback для галки обрезки полей
@@ -243,15 +255,75 @@ void reset_statistics() // Callback для кнопки статистики (с
     gtk_button_set_label(GTK_BUTTON(viewed), VIEWED_PAGES" 0");
     wait_for_draw();
     if (QT) usleep (QT_REFRESH_DELAY);
-    e_ink_refresh_part();
   }
 }
 
-gint keys_rotation_picture_menu (__attribute__((unused))GtkWidget *window, GdkEventKey *event) //Круговое перемещение по меню в смотрелке
+void picture_menu_destroy (struct_panel *panel) // Уничтожаем меню настроек отображения
 {
-  if (check_key_press(event->keyval, active_panel)) return TRUE;
+  enable_refresh=FALSE;
+  gtk_widget_destroy(picture_menu);
+  //   gtk_widget_grab_focus (win);
+  if (need_refresh)
+  {
+    char *current_name=strdup(current.name);
+    (void)load_image(current_name, panel, TRUE, &current); // Повторно загружаем и показываем картинку для учёта изменений
+    (void)show_image(&current, panel, TRUE);
+    free(current_name);
+    viewed_pages--; // Откатываем назад счётчик страниц - после открытия-закрытия меню он не должен изменяться
+  }
+  enable_refresh=TRUE;
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
+  e_ink_refresh_local();
+  //   g_signal_handlers_unblock_by_func( win, focus_in_callback, NULL );
+  //   g_signal_handlers_unblock_by_func( win, focus_out_callback, NULL );
+}
+
+gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel) //задействует кнопки
+{
+  if (check_key_press(event->keyval, panel)) return TRUE;
   switch (event->keyval){
+    case   KEY_MENU:
+    case   GDK_m:
+    case   KEY_BACK:
+    case   KEY_MENU_LIBROII:
+    case   KEY_MENU_QT:
+      picture_menu_destroy (panel);
+      return FALSE;
+
+    case   KEY_REFRESH_LIBROII:
+    case   KEY_REFRESH_QT:
+      e_ink_refresh_full();
+      return FALSE;
+
+    case   KEY_OK:
+      if (dialog==loop_dir_none || dialog==loop_dir_loop || dialog==loop_dir_next || dialog==loop_dir_exit)
+      {
+        if (dialog==loop_dir_none) loop_dir = LOOP_NONE;
+        if (dialog==loop_dir_loop) loop_dir = LOOP_LOOP;
+        if (dialog==loop_dir_next) loop_dir = LOOP_NEXT;
+        if (dialog==loop_dir_exit) loop_dir = LOOP_EXIT;
+        write_config_int("loop_dir", loop_dir);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog), TRUE);
+        wait_for_draw();
+        if (QT) usleep (QT_REFRESH_DELAY); else usleep(GTK_REFRESH_DELAY);
+        e_ink_refresh_part ();
+        return TRUE;
+      }
+      return FALSE;
+      
     case   KEY_UP:
+      if (dialog==loop_dir_none || dialog==loop_dir_loop || dialog==loop_dir_next || dialog==loop_dir_exit)
+      {
+        if (dialog == loop_dir_none) gtk_widget_grab_focus(double_refresh_image);
+        if (dialog == loop_dir_loop) gtk_widget_grab_focus(loop_dir_none);
+        if (dialog == loop_dir_next) gtk_widget_grab_focus(loop_dir_loop);
+        if (dialog == loop_dir_exit) gtk_widget_grab_focus(loop_dir_next);
+        if (QT) usleep (QT_REFRESH_DELAY); else usleep(GTK_REFRESH_DELAY);
+        e_ink_refresh_part ();
+        return TRUE;
+      }
+
       if (gtk_widget_is_focus (crop_image))
       {
         gtk_widget_grab_focus (viewed);
@@ -271,8 +343,19 @@ gint keys_rotation_picture_menu (__attribute__((unused))GtkWidget *window, GdkEv
       }
 
       return FALSE;
-
+      
     case   KEY_DOWN:
+      if (dialog==loop_dir_none || dialog==loop_dir_loop || dialog==loop_dir_next || dialog==loop_dir_exit)
+      {
+        if (dialog == loop_dir_none) gtk_widget_grab_focus(loop_dir_loop);
+        if (dialog == loop_dir_loop) gtk_widget_grab_focus(loop_dir_next);
+        if (dialog == loop_dir_next) gtk_widget_grab_focus(loop_dir_exit);
+        if (dialog == loop_dir_exit) gtk_widget_grab_focus(preload_enabled_button);
+        if (QT) usleep (QT_REFRESH_DELAY); else usleep(GTK_REFRESH_DELAY);
+        e_ink_refresh_part ();
+        return TRUE;
+      }
+
       if (gtk_widget_is_focus (viewed))
       {
         if (GTK_WIDGET_SENSITIVE(crop_image))
@@ -288,223 +371,107 @@ gint keys_rotation_picture_menu (__attribute__((unused))GtkWidget *window, GdkEv
       else
         return FALSE;
 
-    default:
       return FALSE;
-  }
-}
-
-void picture_menu_destroy (struct_panel *panel, GtkWidget *dialog) // Уничтожаем меню настроек отображения
-{
-  enable_refresh=FALSE;
-  gtk_widget_destroy(dialog);
-  //   gtk_widget_grab_focus (win);
-  if (need_refresh)
-  {
-    char *current_name=strdup(current.name);
-    (void)load_image(current_name, panel, TRUE, &current); // Повторно загружаем и показываем картинку для учёта изменений
-    (void)show_image(&current, panel, TRUE);
-    free(current_name);
-    viewed_pages--; // Откатываем назад счётчик страниц - после открытия-закрытия меню он не должен изменяться
-  }
-  enable_refresh=TRUE;
-  wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
-  e_ink_refresh_local();
-  //   g_signal_handlers_unblock_by_func( win, focus_in_callback, NULL );
-  //   g_signal_handlers_unblock_by_func( win, focus_out_callback, NULL );
-}
-
-gint keys_in_loop_dir (GtkWidget *dialog, GdkEventKey *event) //задействует кнопки
-{
-  if (check_key_press(event->keyval, active_panel)) return TRUE;
-  switch (event->keyval){
-    case   KEY_OK:
-      if (dialog==loop_dir_none) loop_dir = LOOP_NONE;
-      if (dialog==loop_dir_loop) loop_dir = LOOP_LOOP;
-      if (dialog==loop_dir_next) loop_dir = LOOP_NEXT;
-      if (dialog==loop_dir_exit) loop_dir = LOOP_EXIT;
-      write_config_int("loop_dir", loop_dir);
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog), TRUE);
-      wait_for_draw();
-      if (QT) usleep (QT_REFRESH_DELAY); else usleep(GTK_REFRESH_DELAY);
-      e_ink_refresh_part ();
-      return TRUE;
-
-    case   KEY_UP:
-      if (dialog == loop_dir_none) gtk_widget_grab_focus(double_refresh_image);
-      if (dialog == loop_dir_loop) gtk_widget_grab_focus(loop_dir_none);
-      if (dialog == loop_dir_next) gtk_widget_grab_focus(loop_dir_loop);
-      if (dialog == loop_dir_exit) gtk_widget_grab_focus(loop_dir_next);
-      if (QT) usleep (QT_REFRESH_DELAY); else usleep(GTK_REFRESH_DELAY);
-      e_ink_refresh_part ();
-      return TRUE;
-
-    case   KEY_DOWN:
-      if (dialog == loop_dir_none) gtk_widget_grab_focus(loop_dir_loop);
-      if (dialog == loop_dir_loop) gtk_widget_grab_focus(loop_dir_next);
-      if (dialog == loop_dir_next) gtk_widget_grab_focus(loop_dir_exit);
-      if (dialog == loop_dir_exit) gtk_widget_grab_focus(preload_enabled_button);
-      if (QT) usleep (QT_REFRESH_DELAY); else usleep(GTK_REFRESH_DELAY);
-      e_ink_refresh_part ();
-      return TRUE;
-
-    default:
-      return FALSE;
-  }
-}
-
-gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel) //задействует кнопки
-{
-  if (check_key_press(event->keyval, panel)) return TRUE;
-  switch (event->keyval){
-    case   KEY_MENU:
-    case   GDK_m:
-    case   KEY_BACK:
-    case   KEY_MENU_LIBROII:
-    case   KEY_MENU_QT:
-      picture_menu_destroy (panel, dialog);
-      return FALSE;
-
-    case   KEY_REFRESH_LIBROII:
-    case   KEY_REFRESH_QT:
-      e_ink_refresh_full();
-      return FALSE;
-
+      
     default:
       if (QT) usleep (QT_REFRESH_DELAY);
-      e_ink_refresh_part();
       return FALSE;
   }
+}
+
+void loop_dir_toggler () // Callback для радиобаттона по действию при окончании каталога
+{
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_none))) loop_dir = LOOP_NONE; 
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_loop))) loop_dir = LOOP_LOOP; 
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_next))) loop_dir = LOOP_NEXT; 
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_exit))) loop_dir = LOOP_EXIT; 
+  write_config_int("loop_dir", loop_dir);
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
+  e_ink_refresh_part ();
 }
 
 void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём меню настроек картинки
 {
-  GtkWidget *dialog, *menu_vbox = gtk_vbox_new (FALSE, 0);
+  GtkWidget *menu_vbox = gtk_vbox_new (FALSE, 0);
   char *battery_capacity, *name, *viewed_count, *viewed_text;
   need_refresh=FALSE;
 
   crop_image = gtk_check_button_new_with_label (CROP_IMAGE);
-  if (crop) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(crop_image), TRUE);
-  gtk_button_set_relief (GTK_BUTTON(crop_image), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), crop_image, TRUE, TRUE, 0);
-  (void)g_signal_connect (G_OBJECT (crop_image), "clicked", G_CALLBACK (crop_image_toggler), NULL);
-  (void)g_signal_connect (G_OBJECT (crop_image), "key_press_event",G_CALLBACK (keys_rotation_picture_menu), NULL);
-
+  add_toggle_button_to_menu(crop_image, menu_vbox, crop_image_toggler, keys_in_picture_menu, crop, panel);
+  
   rotate_image = gtk_check_button_new_with_label(ROTATE_IMAGE);
-  if (rotate) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(rotate_image), TRUE);
-  gtk_button_set_relief (GTK_BUTTON(rotate_image), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), rotate_image, TRUE, TRUE, 0);
-  (void)g_signal_connect (G_OBJECT (rotate_image), "clicked", G_CALLBACK (rotate_image_toggler), NULL);
-
+  add_toggle_button_to_menu(rotate_image, menu_vbox, rotate_image_toggler, keys_in_picture_menu, rotate, panel);
+  
   frame_image = gtk_check_button_new_with_label(FRAME_IMAGE);
-  if (frame) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(frame_image), TRUE);
-  gtk_button_set_relief (GTK_BUTTON(frame_image), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), frame_image, TRUE, TRUE, 0);
-  (void)g_signal_connect (G_OBJECT (frame_image), "clicked", G_CALLBACK (frame_image_toggler), NULL);
-  (void)g_signal_connect (G_OBJECT (frame_image), "key_press_event",G_CALLBACK (keys_rotation_picture_menu), NULL);
-
+  add_toggle_button_to_menu(frame_image, menu_vbox, frame_image_toggler, keys_in_picture_menu, frame, panel);
+  
   manga_mode = gtk_check_button_new_with_label(MANGA_MODE);
-  if (manga) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(manga_mode), TRUE);
-  gtk_button_set_relief (GTK_BUTTON(manga_mode), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), manga_mode, TRUE, TRUE, 0);
-  (void)g_signal_connect (G_OBJECT (manga_mode), "clicked", G_CALLBACK (manga_mode_toggler), NULL);
-  (void)g_signal_connect (G_OBJECT (manga_mode), "key_press_event",G_CALLBACK (keys_rotation_picture_menu), NULL);
-
+  add_toggle_button_to_menu(manga_mode, menu_vbox, manga_mode_toggler, keys_in_picture_menu, manga, panel);
+  
   keepaspect_image = gtk_check_button_new_with_label(KEEP_ASPECT);
-  if (keepaspect) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(keepaspect_image), TRUE);
-  gtk_button_set_relief (GTK_BUTTON(keepaspect_image), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), keepaspect_image, TRUE, TRUE, 0);
-  g_signal_connect (G_OBJECT (keepaspect_image), "clicked", G_CALLBACK (keepaspect_image_toggler), NULL);
-
+  add_toggle_button_to_menu(keepaspect_image, menu_vbox, keepaspect_image_toggler, keys_in_picture_menu, keepaspect, panel);
+  
   double_refresh_image = gtk_check_button_new_with_label(DOUBLE_REFRESH);
-  if (double_refresh) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(double_refresh_image), TRUE);
-  gtk_button_set_relief (GTK_BUTTON(double_refresh_image), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), double_refresh_image, TRUE, TRUE, 0);
-  (void)g_signal_connect (G_OBJECT (double_refresh_image), "clicked", G_CALLBACK (double_refresh_toggler), NULL);
-
+  add_toggle_button_to_menu(double_refresh_image, menu_vbox, double_refresh_toggler, keys_in_picture_menu, double_refresh, panel);
+  
   loop_dir_frame = gtk_frame_new (ACTION_ON_LAST_FILE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), loop_dir_frame, FALSE, TRUE, 0);
-
   loop_dir_vbox = gtk_vbox_new (TRUE, 0);
   gtk_container_add (GTK_CONTAINER (loop_dir_frame), loop_dir_vbox);
-
   loop_dir_none = gtk_radio_button_new_with_label (NULL, DO_NOTHING);
-  if (loop_dir == LOOP_NONE) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_none), TRUE);
-  gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_none, TRUE, TRUE, 0);
-  gtk_button_set_relief (GTK_BUTTON(loop_dir_none), GTK_RELIEF_NONE);
-  (void)g_signal_connect (G_OBJECT (loop_dir_none), "key_press_event",G_CALLBACK (keys_in_loop_dir), NULL);
-
+  if (loop_dir == LOOP_NONE) 
+    add_toggle_button_to_menu(loop_dir_none, loop_dir_vbox, NULL, keys_in_picture_menu, TRUE, panel);
+  else
+    add_toggle_button_to_menu(loop_dir_none, loop_dir_vbox, NULL, keys_in_picture_menu, FALSE, panel);
   loop_dir_loop = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (loop_dir_none), LOOP_DIRECTORY);
-  if (loop_dir == LOOP_LOOP) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_loop), TRUE);
-  gtk_button_set_relief (GTK_BUTTON(loop_dir_loop), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_loop, TRUE, TRUE, 0);
-  (void)g_signal_connect (G_OBJECT (loop_dir_loop), "key_press_event",G_CALLBACK (keys_in_loop_dir), NULL);
-
+  if (loop_dir == LOOP_LOOP) 
+    add_toggle_button_to_menu(loop_dir_loop, loop_dir_vbox, NULL, keys_in_picture_menu, TRUE, panel);
+  else
+    add_toggle_button_to_menu(loop_dir_loop, loop_dir_vbox, NULL, keys_in_picture_menu, FALSE, panel);
   loop_dir_next = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (loop_dir_none), NEXT_DIRECTORY);
-  if (loop_dir == LOOP_NEXT) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_next), TRUE);
-  gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_next, TRUE, TRUE, 0);
-  gtk_button_set_relief (GTK_BUTTON(loop_dir_next), GTK_RELIEF_NONE);
-  (void)g_signal_connect (G_OBJECT (loop_dir_next), "key_press_event",G_CALLBACK (keys_in_loop_dir), NULL);
-
+  if (loop_dir == LOOP_NEXT) 
+    add_toggle_button_to_menu(loop_dir_next, loop_dir_vbox, NULL, keys_in_picture_menu, TRUE, panel);
+  else
+    add_toggle_button_to_menu(loop_dir_next, loop_dir_vbox, NULL, keys_in_picture_menu, FALSE, panel);
   loop_dir_exit = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (loop_dir_none), EXIT_TO_FILEMANAGER);
-  if (loop_dir == LOOP_EXIT) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_exit), TRUE);
-  gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_exit, TRUE, TRUE, 0);
-  gtk_button_set_relief (GTK_BUTTON(loop_dir_exit), GTK_RELIEF_NONE);
-  (void)g_signal_connect (G_OBJECT (loop_dir_exit), "key_press_event",G_CALLBACK (keys_in_loop_dir), NULL);
-
+  if (loop_dir == LOOP_EXIT) 
+    add_toggle_button_to_menu(loop_dir_exit, loop_dir_vbox, NULL, keys_in_picture_menu, TRUE, panel);
+  else
+    add_toggle_button_to_menu(loop_dir_exit, loop_dir_vbox, NULL, keys_in_picture_menu, FALSE, panel);
+  (void)g_signal_connect (G_OBJECT (loop_dir_none), "group-changed", G_CALLBACK (loop_dir_toggler), NULL); // Один callback на всех
+  
+  
   preload_enabled_button = gtk_check_button_new_with_label(ALLOW_PRELOADING);
-  if (preload_enable) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(preload_enabled_button), TRUE);
-  gtk_button_set_relief (GTK_BUTTON(preload_enabled_button), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), preload_enabled_button, TRUE, TRUE, 0);
-  (void)g_signal_connect (G_OBJECT (preload_enabled_button), "clicked", G_CALLBACK (preload_toggler), NULL);
-
+  add_toggle_button_to_menu(preload_enabled_button, menu_vbox, preload_toggler, keys_in_picture_menu, preload_enable, panel);
+  
   caching_enabled_button = gtk_check_button_new_with_label(ALLOW_CACHING);
-  if (caching_enable) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(caching_enabled_button), TRUE);
-  gtk_button_set_relief (GTK_BUTTON(caching_enabled_button), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), caching_enabled_button, TRUE, TRUE, 0);
-  (void)g_signal_connect (G_OBJECT (caching_enabled_button), "clicked", G_CALLBACK (caching_toggler), NULL);
+  add_toggle_button_to_menu(caching_enabled_button, menu_vbox, caching_toggler, keys_in_picture_menu, caching_enable, panel);
 
   HD_scaling_button = gtk_check_button_new_with_label(HD_SCALING);
-  if (HD_scaling) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(HD_scaling_button), TRUE);
-  gtk_button_set_relief (GTK_BUTTON(HD_scaling_button), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), HD_scaling_button, TRUE, TRUE, 0);
-  (void)g_signal_connect (G_OBJECT (HD_scaling_button), "clicked", G_CALLBACK (HD_scaling_callback), NULL);
-
+  add_toggle_button_to_menu(HD_scaling_button, menu_vbox, HD_scaling_callback, keys_in_picture_menu, HD_scaling, panel);
+  
   boost_contrast_button = gtk_check_button_new_with_label(BOOST_CONTRAST);
-  if (boost_contrast) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(boost_contrast_button), TRUE);
-  gtk_button_set_relief (GTK_BUTTON(boost_contrast_button), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), boost_contrast_button, TRUE, TRUE, 0);
-  (void)g_signal_connect (G_OBJECT (boost_contrast_button), "clicked", G_CALLBACK (boost_contrast_callback), NULL);
-
+  add_toggle_button_to_menu(boost_contrast_button, menu_vbox, boost_contrast_callback, keys_in_picture_menu, boost_contrast, panel);
   if (QT == FALSE)
   {
     suppress_panel_button = gtk_check_button_new_with_label (SUPPRESS_BATTERY_WARNINGS);
-    if (suppress_panel) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(suppress_panel_button), TRUE);
-    gtk_button_set_alignment (GTK_BUTTON(suppress_panel_button), (float)0.0, (float)0.0);
-    gtk_button_set_relief (GTK_BUTTON(suppress_panel_button), GTK_RELIEF_NONE);
-    gtk_box_pack_start (GTK_BOX (menu_vbox), suppress_panel_button, FALSE, FALSE, 0);
-    (void)g_signal_connect (G_OBJECT (suppress_panel_button), "clicked", G_CALLBACK (suppress_panel_callback), NULL);
+    add_toggle_button_to_menu(suppress_panel_button, menu_vbox, suppress_panel_callback, keys_in_picture_menu, suppress_panel, panel);
   }
+  
   read_string(BATTERY_CAPACITY, &battery_capacity); // Заряд в процентах
   asprintf(&name, BATTERY_CHARGE_PERCENT, battery_capacity);
-  viewed = gtk_button_new_with_label (name);
-  gtk_button_set_alignment (GTK_BUTTON(viewed), (float)0.0, (float)0.0);
-  gtk_button_set_relief (GTK_BUTTON(viewed), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), viewed, FALSE, FALSE, 0);
-  (void)g_signal_connect (G_OBJECT (viewed), "clicked", G_CALLBACK (power_information), NULL);
+  power_information_button=gtk_button_new_with_label (name);
+  add_toggle_button_to_menu(power_information_button, menu_vbox, power_information, keys_in_picture_menu, FALSE, panel);
   xfree(&battery_capacity);
   xfree(&name);
 
   viewed_count=itoa(viewed_pages);
   viewed_text=xconcat(VIEWED_PAGES, viewed_count);
   viewed = gtk_button_new_with_label (viewed_text);
+  add_toggle_button_to_menu(viewed, menu_vbox, reset_statistics, keys_in_picture_menu, FALSE, panel);
   free(viewed_count);
   free(viewed_text);
-  gtk_button_set_alignment (GTK_BUTTON(viewed), (float)0.0, (float)0.0);
-  gtk_button_set_relief (GTK_BUTTON(viewed), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), viewed, FALSE, FALSE, 0);
-  (void)g_signal_connect (G_OBJECT (viewed), "clicked", G_CALLBACK (reset_statistics), NULL);
-  (void)g_signal_connect (G_OBJECT (viewed), "key_press_event",G_CALLBACK (keys_rotation_picture_menu), NULL);
 
   if (rotate == FALSE) { // Если поворот отключен
     frame = FALSE; // Отключаем умное листание
@@ -527,19 +494,15 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
     gtk_widget_set_sensitive(rotate_image, FALSE); // Поворота
     gtk_widget_set_sensitive(frame_image, FALSE); // И умного просмотра
   }
-  dialog = gtk_dialog_new_with_buttons (SETTINGS,
+  picture_menu = gtk_dialog_new_with_buttons (SETTINGS,
                                         GTK_WINDOW(win),
                                         GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT|GTK_DIALOG_NO_SEPARATOR,
                                         NULL);
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), menu_vbox);
-  gtk_window_set_position (GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_widget_show_all (dialog);
+  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(picture_menu)->vbox), menu_vbox);
+  gtk_window_set_position (GTK_WINDOW(picture_menu), GTK_WIN_POS_CENTER_ALWAYS);
+  gtk_widget_show_all (picture_menu);
   wait_for_draw();
-  
-  (void)g_signal_connect (G_OBJECT (dialog), "key_press_event", G_CALLBACK (keys_in_picture_menu), panel);
-  e_ink_refresh_local();
 }
-
 
 // **************************************************  Options menu  ***********************************************************
 
@@ -553,7 +516,6 @@ void fm_start () // Callback для галки включения ФМ в нас
     gtk_widget_set_sensitive(copy, TRUE);
     gtk_widget_set_sensitive(moving, TRUE);
     write_config_int ("fm_toggle", fm_toggle);
-    e_ink_refresh_part ();
   } else {
     fm_toggle = FALSE;
     top_panel_active=TRUE;
@@ -561,9 +523,10 @@ void fm_start () // Callback для галки включения ФМ в нас
     gtk_widget_set_sensitive(create, FALSE);
     gtk_widget_set_sensitive(copy, FALSE);
     gtk_widget_set_sensitive(moving, FALSE);
+    if (!QT) usleep(GTK_REFRESH_DELAY);
   }
+  if (!QT) usleep(GTK_REFRESH_DELAY);
   write_config_int ("fm_toggle", fm_toggle);
-  e_ink_refresh_part ();
 }
 
 void move_confirm ()
@@ -594,10 +557,8 @@ void type_refresh ()
 void show_hidden_files_callback ()
 {
   write_config_int("show_hidden_files", show_hidden_files=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(show_hidden_files_chk)));
-  update(active_panel);
-  if (fm_toggle)
-    update(&bottom_panel);
-  e_ink_refresh_part ();
+  update(&top_panel);
+  if (fm_toggle) update(&bottom_panel);
 }
 
 void LED_notify_callback ()
@@ -663,66 +624,6 @@ void options_destroy (GtkWidget *dialog) // Уничтожаем меню нас
   e_ink_refresh_local();
 }
 
-gint keys_rotation_options (__attribute__((unused))GtkWidget *window, GdkEventKey *event) //Круговое перемещение по меню в ФМ
-{
-  if (check_key_press(event->keyval, active_panel)) return TRUE;
-  switch (event->keyval){
-    case   KEY_UP:
-      if (gtk_widget_is_focus (fmanager))
-      {
-        gtk_widget_grab_focus (about_program);
-        return TRUE;
-      }
-      else
-        return FALSE;
-
-    case   KEY_DOWN:
-      if (gtk_widget_is_focus (about_program))
-      {
-        gtk_widget_grab_focus (fmanager);
-        return TRUE;
-      }
-      else
-        return FALSE;
-
-    default:
-      return FALSE;
-  }
-}
-
-gint keys_updown_backlight (__attribute__((unused))GtkWidget *window, GdkEventKey *event) // Для возможности переключаться из регулятора подсветки вверх-вниз
-{
-  if (check_key_press(event->keyval, active_panel)) return TRUE;
-  switch (event->keyval){
-    case   KEY_UP:
-      gtk_widget_grab_focus (LED_notify_checkbox);
-      return TRUE;
-    case   KEY_DOWN:
-      gtk_widget_grab_focus (sleep_timeout_scale);
-      return TRUE;
-    default:
-      return FALSE;
-  }
-}
-
-gint keys_updown_sleep_timeout (__attribute__((unused))GtkWidget *window, GdkEventKey *event) // Для возможности переключаться из регулятора таймера сна вверх-вниз
-{
-  if (check_key_press(event->keyval, active_panel)) return TRUE;
-  switch (event->keyval){
-    case   KEY_UP:
-      if(hardware_has_backlight)
-        gtk_widget_grab_focus (backlight_scale);
-      else
-        gtk_widget_grab_focus (LED_notify_checkbox);
-      return TRUE;
-    case   KEY_DOWN:
-      gtk_widget_grab_focus (reset_configuration);
-      return TRUE;
-    default:
-      return FALSE;
-  }
-}
-
 gint keys_in_options (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel) //задействует кнопки
 {
   if (check_key_press(event->keyval, panel)) return TRUE;
@@ -732,7 +633,7 @@ gint keys_in_options (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel
     case   KEY_BACK:
     case   KEY_MENU_LIBROII:
     case   KEY_MENU_QT:
-      options_destroy (dialog);
+      options_destroy (options_menu);
       return FALSE;
 
     case   KEY_REFRESH_LIBROII:
@@ -740,70 +641,93 @@ gint keys_in_options (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel
       e_ink_refresh_full();
       return FALSE;
 
+    case KEY_UP:
+      if (dialog == sleep_timeout_scale)    
+      {
+        if(hardware_has_backlight)
+          gtk_widget_grab_focus (backlight_scale);
+        else
+          gtk_widget_grab_focus (LED_notify_checkbox);
+        return TRUE;
+      }
+      
+      if (dialog == backlight_scale)    
+      {
+        gtk_widget_grab_focus (LED_notify_checkbox);
+        return TRUE;
+      }
+      
+      if (gtk_widget_is_focus (fmanager))
+      {
+        gtk_widget_grab_focus (about_program);
+        return TRUE;
+      }
+      return FALSE;
+      
+    case KEY_DOWN:
+      if (dialog == sleep_timeout_scale)
+      {
+        gtk_widget_grab_focus (reset_configuration);
+        return TRUE;
+      }
+      
+      if (dialog == backlight_scale)
+      {
+        gtk_widget_grab_focus (sleep_timeout_scale);
+        return TRUE;
+      }
+      
+      if (gtk_widget_is_focus (about_program))
+      {
+        gtk_widget_grab_focus (fmanager);
+        return TRUE;
+      }
+      return FALSE;
+      
+    case KEY_OK:
     default:
-      e_ink_refresh_part();
       return FALSE;
   }
 }
 
-void options_menu_create(GtkWidget *main_menu) //Создание меню опций в ФМ
+void options_menu_create(GtkWidget *parent_menu) //Создание меню опций в ФМ
 {
   GtkWidget *sleep_timeout_frame;
-  GtkWidget *options_dialog = gtk_dialog_new_with_buttons (SETTINGS,
-                                                           GTK_WINDOW(main_menu),
-                                                           GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT|GTK_DIALOG_NO_SEPARATOR,
-                                                           NULL);
+  options_menu = gtk_dialog_new_with_buttons (SETTINGS, GTK_WINDOW(parent_menu),
+                                              GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT|GTK_DIALOG_NO_SEPARATOR, NULL);
   GtkWidget *menu_vbox = gtk_vbox_new (FALSE, 0);
 
   fmanager = gtk_check_button_new_with_label (FILEMANAGER_MODE);
-  if (fm_toggle) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(fmanager), TRUE);
-  gtk_button_set_relief (GTK_BUTTON(fmanager), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), fmanager, TRUE, TRUE, 0);
-  (void)g_signal_connect (G_OBJECT (fmanager), "clicked", G_CALLBACK (fm_start), NULL);
-  (void)g_signal_connect (G_OBJECT (fmanager), "key_press_event", G_CALLBACK (keys_rotation_options), NULL);
-
+  add_toggle_button_to_menu(fmanager, menu_vbox, fm_start, keys_in_options, fm_toggle, active_panel);
+  
   ink_speed = gtk_check_button_new_with_label (PARTIAL_UPDATE);
-  if (speed_toggle) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ink_speed), TRUE);
-  gtk_button_set_relief (GTK_BUTTON(ink_speed), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), ink_speed, FALSE, FALSE, 0);
-  (void)g_signal_connect (G_OBJECT (ink_speed), "clicked", G_CALLBACK (type_refresh), NULL);
+  add_toggle_button_to_menu(ink_speed, menu_vbox, type_refresh, keys_in_options, speed_toggle, active_panel);
 
   move_chk = gtk_check_button_new_with_label (CONFIRM_MOVE);
-  if (move_toggle) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(move_chk), TRUE);
-  gtk_button_set_relief (GTK_BUTTON(move_chk), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), move_chk, TRUE, TRUE, 0);
-  (void)g_signal_connect (G_OBJECT (move_chk), "clicked", G_CALLBACK (move_confirm), NULL);
+  add_toggle_button_to_menu(move_chk, menu_vbox, move_confirm, keys_in_options, move_toggle, active_panel);
 
   show_hidden_files_chk = gtk_check_button_new_with_label (SHOW_HIDDEN_FILES);
-  if (show_hidden_files) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(show_hidden_files_chk), TRUE);
-  gtk_button_set_relief (GTK_BUTTON(show_hidden_files_chk), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), show_hidden_files_chk, TRUE, TRUE, 0);
-  (void)g_signal_connect (G_OBJECT (show_hidden_files_chk), "clicked", G_CALLBACK (show_hidden_files_callback), NULL);
+  add_toggle_button_to_menu(show_hidden_files_chk, menu_vbox, show_hidden_files_callback, keys_in_options, show_hidden_files, active_panel);
 
   if (QT == FALSE)
   {
     clock_panel = gtk_check_button_new_with_label(SHOW_PANEL);
-    if (clock_toggle) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(clock_panel), TRUE);
-    gtk_button_set_relief (GTK_BUTTON(clock_panel), GTK_RELIEF_NONE);
-    gtk_box_pack_start (GTK_BOX (menu_vbox), clock_panel, TRUE, TRUE, 0);
-    (void)g_signal_connect (G_OBJECT (clock_panel), "clicked", G_CALLBACK (clock_panel_toggler), NULL);
+    add_toggle_button_to_menu(clock_panel, menu_vbox, clock_panel_toggler, keys_in_options, clock_toggle, active_panel);
   }
 
   LED_notify_checkbox = gtk_check_button_new_with_label (LED_NOTIFY);
-  if (LED_notify) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(LED_notify_checkbox), TRUE);
-  gtk_button_set_relief (GTK_BUTTON(LED_notify_checkbox), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), LED_notify_checkbox, TRUE, TRUE, 0);
-  (void)g_signal_connect (G_OBJECT (LED_notify_checkbox), "clicked", G_CALLBACK (LED_notify_callback), NULL);
+  add_toggle_button_to_menu(LED_notify_checkbox, menu_vbox, LED_notify_callback, keys_in_options, LED_notify, active_panel);
 
   if (hardware_has_backlight)
   {
     GtkWidget *backlight_frame = gtk_frame_new (BACKLIGHT);
+    
     gtk_box_pack_start (GTK_BOX (menu_vbox), backlight_frame, FALSE, TRUE, 0);
     backlight_scale = gtk_hscale_new_with_range ((gdouble)0, (gdouble)8, (gdouble)1);
     (void)g_signal_connect(backlight_scale, "value-changed", G_CALLBACK(backlight_changed), NULL);
     gtk_range_set_value (GTK_RANGE(backlight_scale), (gdouble) backlight);
     gtk_container_add (GTK_CONTAINER (backlight_frame), backlight_scale);
-    (void)g_signal_connect (G_OBJECT (backlight_frame), "key_press_event", G_CALLBACK (keys_updown_backlight), NULL);
+    (void)g_signal_connect (G_OBJECT (backlight_frame), "key_press_event", G_CALLBACK (keys_in_options), NULL);
   }
   
   if (QT)
@@ -812,7 +736,7 @@ void options_menu_create(GtkWidget *main_menu) //Создание меню оп�
     gtk_box_pack_start (GTK_BOX (menu_vbox), sleep_timeout_frame, FALSE, TRUE, 0);
     sleep_timeout_scale = gtk_hscale_new_with_range ((gdouble)0,(gdouble) 600,(gdouble) 5);
     gtk_range_set_value (GTK_RANGE(sleep_timeout_scale), (gdouble)sleep_timeout);
-    (void)g_signal_connect (G_OBJECT (sleep_timeout_scale), "key_press_event", G_CALLBACK (keys_updown_sleep_timeout), NULL);
+    (void)g_signal_connect (G_OBJECT (sleep_timeout_scale), "key_press_event", G_CALLBACK (keys_in_options), NULL);
     (void)g_signal_connect(sleep_timeout_scale, "value-changed", G_CALLBACK(sleep_timeout_changed), NULL);
     gtk_container_add (GTK_CONTAINER (sleep_timeout_frame), sleep_timeout_scale);
   }
@@ -826,73 +750,27 @@ void options_menu_create(GtkWidget *main_menu) //Создание меню оп�
   #endif
     
   reset_configuration = gtk_button_new_with_label ("   "RESET_CONFIGURATION);
-  gtk_button_set_alignment (GTK_BUTTON(reset_configuration), (gfloat)0.0, (gfloat)0.0);
-  gtk_button_set_relief (GTK_BUTTON(reset_configuration), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), reset_configuration, FALSE, FALSE, 0);
-  (void)g_signal_connect (G_OBJECT (reset_configuration), "clicked", G_CALLBACK (reset_configuration_callback), NULL);
+  add_toggle_button_to_menu(reset_configuration, menu_vbox, reset_configuration_callback, keys_in_options, FALSE, active_panel);
 
   about_program = gtk_button_new_with_label ("   "ABOUT_PROGRAM);
-  gtk_button_set_alignment (GTK_BUTTON(about_program), (gfloat)0.0, (gfloat)0.0);
-  gtk_button_set_relief (GTK_BUTTON(about_program), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), about_program, FALSE, FALSE, 0);
-  (void)g_signal_connect (G_OBJECT (about_program), "clicked", G_CALLBACK (about_program_callback), NULL);
-  (void)g_signal_connect (G_OBJECT (about_program), "key_press_event", G_CALLBACK (keys_rotation_options), NULL);
+  add_toggle_button_to_menu(about_program, menu_vbox, about_program_callback, keys_in_options, FALSE, active_panel);
 
+  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(options_menu)->vbox), menu_vbox);
+  gtk_window_set_position (GTK_WINDOW(options_menu), GTK_WIN_POS_CENTER_ALWAYS);
+  gtk_widget_show_all (options_menu);
 
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(options_dialog)->vbox), menu_vbox);
-  gtk_window_set_position (GTK_WINDOW(options_dialog), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_widget_show_all (options_dialog);
-
-  (void)g_signal_connect (G_OBJECT (options_dialog), "key_press_event", G_CALLBACK (keys_in_options), NULL);
-  e_ink_refresh_local();
+//   e_ink_refresh_local();
 }
 
 
 // ********************************  Main menu!  **************************************
-void create_folder()
+void create_folder(void)
 {
   xsystem("mkdir -p temp000");
   if ((inactive_panel != NULL) && (strcmp (active_panel->path, inactive_panel->path) == 0))
     update(inactive_panel);
   update(active_panel);
   e_ink_refresh_local ();
-}
-
-gint keys_rotation_menu (__attribute__((unused))GtkWidget *window, GdkEventKey *event) //Круговое перемещение по меню в ФМ
-{
-  if (check_key_press(event->keyval, active_panel)) return TRUE;
-  switch (event->keyval){
-    case   KEY_UP:
-
-      if (gtk_widget_is_focus (create))
-      {
-        gtk_widget_grab_focus (exit_button);
-        return TRUE;
-      }
-      else if (gtk_widget_is_focus(options) && GTK_WIDGET_SENSITIVE(create) == FALSE)
-      {
-        printf("options\n");
-        gtk_widget_grab_focus (exit_button);
-        return TRUE;
-      }
-      else
-        return FALSE;
-
-    case   KEY_DOWN:
-      if (gtk_widget_is_focus (exit_button))
-      {
-        if (GTK_WIDGET_SENSITIVE(create))
-          gtk_widget_grab_focus (create);
-        else
-          gtk_widget_grab_focus (options);
-        return TRUE;
-      }
-      else
-        return FALSE;
-
-    default:
-      return FALSE;
-  }
 }
 
 gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel) //задействует кнопку М в меню
@@ -904,9 +782,11 @@ gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *pan
     case   KEY_MENU_LIBROII:
     case   KEY_MENU_QT:
     case   GDK_m:
-      menu_destroy (dialog);
-      (void)chdir(top_panel.path);
+      interface_is_locked=TRUE;
+      menu_destroy (main_menu);
+      (void)chdir(active_panel->path);
       e_ink_refresh_local();
+      interface_is_locked=FALSE;
       return FALSE;
 
     case   KEY_REFRESH_LIBROII:
@@ -914,6 +794,34 @@ gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *pan
       e_ink_refresh_full();
       return FALSE;
 
+    case   KEY_UP:
+      if (dialog == create)
+      {
+        gtk_widget_grab_focus (exit_button);
+        return TRUE;
+      }
+      else if ((dialog == options) && GTK_WIDGET_SENSITIVE(create) == FALSE)
+      {
+        printf("options\n");
+        gtk_widget_grab_focus (exit_button);
+        return TRUE;
+      }
+      else
+        return FALSE;
+
+    case   KEY_DOWN:
+      if (dialog == exit_button)
+      {
+        if (GTK_WIDGET_SENSITIVE(create))
+          gtk_widget_grab_focus (create);
+        else
+          gtk_widget_grab_focus (options);
+        return TRUE;
+      }
+      else
+        return FALSE;
+
+    case KEY_OK:
     default:
       e_ink_refresh_default ();
       return FALSE;
@@ -922,63 +830,38 @@ gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *pan
 
 void start_main_menu (struct_panel *panel)
 {
-  GtkWidget *dialog = gtk_dialog_new_with_buttons (MAIN_MENU,
-                                                   GTK_WINDOW(main_window),
-                                                   GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT|GTK_DIALOG_NO_SEPARATOR,
-                                                   NULL);
+  enable_refresh=FALSE;
+  main_menu = gtk_dialog_new_with_buttons (MAIN_MENU, GTK_WINDOW(main_window),
+                                           GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT|GTK_DIALOG_NO_SEPARATOR, NULL);
   GtkWidget *menu_vbox = gtk_vbox_new (TRUE, 0);
 
   create = gtk_button_new_with_label (CREATE_TEMPORARY_DIRECTORY);
-  gtk_button_set_alignment (GTK_BUTTON(create), (gfloat)0.0, (gfloat)0.0);
-  gtk_button_set_relief (GTK_BUTTON(create), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), create, FALSE, FALSE, 0);
+  add_toggle_button_to_menu(create, menu_vbox, create_folder, keys_in_main_menu, FALSE, panel);
   if (active_panel->archive_depth > 0 ) gtk_widget_set_sensitive(create, FALSE); // В архиве не поддерживается
-  (void)g_signal_connect (G_OBJECT (create), "clicked", G_CALLBACK (create_folder), NULL);
-  (void)g_signal_connect (G_OBJECT (create), "key_press_event", G_CALLBACK (keys_rotation_menu), NULL);
-
+  
   copy = gtk_button_new_with_label (COPY);
-  gtk_button_set_alignment (GTK_BUTTON(copy), (gfloat)0.0, (gfloat)0.0);
-  gtk_button_set_relief (GTK_BUTTON(copy), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), copy, FALSE, FALSE, 0);
-  if (fm_toggle == FALSE) gtk_widget_set_sensitive(copy, FALSE);
+  add_toggle_button_to_menu(copy, menu_vbox, copy_dir_or_file, keys_in_main_menu, FALSE, panel);
   if (top_panel.archive_depth > 0 || bottom_panel.archive_depth > 0) gtk_widget_set_sensitive(copy, FALSE); // В архиве не поддерживается
-  (void)g_signal_connect (G_OBJECT (copy), "clicked", G_CALLBACK (copy_dir_or_file), NULL);
 
   moving = gtk_button_new_with_label (MOVE_FILE);
-  gtk_button_set_alignment (GTK_BUTTON(moving), (gfloat)0.0, (gfloat)0.0);
-  gtk_button_set_relief (GTK_BUTTON(moving), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), moving, FALSE, FALSE, 0);
-  if (fm_toggle == FALSE) gtk_widget_set_sensitive(moving, FALSE);
+  add_toggle_button_to_menu(moving, menu_vbox, move_dir_or_file, keys_in_main_menu, FALSE, panel);
   if (top_panel.archive_depth > 0 || bottom_panel.archive_depth > 0) gtk_widget_set_sensitive(moving, FALSE); // В архиве не поддерживается
-  (void)g_signal_connect (G_OBJECT (moving), "clicked", G_CALLBACK (move_dir_or_file), NULL);
 
   del = gtk_button_new_with_label (DELETE);
-  gtk_button_set_alignment (GTK_BUTTON(del), (gfloat)0.0, (gfloat)0.0);
-  gtk_button_set_relief (GTK_BUTTON(del), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), del, FALSE, FALSE, 0);
-  if (top_panel.archive_depth > 0 || bottom_panel.archive_depth > 0) gtk_widget_set_sensitive(del, FALSE); // В архиве не поддерживается
-  (void)g_signal_connect (G_OBJECT (del), "clicked", G_CALLBACK (delete_dir_or_file), NULL);
+  add_toggle_button_to_menu(del, menu_vbox, delete_dir_or_file, keys_in_main_menu, FALSE, panel);
+  if (active_panel->archive_depth > 0) gtk_widget_set_sensitive(del, FALSE); // В архиве не поддерживается
 
   options = gtk_button_new_with_label (OPTIONS);
-  gtk_button_set_alignment (GTK_BUTTON(options), (gfloat)0.0, (gfloat)0.0);
-  gtk_button_set_relief (GTK_BUTTON(options), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), options, FALSE, FALSE, 0);
-  (void)g_signal_connect_swapped (G_OBJECT (options), "clicked", G_CALLBACK (options_menu_create), dialog);
-  (void)g_signal_connect (G_OBJECT (options), "key_press_event", G_CALLBACK (keys_rotation_menu), NULL);
+  add_toggle_button_to_menu(options, menu_vbox, options_menu_create, keys_in_main_menu, FALSE, panel);
 
   exit_button = gtk_button_new_with_label (EXIT);
-  gtk_button_set_alignment (GTK_BUTTON(exit_button), (gfloat)0.0, (gfloat)0.0);
-  gtk_button_set_relief (GTK_BUTTON(exit_button), GTK_RELIEF_NONE);
-  gtk_box_pack_start (GTK_BOX (menu_vbox), exit_button, FALSE, FALSE, 0);
-  (void)g_signal_connect (G_OBJECT (exit_button), "clicked", G_CALLBACK (shutdown), NULL);
-  (void)g_signal_connect (G_OBJECT (exit_button), "key_press_event", G_CALLBACK (keys_rotation_menu), NULL);
+  add_toggle_button_to_menu(exit_button, menu_vbox, shutdown, keys_in_main_menu, FALSE, panel);
 
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), menu_vbox);
-  gtk_window_set_position (GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_widget_show_all (dialog);
-  
+  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(main_menu)->vbox), menu_vbox);
+  gtk_window_set_position (GTK_WINDOW(main_menu), GTK_WIN_POS_CENTER_ALWAYS);
+  gtk_widget_show_all (main_menu);
   wait_for_draw();
-  (void)g_signal_connect (GTK_WIDGET(dialog), "key_press_event", G_CALLBACK (keys_in_main_menu), panel);
+  enable_refresh=TRUE;
   if (!QT) usleep(GTK_REFRESH_DELAY);
   e_ink_refresh_local();
 }

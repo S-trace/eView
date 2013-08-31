@@ -55,6 +55,7 @@ void die_viewer_window (void)
   #ifdef debug_printf
   printf("Destroying ViewImageWindow\n");
   #endif
+  interface_is_locked=TRUE; // Чтобы не стреляло обновление экрана из фокусировки панелей
   enable_refresh=FALSE;
   gtk_widget_destroy(ImageWindow);
   in_picture_viewer=FALSE;
@@ -63,7 +64,8 @@ void die_viewer_window (void)
   wait_for_draw();
   if (!QT) usleep(GTK_REFRESH_DELAY);
   enable_refresh=TRUE;
-  e_ink_refresh_full();
+  interface_is_locked=FALSE;
+//   e_ink_refresh_full();
 }
 
 int check_image_settings(const image *const target) __attribute__((pure));
@@ -396,13 +398,16 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
           }
         }
       }
+      enable_refresh=FALSE; // Чтобы не дать Message спровоцировать двойное обновление при появлении
       next_file = next_image (panel->selected_name, TRUE, panel);
+      enable_refresh=TRUE;
       if (next_file==NULL)
       {
         interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
         return FALSE;
       }
-
+      enable_refresh=TRUE;
+      
       // Перемещаем курсор
       {
         char *full_name=strdup(next_file);
@@ -490,7 +495,9 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
           }
         }
         if (rotate) gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), R_SHIFT);
+        enable_refresh=FALSE;
         next_file = prev_image (panel->selected_name, TRUE, panel);
+        enable_refresh=TRUE;
         if (next_file==NULL)
         {
           interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
