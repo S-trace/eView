@@ -57,7 +57,6 @@ void set_system_sleep_timeout(const char *timeout)
   free(command);
 }
 
-
 void get_screensavers_list(void)
 {
   #ifdef __amd64
@@ -668,6 +667,8 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
 int is_picture(char *name) __attribute__((pure));
 int is_picture(char *name) /* Является ли изображением */
 {
+  if (strlen(name)<4) return FALSE; // Если имя файла слишком короткое
+  
   size_t n = strlen(name) - 4; /* Позиция начала расширения */
   if(strcasecmp((name+n), ".jpg") != 0 &&
     strcasecmp((name+n), "jpeg") != 0 &&
@@ -684,6 +685,8 @@ int is_picture(char *name) /* Является ли изображением */
 int is_archive(char *name) __attribute__((pure));
 int is_archive(char *name) /* Является ли архивом */
 {
+  if (strlen(name)<4) return FALSE; // Если имя файла слишком короткое
+  
   size_t n = strlen(name) - 4; /* Позиция начала расширения */
   if(strcasecmp((name+n), ".rar") != 0 &&
     strcasecmp((name+n), ".cbr") != 0 &&
@@ -697,6 +700,8 @@ int is_archive(char *name) /* Является ли архивом */
 int is_text(char *name) __attribute__((pure));
 int is_text(char *name) /* Является ли текстом */
 {
+  if (strlen(name)<4) return FALSE; // Если имя файла слишком короткое
+  
   size_t n = strlen(name) - 4; /* Позиция начала расширения */
   if(strcasecmp((name+n), ".txt") != 0)
     return FALSE;

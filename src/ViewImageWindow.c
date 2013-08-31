@@ -146,7 +146,7 @@ void reset_image(image *const target)
   target->pixbuf=NULL;
 }
 
-gboolean load_image(const char *const filename, const  struct_panel *const panel, const int enable_actions, image *const target) /* Загружаем и готовим к показу картинку */
+gboolean load_image(const char *const filename, const struct_panel *const panel, const int enable_actions, image *const target) /* Загружаем и готовим к показу картинку */
 {
   /*Если функция вызвана с пустым именем для загрузки*/
   if (filename==NULL || filename[0]=='\0') return FALSE;
@@ -758,7 +758,7 @@ void ViewImageWindow(const char *file, struct_panel *panel, int enable_actions) 
   gtk_widget_grab_focus(ImageWindow);
   if (enable_actions)
   {
-    select_file_by_name(file, panel);
+    select_file_by_name(panel->last_name, panel);
     in_picture_viewer=TRUE;
   }
   if (double_refresh) e_ink_refresh_local();

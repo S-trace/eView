@@ -7,7 +7,7 @@ void adjust_contrast(image *target, int contrast) // contrast (256 - normal)
 {
   guchar *imageData = gdk_pixbuf_get_pixels (target->pixbuf); // free() не требует!
   int i;
-  int dataSize = gdk_pixbuf_get_rowstride (target->pixbuf)*(target->height-1) + target->width *((gdk_pixbuf_get_n_channels (target->pixbuf) * gdk_pixbuf_get_bits_per_sample(target->pixbuf) + 7) / 8);
+  int dataSize = gdk_pixbuf_get_rowstride (target->pixbuf)*(target->height-1) + target->width *((gdk_pixbuf_get_n_channels (target->pixbuf) * gdk_pixbuf_get_bits_per_sample(target->pixbuf) + 7) / 8) - 2;
   unsigned char buf[256];
 
   long long int midBright = 0, midBright1 = 0, midBright2 = 0;

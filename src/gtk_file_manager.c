@@ -122,7 +122,7 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
         full_name=xconcat(text_basename,"/");
         free(text);
         #ifdef debug_printf
-        printf("Adding %d archive file '%s'\n", i, text_basename);
+        printf("Adding %d archive file '%s'\n", i, full_name);
         fflush(stdout);
         #endif
         add_data_to_list(panel->list, full_name, 1, NO_AUTOSCROLL, "dir ");
@@ -244,11 +244,8 @@ char *iter_from_filename (const char *const fname, const struct_panel *const pan
 
 void update(struct_panel *panel) /*обновление списка */
 {
-  GtkTreeIter iter;
-  GtkTreeModel *model;
-  gboolean valid = TRUE;
-  char *title, *iter_string;
-  set_led_state (LED_state[LED_BLINK_FAST]); /* Индикация активности */
+  char *title;
+  if (LED_notify) set_led_state (LED_state[LED_BLINK_FAST]); /* Индикация активности */
   panel->files_num=0; /* Обнуляем число файлов в просмотрщике */
   clear_list(panel->list);
   #ifdef debug_printf
@@ -257,24 +254,21 @@ void update(struct_panel *panel) /*обновление списка */
   #endif
   list_fd(panel);
 
-  /* подсчет числа строк в листе папок и файлов */
-  model = gtk_tree_view_get_model (panel->list);
-  (void)gtk_tree_model_get_iter_first (model, &iter);
-  while (valid)
-    valid = gtk_tree_model_iter_next (model, &iter);
   /*инфа о числе папок и файлов в загловок окна */
-  asprintf(&title, "Dirs: %d Files: %d  %s", panel->dirs_num-1, panel->files_num, VERSION);
+  asprintf(&title, "Dirs: %d Files: %d %s", panel->dirs_num-1, panel->files_num, VERSION);
   gtk_window_set_title(GTK_WINDOW(main_window), title);
   xfree (&title);
   if (panel->archive_depth > 0) /* Пишем имя архива с путём в поле снизу */
-    gtk_label_set_text (GTK_LABEL(panel->path_label), xconcat_path_file(panel->archive_stack[panel->archive_depth], panel->archive_cwd));
+  {
+    char *path=xconcat_path_file(panel->archive_stack[panel->archive_depth], panel->archive_cwd);
+    gtk_label_set_text (GTK_LABEL(panel->path_label), path);
+    free(path);
+  }
   else
     gtk_label_set_text (GTK_LABEL(panel->path_label), panel->path);
   //   free(model); // Не надо - карается abort()ом
-  iter_string=iter_from_filename (panel->selected_name, panel);
-  move_selection(iter_string, panel);
-  free(iter_string);
-  set_led_state (LED_state[LED_OFF]); /* Индикация активности */
+  select_file_by_name (panel->selected_name, panel);
+  if (LED_notify) set_led_state (LED_state[LED_OFF]); /* Индикация активности */
 }
 
 void move_selection(const char *const move_to, const struct_panel *const panel) /* сдвигает курсор на заданную строку в символьном виде */
@@ -605,7 +599,6 @@ int main (int argc, char **argv)
   if (access(".eView/", F_OK) != 0) /* Действия когда каталог не существует:  */
   {
     create_cfg ();
-    read_configuration();
     (void)chdir("/media/mmcblk0p1/"); /* Для новых книг */
     (void)chdir("/userdata/media/mmcblk0p1/"); /* Для старых книг */
     /* Неизвестно, где мы оказались после предыдущих двух переходов (сработал только один):  */
@@ -622,10 +615,6 @@ int main (int argc, char **argv)
   gtk_box_set_homogeneous (GTK_BOX (panels_vbox), FALSE);
   gtk_container_add (GTK_CONTAINER (main_window), panels_vbox);
   create_panel(&top_panel);
-  if (top_panel.archive_depth > 0 )
-    enable_refresh=FALSE;
-  else
-    update(&top_panel);
 
   if ( fm_toggle)
   {
@@ -653,27 +642,8 @@ int main (int argc, char **argv)
     printf ("Chdir to '%s' failed because %s!\n", active_panel->path, strerror(errno));
     #endif
   }
-  if (active_panel->archive_depth > 0 || (inactive_panel != NULL && inactive_panel->archive_depth > 0) )
-  {
-    char *iter;
-    enable_refresh=FALSE;
-    if ( active_panel->archive_depth > 0 )
-    {
-      enter_archive(active_panel->archive_stack[active_panel->archive_depth], active_panel, FALSE);
-      iter=iter_from_filename (active_panel->selected_name, active_panel);
-      move_selection(iter, active_panel); /* Восстанавливаем состояние выбранных элементов в списке файлов */
-      free(iter);
-    }
-    if ( inactive_panel != NULL && inactive_panel->archive_depth > 0 )
-    {
-      enter_archive(inactive_panel->archive_stack[inactive_panel->archive_depth], inactive_panel, FALSE);
-      iter=iter_from_filename (inactive_panel->selected_name, inactive_panel);
-      move_selection(iter, inactive_panel); /* Восстанавливаем состояние выбранных элементов в списке файлов */
-      free(iter);
-    }
-    enable_refresh=TRUE;
-  }
-  update(active_panel); /* Наполняем список каталогов */
+  
+  enable_refresh=FALSE;
   #ifndef __amd64
   if (clock_toggle) /* Показываем часики */
     gtk_window_unfullscreen  (GTK_WINDOW(main_window));
@@ -683,8 +653,24 @@ int main (int argc, char **argv)
   panel_selector (active_panel); /* Переключаемся в активную панель! */
   gtk_widget_destroy(MessageWindow);
   gtk_widget_show_all(main_window); /* Рисуем интерфейс */
+  
+  // Строим списки файлов в панелях
+  if (active_panel->archive_depth > 0)
+    enter_archive(active_panel->archive_stack[active_panel->archive_depth], active_panel, FALSE);
+  else
+    update(active_panel);
+  
+  if (inactive_panel != NULL)
+  {
+    if (inactive_panel->archive_depth > 0 )
+      enter_archive(inactive_panel->archive_stack[inactive_panel->archive_depth], inactive_panel, FALSE);
+    else
+      update(inactive_panel);
+  } 
+    
   wait_for_draw();/* Ожидаем отрисовки всего */
   enable_refresh=TRUE;
+  
   if (is_picture(active_panel->last_name) ) /* Открываем последнюю отображённую картинку */
     ViewImageWindow (active_panel->last_name, active_panel, TRUE);
   else
@@ -692,11 +678,13 @@ int main (int argc, char **argv)
   /*   g_signal_connect (G_OBJECT (window), "show", G_CALLBACK (e_ink_refresh_full), NULL); */
   /*   g_signal_connect_after (current_panel->list, "move_cursor", G_CALLBACK (e_ink_refresh_default), NULL ); // Обновление экрана при сдвиге выделения */
   interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
-  if (QT)
+  if (QT) 
+  {
     preload_next_screensaver(); // Загружаем первую заставку в память для мгновенного отображения
-    if (LED_notify)
-      set_led_state (LED_state[LED_OFF]);
     start_sleep_timer();
+  }
+  if (LED_notify)
+    set_led_state (LED_state[LED_OFF]);
   gtk_main ();
   return 0;
 }

@@ -543,6 +543,7 @@ void fm_start () // Callback для галки включения ФМ в нас
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(fmanager))) {
     fm_toggle = TRUE;
     second_panel_show();
+    update(&bottom_panel);
     gtk_widget_set_sensitive(create, TRUE);
     gtk_widget_set_sensitive(copy, TRUE);
     gtk_widget_set_sensitive(moving, TRUE);

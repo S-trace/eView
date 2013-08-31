@@ -434,8 +434,6 @@ void go_upper(struct_panel *panel) /* Переход на уровень вве�
       write_config_string("bottom_panel.selected_name", bottom_panel.selected_name);
       write_config_string("bottom_panel.last_name", "");
     }
-    update(panel);
-    /*     move_selection(iter_from_filename (saved_path, panel), panel); // И выбираем последний элемент */
     free (saved_path);
   }
   gtk_widget_queue_draw(GTK_WIDGET(panel->list)); /* Заставляем GTK перерисовать список каталогов */
@@ -645,7 +643,6 @@ void create_panel (struct_panel *panel)
   gtk_box_pack_start (GTK_BOX (panels_vbox), panel->path_label , (gfloat)FALSE, (gfloat)FALSE, 0);
   gtk_label_set_text (GTK_LABEL(panel->path_label), panel->path);
   panel->list = string_list_create_on_table(2, panel->table, 0, 1, 0, 30, SHOW, NOT_EDITABLE, " Name", "size/dir", 0.0,0.0);
-  update(panel);
   wait_for_draw(); /* Ожидаем отрисовки всего */
   (void)g_signal_connect (GTK_TREE_SELECTION(gtk_tree_view_get_selection (panel->list)),
                           "changed", G_CALLBACK (dirlist_select), panel ); /*реакция на сдвиг выделения */

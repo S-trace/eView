@@ -213,43 +213,46 @@ void create_cfg (void)  /*создание файлов настроек по у
     #endif
   }
   current_dir = get_current_dir_name();
-  write_config_int("crop", TRUE);
-  write_config_int("rotate", FALSE);
-  write_config_int("frame", FALSE);
-  write_config_int("manga", FALSE);
-  write_config_int("keepaspect", TRUE);
-  write_config_int("fm_toggle", FALSE);
-  write_config_int("move_toggle", TRUE);
-  write_config_int("speed_toggle", FALSE);
-  write_config_int("clock_toggle", TRUE);
-  write_config_int("top_panel_active", TRUE);
-  write_config_int("loop_dir", LOOP_NONE);
-  write_config_int("double_refresh", FALSE);
-  write_config_int("in_archive", FALSE);
-  write_config_int("viewed_pages", 0);
-  write_config_int("preload_enable", TRUE);
-  write_config_int("caching_enable", TRUE);
-  write_config_int("suppress_panel", FALSE);
-  write_config_int("show_hidden_files", FALSE);
-  write_config_int("LED_notify", TRUE);
-  write_config_int("backlight", FALSE);
-  write_config_int("sleep_timeout", 60);
-  write_config_int("HD_scaling", FALSE);
-  write_config_int("boost_contrast", FALSE);
+  write_config_int("crop", crop=TRUE);
+  write_config_int("rotate", rotate=FALSE);
+  write_config_int("frame", frame=FALSE);
+  write_config_int("manga", manga=FALSE);
+  write_config_int("keepaspect", keepaspect=TRUE);
+  write_config_int("fm_toggle", fm_toggle=FALSE);
+  write_config_int("move_toggle", move_toggle=TRUE);
+  write_config_int("speed_toggle", speed_toggle=FALSE);
+  write_config_int("clock_toggle", clock_toggle=TRUE);
+  write_config_int("top_panel_active", top_panel_active=TRUE);
+  write_config_int("loop_dir", loop_dir=LOOP_NONE);
+  write_config_int("double_refresh", double_refresh=FALSE);
+  write_config_int("viewed_pages", viewed_pages=0);
+  write_config_int("preload_enable", preload_enable=TRUE);
+  write_config_int("caching_enable", caching_enable=TRUE);
+  write_config_int("suppress_panel", suppress_panel=FALSE);
+  write_config_int("show_hidden_files", show_hidden_files=FALSE);
+  write_config_int("LED_notify", LED_notify=TRUE);
+  write_config_int("backlight", backlight=FALSE);
+  write_config_int("sleep_timeout", sleep_timeout=60);
+  write_config_int("HD_scaling", HD_scaling=FALSE);
+  write_config_int("boost_contrast", boost_contrast=FALSE);
 
-  write_config_string("top_panel.path", cfg_directory); // Хз почему, но если установить "/" - прога крашится при первом запуске
-  write_config_string("top_panel.selected_name", "../");
-  write_config_string("top_panel.archive_cwd", "");
-  write_config_string("top_panel.last_name", "");
-  write_config_string("top_panel.archive_stack", "filesystem\n");
-  write_config_string("top_panel.archive_list", "/tmp/top.archive_list");
-
-  write_config_string("bottom_panel.path", "/");
-  write_config_string("bottom_panel.selected_name", "../");
-  write_config_string("bottom_panel.archive_cwd", "");
-  write_config_string("bottom_panel.last_name", "");
-  write_config_string("bottom_panel.archive_stack", "filesystem\n");
-  write_config_string("bottom_panel.archive_list", "/tmp/bottom.archive_list");
+  write_config_string("top_panel.path", top_panel.path=xgetcwd(NULL));
+  write_config_string("top_panel.selected_name", top_panel.selected_name=strdup("../"));
+  write_config_string("top_panel.archive_cwd", top_panel.archive_cwd=strdup(""));
+  write_config_string("top_panel.last_name", top_panel.last_name=strdup(""));
+  write_config_string("top_panel.archive_list", top_panel.archive_list=strdup("/tmp/top.archive_list"));
+  strcpy(top_panel.archive_stack[0],"filesystem");
+  strcpy(top_panel.archive_stack[1],"");
+  write_archive_stack("top_panel.archive_stack", &top_panel);
+  
+  write_config_string("bottom_panel.path", bottom_panel.path=xgetcwd(NULL));
+  write_config_string("bottom_panel.selected_name", bottom_panel.selected_name=strdup("../"));
+  write_config_string("bottom_panel.archive_cwd", bottom_panel.archive_cwd=strdup(""));
+  write_config_string("bottom_panel.last_name", bottom_panel.last_name=strdup(""));
+  write_config_string("bottom_panel.archive_list", bottom_panel.archive_list=strdup("/tmp/bottom.archive_list"));
+  strcpy(bottom_panel.archive_stack[0],"filesystem");
+  strcpy(bottom_panel.archive_stack[1],"");
+  write_archive_stack("bottom_panel.archive_stack", &bottom_panel);
   xfree(&current_dir);
 }
 
