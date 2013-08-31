@@ -18,7 +18,7 @@
 #define BATTERY_TIME_TO_FULL  "src/power_supply/bat/time_to_full_now"
 #define BATTERY_TIME_TO_EMPTY "src/power_supply/bat/time_to_empty_now"
 
-#define USB_CURRENT "src/power_supply/usb/current_now" 
+#define USB_CURRENT "src/power_supply/usb/current_now"
 #define USB_VOLTAGE "src/power_supply/usb/voltage_now"
 
 #define AC_CURRENT "src/power_supply/ac/current_now"

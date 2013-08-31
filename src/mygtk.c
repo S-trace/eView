@@ -66,7 +66,7 @@ int check_key_press(guint keyval, struct_panel *panel) /* Возвращает T
     if (keyval == KEY_POWER_QT)
     {
       enter_suspend(panel);
-      return TRUE;    
+      return TRUE;
     }
     else
     {
@@ -86,10 +86,10 @@ gboolean confirm_request(const char *title, const char *confirm_button, const ch
   gtk_dialog_set_default_response (GTK_DIALOG(dialog),GTK_RESPONSE_REJECT);
   (void)g_signal_connect (G_OBJECT (dialog), "map-event", G_CALLBACK (e_ink_refresh_local), NULL);
   (void)g_signal_connect (G_OBJECT (dialog), "key-release-event", G_CALLBACK (e_ink_refresh_default), NULL);
-  
+
   result = gtk_dialog_run (GTK_DIALOG (dialog));
   e_ink_refresh_local ();
-  gtk_widget_show_all (dialog);  
+  gtk_widget_show_all (dialog);
   switch (result)
   {
     case GTK_RESPONSE_ACCEPT:
@@ -133,23 +133,23 @@ gboolean confirm_request(const char *title, const char *confirm_button, const ch
 /*           asprintf(&command, "dbus-send  --type=method_call --dest=com.test.reader /reader/registry com.test.reader.registry.input string:\"%s%s\"",panel->path, panel->selected_name);  */
 /* signal sender=:1.1 -> dest=(null destination) serial=131 path=/PowerManager; interface=com.sibrary.Service.PowerManager; member=requestSuspend */
 
-/* DBUS-вызовы на Qt прошивке: 
+/* DBUS-вызовы на Qt прошивке:
  * method call sender=:1.3 -> dest=com.sibrary.BoeyeServer serial=47 path=/StartupSplash; interface=com.sibrary.Service.StartupSplash; member=closeSplash
  * dbus-send --type=method_call --dest=com.sibrary.BoeyeServer /StartupSplash com.sibrary.Service.StartupSplash.showSplash
  * dbus-send --type=method_call --dest=com.sibrary.BoeyeServer /StartupSplash com.sibrary.Service.StartupSplash.closeSplash
- * 
+ *
  * dbus-send --type=method_call --dest=com.test.reader /reader/registry com.test.reader.registry.input string:"/path/file.txt"
- 
-dbus-send --print-reply --type=method_call --dest=com.sibrary.BoeyeServer /PowerManager com.sibrary.Service.PowerManager.getSuspendTime|cut -d ' ' -f 5|tail -n 1
-dbus-send --print-reply --type=method_call --dest=com.sibrary.BoeyeServer /PowerManager com.sibrary.Service.PowerManager.setSuspendTime int32:1024
-
-cat /home/root/Settings/boeye/boeyeserver.conf|grep ScreenSaver | cut -d = -f 2|tr -d ' '| tr ',' '\n' - список файлов для заставки
-
+ *
+ * dbus-send --print-reply --type=method_call --dest=com.sibrary.BoeyeServer /PowerManager com.sibrary.Service.PowerManager.getSuspendTime|cut -d ' ' -f 5|tail -n 1
+ * dbus-send --print-reply --type=method_call --dest=com.sibrary.BoeyeServer /PowerManager com.sibrary.Service.PowerManager.setSuspendTime int32:1024
+ *
+ * cat /home/root/Settings/boeye/boeyeserver.conf|grep ScreenSaver | cut -d = -f 2|tr -d ' '| tr ',' '\n' - список файлов для заставки
+ *
  * method call sender=:1.2 -> dest=com.test.reader serial=113 path=/reader/registry; interface=com.test.reader.registry; member=input ; string "/media/mmcblk0p1/passwd.txt"
- * 
+ *
  * dbus-send /PowerManager com.sibrary.Service.PowerManager.requestSuspend
  * signal sender=:1.1  -> dest=(null destination) serial=151 path=/PowerManager; interface=com.sibrary.Service.PowerManager; member=requestSuspend
- * 
+ *
  */
 
 void Qt_error_message(const char *message)
@@ -178,8 +178,9 @@ void Qt_error_message(const char *message)
 
 int MessageDie (GtkWidget *Window)
 {
-  gtk_idle_remove (MessageDie_idle_call_handler); /* Удаляем вызов этой функции из очереди вызовов (иначе на ARM она будет вызываться вечно) */
-  char *iter=iter_from_filename(active_panel->selected_name, active_panel);
+  char *iter;
+  gtk_idle_remove (MessageDie_idle_call_handler); /* Удаляем вызов этой функции из очереди вызовов (иначе она будет вызываться вечно) */
+  iter=iter_from_filename(active_panel->selected_name, active_panel);
   #ifdef debug_printf
   printf ("Destroying message window\n");
   #endif
@@ -210,7 +211,7 @@ GtkWidget *Message (const char *title, const char *message) {
   #endif
   MessageWindow = gtk_dialog_new_with_buttons (title,
                                                NULL,
-                                               GTK_DIALOG_MODAL/* |GTK_DIALOG_DESTROY_WITH_PARENT |GTK_DIALOG_NO_SEPARATOR*/,
+                                               GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT |GTK_DIALOG_NO_SEPARATOR,
                                                NULL);
   gtk_window_set_position (GTK_WINDOW (MessageWindow), GTK_WIN_POS_CENTER_ALWAYS);
   label = gtk_label_new (message);
@@ -225,7 +226,7 @@ GtkWidget *Message (const char *title, const char *message) {
   return MessageWindow;
 }
 
-void wait_for_draw (void) 
+void wait_for_draw (void)
 {
   while (gtk_events_pending ())    (void)gtk_main_iteration ();
 }
@@ -239,7 +240,7 @@ char *get_current_iter (struct_panel *panel) /*возвращает итерат
   selection = gtk_tree_view_get_selection (panel->list);
   model = gtk_tree_view_get_model (panel->list);
   (void)gtk_tree_selection_get_selected (selection, &model, &iter);
-//   free(selection); // Не надо - карается abort()ом
+  //   free(selection); // Не надо - карается abort()ом
   inlist =  gtk_tree_model_get_string_from_iter (model, &iter);
   if (inlist == NULL)
     return (strdup("0"));
@@ -276,9 +277,9 @@ void e_ink_refresh_full(void)
 
 void e_ink_refresh_default(void) /* Рефреш экрана по умолчанию (из настроек) */
 {
-  if (speed_toggle) 
+  if (speed_toggle)
     e_ink_refresh_local();
-  else 
+  else
     e_ink_refresh_part ();
 }
 
@@ -287,30 +288,30 @@ void enter_subdir(char *name, struct_panel *panel)/* Переход на уро�
   enable_refresh=FALSE;
   if (panel->archive_depth > 0) /* Если мы в архиве */
     archive_enter_subdir (name, panel); /* - дёргаем архивную функцию */
-  else
-  {
-    char *path=xconcat_path_file(panel->path, name);
-    (void)chdir (path);
-    free (panel->path);
-    panel->path=strdup(path);
-    free (path);
-    update(panel);
-    move_selection("0", panel);
-    if (panel == &top_panel)
-    {
-      write_config_string("top_panel.last_name", ""); /* Сбрасываем имя картинки (она всё равно не существует в новом каталоге), чтобы при запуске не было ошибки */
-      write_config_string("top_panel.path", top_panel.path);
-    }
     else
     {
-      write_config_string("bottom_panel.last_name", "");
-      write_config_string("bottom_panel.path", bottom_panel.path);    
+      char *path=xconcat_path_file(panel->path, name);
+      (void)chdir (path);
+      free (panel->path);
+      panel->path=strdup(path);
+      free (path);
+      update(panel);
+      move_selection("0", panel);
+      if (panel == &top_panel)
+      {
+        write_config_string("top_panel.last_name", ""); /* Сбрасываем имя картинки (она всё равно не существует в новом каталоге), чтобы при запуске не было ошибки */
+        write_config_string("top_panel.path", top_panel.path);
+      }
+      else
+      {
+        write_config_string("bottom_panel.last_name", "");
+        write_config_string("bottom_panel.path", bottom_panel.path);
+      }
     }
-  }
-  gtk_widget_queue_draw(GTK_WIDGET(panel->list)); /* Заставляем GTK перерисовать список каталогов */
-  enable_refresh=TRUE;
-  wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
+    gtk_widget_queue_draw(GTK_WIDGET(panel->list)); /* Заставляем GTK перерисовать список каталогов */
+    enable_refresh=TRUE;
+    wait_for_draw();
+    if (QT) usleep (QT_REFRESH_DELAY);
 }
 
 void dirlist_select(GtkWidget *const widget, struct_panel *const panel) /* Что происходит при перемещении выделенной строки по списку */
@@ -319,7 +320,7 @@ void dirlist_select(GtkWidget *const widget, struct_panel *const panel) /* Чт�
   GtkTreeIter iter;
   GtkTreeModel *model;
   GtkTreeSelection *selection = gtk_tree_view_get_selection (panel->list);
-  if (gtk_tree_selection_get_selected (selection, &model, &iter)) 
+  if (gtk_tree_selection_get_selected (selection, &model, &iter))
   {
     GtkTreePath *start_path, *end_path, *path;
     char *selection_row;
@@ -337,10 +338,10 @@ void dirlist_select(GtkWidget *const widget, struct_panel *const panel) /* Чт�
     selection_row = iter_from_filename (panel->selected_name, panel);
     path = gtk_tree_path_new_from_string (selection_row);
     /*поведение курсора у краев списка */
-    if (gtk_tree_view_get_visible_range (panel->list, &start_path, &end_path)) 
+    if (gtk_tree_view_get_visible_range (panel->list, &start_path, &end_path))
     {
       char *path_string=gtk_tree_path_to_string (end_path);
-      if ((strcmp(path_string, selection_row) == 0) && atoi(panel->selected_iter) != (panel->files_num + panel->dirs_num-1)) 
+      if ((strcmp(path_string, selection_row) == 0) && atoi(panel->selected_iter) != (panel->files_num + panel->dirs_num-1))
       {
         gtk_tree_view_scroll_to_cell (panel->list, path, NULL, TRUE, (gfloat)0.0, (gfloat)0.0);
         need_full_refresh=TRUE;
@@ -348,30 +349,30 @@ void dirlist_select(GtkWidget *const widget, struct_panel *const panel) /* Чт�
       free(path_string);
 
       path_string=gtk_tree_path_to_string (start_path);
-      if (strcmp(path_string, selection_row) == 0 && atoi(panel->selected_iter) != 0) 
+      if (strcmp(path_string, selection_row) == 0 && atoi(panel->selected_iter) != 0)
       {
         gtk_tree_view_scroll_to_cell (GTK_TREE_VIEW(widget), path, NULL, TRUE, (gfloat)1.0, (gfloat)1.0);
         need_full_refresh=TRUE;
       }
       free(path_string);
-    gtk_tree_path_free(start_path);
-    gtk_tree_path_free(end_path);
+      gtk_tree_path_free(start_path);
+      gtk_tree_path_free(end_path);
     }
     gtk_tree_path_free(path);
     free(selection_row);
     need_full_refresh=FALSE;
   }
-//     free(selection); // Не надо - карается abort()ом
+  //     free(selection); // Не надо - карается abort()ом
 }
 
 void after_dirlist_select(void) /* Что происходит при перемещении выделенной строки по списку (часть 2) */
 {
   if (interface_is_locked) /* Чтобы не дёргалось при просмотре изображений (каждый раз, приводя к двойному обновлению) */
     return;
-  
+
   if (need_full_refresh)
     e_ink_refresh_full();
-  else 
+  else
     e_ink_refresh_default();
 }
 
@@ -383,7 +384,7 @@ void panel_focussed(struct_panel *panel)
     printf("Interface was locked, panel focus change signal ignored!\n");
     #endif
     return;
-  }  
+  }
   if (panel == &top_panel)
   {
     active_panel=&top_panel;
@@ -408,28 +409,28 @@ void go_upper(struct_panel *panel) /* Переход на уровень вве�
     archive_go_upper(panel);
   else
   {
-    char *saved_path;
+    char *saved_path, *new_path;
     if (strcmp (panel->path, "/") == 0)
-      return; 
+      return;
     trim_line(panel->path);
     saved_path=xconcat_path_file(strrchr(panel->path,'/')+1, ""); /* Сохраняем текущий каталог */
     #ifdef debug_printf
     printf("saved_path=%s\n", saved_path);
     #endif
     (void)chdir("..");
-    char *new_path=strrchr(panel->path, '/')+1; // Находим начало имени покинутого каталога
+    new_path=strrchr(panel->path, '/')+1; // Находим начало имени покинутого каталога
     new_path[0]='\0'; // Обрезаем строку panel->path на уровень выше
     update(panel);
-    select_file_by_name(saved_path, panel); 
+    select_file_by_name(saved_path, panel);
     if (panel == &top_panel)
     {
-      write_config_string("top_panel.path", top_panel.path);    
+      write_config_string("top_panel.path", top_panel.path);
       write_config_string("top_panel.selected_name", top_panel.selected_name);
       write_config_string("top_panel.last_name", "");
     }
     else
     {
-      write_config_string("bottom_panel.path", bottom_panel.path);    
+      write_config_string("bottom_panel.path", bottom_panel.path);
       write_config_string("bottom_panel.selected_name", bottom_panel.selected_name);
       write_config_string("bottom_panel.last_name", "");
     }
@@ -462,7 +463,7 @@ void actions(struct_panel *panel) /*выбор что делать по клик
       bottom_panel.last_name[0]='\0';
       write_config_string("bottom_panel.last_name", bottom_panel.last_name);
     }
-    
+
     if (strcmp(panel->selected_name, "../")== 0)  /* Если кликнули '../' */
     {
       #ifdef debug_printf
@@ -481,8 +482,8 @@ void actions(struct_panel *panel) /*выбор что делать по клик
   }
   else /* Если кликнули на файл - проверкa по типу файла */
   {
-    if (is_picture(panel->selected_name)) ViewImageWindow(panel->selected_name, panel, TRUE);/* Если картинка - пуск смотрелки */
-    /*после отработки смотрелки возврат  идет не сюда, а в wait_state */
+    /* Если картинка - пуск смотрелки, после отработки смотрелки возврат  идет не сюда, а в wait_state */
+    if (is_picture(panel->selected_name)) ViewImageWindow(panel->selected_name, panel, TRUE);
     if (is_archive(panel->selected_name))
     {
       if (panel == &top_panel) /* Сбрасываем имя последнего просмотренного файла, чтобы при следующем запуске не было ошибки */
@@ -528,7 +529,7 @@ void actions(struct_panel *panel) /*выбор что делать по клик
         xsystem(command);
         free(command);
         e_ink_refresh_full();
-        
+
         #ifdef debug_printf
         printf("Removing extracted '%s'\n", file);
         #endif
@@ -538,7 +539,7 @@ void actions(struct_panel *panel) /*выбор что делать по клик
       }
       else
       {
-        asprintf(&command, "/usr/bin/fbreader '%s'", panel->selected_name); 
+        asprintf(&command, "/usr/bin/fbreader '%s'", panel->selected_name);
         xsystem(command);
         xfree (&command);
       }
@@ -556,25 +557,25 @@ gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
     case   KEY_MENU_QT:
       start_main_menu (panel);
       return FALSE;
-      
+
     case   GDK_h:
     case   KEY_HOME: /*panel focus change */
-      panel_selector (active_panel == &top_panel ? &bottom_panel : &top_panel);        
+      panel_selector (active_panel == &top_panel ? &bottom_panel : &top_panel);
       return TRUE;
-      
+
     case   KEY_LEFT:
       copy_dir_or_file ();
       return FALSE;
-      
+
     case    KEY_RIGHT:
       move_dir_or_file ();
       return FALSE;
-      
+
     case   KEY_REFRESH_LIBROII:
     case   KEY_REFRESH_QT:
       e_ink_refresh_full();
       return FALSE;
-      
+
     case   KEY_UP:
     {
       char *str_iter;
@@ -585,12 +586,12 @@ gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
         move_selection (last_row_string, panel);
         free (last_row_string);
         free (str_iter);
-        return TRUE;        
+        return TRUE;
       }
       free (str_iter);
       return FALSE;
     }
-    
+
     case   KEY_DOWN:
     {
       char *str_iter=get_current_iter(panel);
@@ -603,20 +604,20 @@ gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
       free (str_iter);
       return FALSE;
     }
-    
+
     case KEY_BACK:/*GDK_x: */
       go_upper(panel);
       return TRUE;
-      
+
     case KEY_PGDOWN:
     case KEY_PGUP:
     case KEY_OK:
-      return FALSE; 
-      
+      return FALSE;
+
     default:
       #ifdef debug_printf
       printf("got unknown keycode 0x%x in main\n", event->keyval);
-      #endif  
+      #endif
       return FALSE;
   }
 }
@@ -625,10 +626,10 @@ void select_file_by_name(const char * const name, const struct_panel * const pan
 {
   #ifdef debug_printf
   printf("Selecting file '%s'\n", name);
-  #endif  
+  #endif
   char *iter=iter_from_filename (name, panel);
   move_selection(iter, panel);
-  free(iter);  
+  free(iter);
 }
 
 void create_panel (struct_panel *panel)
@@ -638,7 +639,7 @@ void create_panel (struct_panel *panel)
   gtk_table_set_homogeneous(GTK_TABLE(panel->table ), HOMOGENEUS);
   gtk_box_pack_start (GTK_BOX (panels_vbox), panel->table , TRUE, TRUE, 0);
   gtk_container_set_border_width(GTK_CONTAINER(panel->table ), 0);
-  
+
   panel->path_label  = gtk_label_new ("");
   gtk_misc_set_alignment (GTK_MISC (panel->path_label ), (gfloat)0, (gfloat)0);
   gtk_box_pack_start (GTK_BOX (panels_vbox), panel->path_label , (gfloat)FALSE, (gfloat)FALSE, 0);
@@ -647,9 +648,9 @@ void create_panel (struct_panel *panel)
   update(panel);
   wait_for_draw(); /* Ожидаем отрисовки всего */
   (void)g_signal_connect (GTK_TREE_SELECTION(gtk_tree_view_get_selection (panel->list)),
-                    "changed", G_CALLBACK (dirlist_select), panel ); /*реакция на сдвиг выделения */
+                          "changed", G_CALLBACK (dirlist_select), panel ); /*реакция на сдвиг выделения */
   (void)g_signal_connect_after (GTK_TREE_SELECTION(gtk_tree_view_get_selection (panel->list)),
-                          "changed", G_CALLBACK (after_dirlist_select), NULL); /*обновление экрана после перемещения курсора */
+                                "changed", G_CALLBACK (after_dirlist_select), NULL); /*обновление экрана после перемещения курсора */
   (void)g_signal_connect_swapped (panel->list, "row-activated", G_CALLBACK (actions), panel); /*реакция на клик по выбору */
   (void)g_signal_connect (G_OBJECT (panel->list), "key_press_event", G_CALLBACK (which_keys_main), panel); /*обаботка назначенных кнопок */
   (void)g_signal_connect_swapped (G_OBJECT (panel->list), "focus_in_event", G_CALLBACK (panel_focussed), panel);
@@ -667,10 +668,10 @@ GtkWidget *window_create(int x, int y, guint border, const char *title, int moda
   gtk_window_set_default_size(GTK_WINDOW(new_window), x, y);
   gtk_window_set_position (GTK_WINDOW (new_window), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_title(GTK_WINDOW(new_window), title);
-  
+
   /*   g_signal_connect (G_OBJECT (window), "destroy", G_CALLBACK (wait_state), NULL); */
   (void)g_signal_connect (G_OBJECT (new_window), "delete_event", G_CALLBACK  (gtk_main_quit), NULL);
-  
+
   gtk_container_set_border_width(GTK_CONTAINER(new_window), border);
   gtk_window_set_modal(GTK_WINDOW(new_window), (modal == MODAL) ? TRUE : FALSE);
   return new_window;
@@ -681,11 +682,9 @@ void add_data_to_list(GtkTreeView *tree, const char *data_string, int n_columns,
 {
   GtkTreeIter iter;
   GtkListStore *store;
-  GtkTreePath *path;
-  GtkTreeModel* model;
   char *data;
   int i;
-  
+
   store = (GtkListStore *)gtk_tree_view_get_model(tree);
   gtk_list_store_append(GTK_LIST_STORE(store), &iter);
   for (i = 0; i < n_columns; i++) {
@@ -704,8 +703,8 @@ void add_data_to_list(GtkTreeView *tree, const char *data_string, int n_columns,
     }
   }
   if (autoscroll) {
-    model = gtk_tree_view_get_model(tree);
-    path = gtk_tree_model_get_path(GTK_TREE_MODEL(model), &iter);
+    GtkTreeModel* model = gtk_tree_view_get_model(tree);
+    GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(model), &iter);
     gtk_tree_view_scroll_to_cell(tree, path, NULL, TRUE, (gfloat)0.5, (gfloat)0.5);
     gtk_tree_path_free(path);
     //     free(model); // Не надо - карается abort()ом
@@ -716,7 +715,6 @@ GtkTreeView *string_list_create_on_table(size_t num,
                                          GtkWidget *table, guint start_col, guint end_col,
                                          guint start_row, guint end_row, guint show_hide, guint editable,...)
 {
-  GtkCellRenderer *renderer;
   GtkTreeViewColumn *column;
   GtkListStore *store;
   GtkWidget *scrolled_window;
@@ -725,51 +723,50 @@ GtkTreeView *string_list_create_on_table(size_t num,
   GType *types;
   va_list titles;
   size_t i;
-  const char *tmp, *label;
-  double align;
-  
+  const char *label;
+
   /* This is the scrolled window to put the cList widget inside */
   scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-  
+
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
   /*adjust =gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(scrolled_window)); */
   gtk_container_set_border_width (GTK_CONTAINER (scrolled_window), 0);
   gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_window), GTK_SHADOW_ETCHED_IN);
-  
+
   types = (GType *) xmalloc(num * sizeof(GType));
   for (i = 0; i < num; i++)
     types[i] = G_TYPE_STRING;
   store = gtk_list_store_newv((int)num, types);
   free(types);
-  
+
   tree = GTK_TREE_VIEW(gtk_tree_view_new_with_model(GTK_TREE_MODEL(store)));
   /*дерево с разными по цвету строками */
   gtk_tree_view_set_rules_hint(tree, FALSE);
   /* Setup the selection handler */
   selection = gtk_tree_view_get_selection(tree);
   gtk_tree_selection_set_mode(selection, GTK_SELECTION_SINGLE);
-  
+
   /*    if (func) { */
   /*            signal_connect(selection, "changed", G_CALLBACK(func), NULL); */
   /*    } */
   /*    g_signal_connect (G_OBJECT (adjust), "value_changed", */
   /*                   G_CALLBACK (print_adjust), NULL); */
-  
+
   gtk_container_add(GTK_CONTAINER(scrolled_window), GTK_WIDGET(tree));
   if (table)
     gtk_table_attach_defaults(GTK_TABLE(table), GTK_WIDGET(scrolled_window), start_col, end_col, start_row, end_row);
-  
+
   /* The view now holds a reference.  We can get rid of our own reference */
   g_object_unref(G_OBJECT(store));
-  
+
   va_start(titles, editable);
   for (i = 0; i < num; i++) {
     /*создаются строки - ячейки */
-    renderer = gtk_cell_renderer_text_new();
-    tmp = va_arg(titles, char *);
-    align = va_arg(titles, double);
+    GtkCellRenderer *renderer = gtk_cell_renderer_text_new();
+    const char *tmp = va_arg(titles, char *);
+    double align = va_arg(titles, double);
     if (!tmp || show_hide == HIDE ) tmp = "";
-    
+
     /* Create a column, associating the "text" attribute of the  cell_renderer to the column of the model */
     if (g_utf8_validate(tmp, -1, NULL) != TRUE) {
       label = g_locale_to_utf8(tmp, -1, NULL, NULL, NULL);
@@ -788,22 +785,22 @@ GtkTreeView *string_list_create_on_table(size_t num,
       g_object_set (renderer, "xalign", 1.0, NULL);
     }
     (void)gtk_tree_view_append_column(tree, column);
-//     free(renderer); // Не надо - карается abort()ом
-//     free(column); // То же самое
+    //     free(renderer); // Не надо - карается abort()ом
+    //     free(column); // То же самое
   }
   va_end(titles);
   return tree;
 }
 
 void enter_suspend(struct_panel *panel)
-{  
+{
   int saved_crop=crop;
   int saved_rotate=rotate;
   int saved_frame=frame;
   int saved_preload_enable=preload_enable;
   int saved_keepaspect=keepaspect;
   int saved_boost_contrast=boost_contrast;
-  
+
   gtk_idle_remove (idle_call_handler); /* Удаляем вызов этой функции из очереди вызовов (иначе на ARM она будет вызываться вечно) */
   if (suspended == FALSE)
   {
@@ -814,7 +811,7 @@ void enter_suspend(struct_panel *panel)
     #ifdef debug_printf
     printf("DBUS sent\n");
     #endif
-    
+
     boost_contrast=crop=rotate=frame=preload_enable=FALSE; /* Грязно перенастраиваем смотрелку */
     suspended=keepaspect=TRUE;
     if (in_picture_viewer)
@@ -834,7 +831,7 @@ void enter_suspend(struct_panel *panel)
     boost_contrast=saved_boost_contrast;
     set_brightness(0);
     preload_next_screensaver();
-    suspend_hardware();  
+    suspend_hardware();
     #ifdef debug_printf
     printf("Suspend done\n");
     #endif

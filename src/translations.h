@@ -1,9 +1,9 @@
 // #define VERSION "eView 0.63rc4 21.aug.2013"
 #ifdef language_russian
 #define EVIEW_IS_STARTING "eView запускается"
-#define PLEASE_WAIT " Пожалуйста, подождите! " 
+#define PLEASE_WAIT " Пожалуйста, подождите! "
 
-#define ERROR "Ошибка" 
+#define ERROR "Ошибка"
 #define UNKNOWN_OR_DAMAGED_ARCHIVE "Неизвестный тип архива\nлибо архив повреждён"
 #define UNABLE_TO_ENTER_NEXT_DIRECTORY "Переход в следующий\nкаталог неудался!"
 #define UNABLE_TO_ENTER_PREVIOUS_DIRECTORY "Переход в предыдущий\nкаталог неудался!"
@@ -75,9 +75,9 @@
 
 #ifdef language_english
 #define EVIEW_IS_STARTING "Starting eView"
-#define PLEASE_WAIT       " Please wait! " 
+#define PLEASE_WAIT       " Please wait! "
 
-#define ERROR "Error" 
+#define ERROR "Error"
 #define UNKNOWN_OR_DAMAGED_ARCHIVE "Unknown archive type\nor broken archive"
 #define UNABLE_TO_ENTER_NEXT_DIRECTORY "Unable to enter\nnext directory!"
 #define UNABLE_TO_ENTER_PREVIOUS_DIRECTORY "Unable to enter\nprevious directory!"

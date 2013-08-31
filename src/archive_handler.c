@@ -20,15 +20,13 @@ enum
 
 typedef struct {
   int     offs;           /* Offset to the signature   */
-  size_t len;       /* Signature length          */
+  size_t len;             /* Signature length          */
   int type;               /* One of ZIP_FILE, RAR_FILE */
-  const char *sign;          /* Signature to compare to   */
+  const char *sign;       /* Signature to compare to   */
 } magic_sign;
 
 char *escape(const char *input) /* Экранирование нежелательных символов для грепа (прежде всего квадратных скобок) */
 {
-  int i=0;
-  size_t idx;
   char  *escaped;
   if (input==NULL)
   {
@@ -50,24 +48,26 @@ char *escape(const char *input) /* Экранирование нежелател
   }
   else
   {
-  for (idx = 0; idx < strlen(input);  idx++) {
-    switch (input[idx])
-    { /* Для нежелательных символов */
-      case '[': case ']':
-      case '{': case '}':
-      case '"':
-        escaped[i++] = '\\'; /* Вставляем перед ними backslash */
-        break;
-      default:
-        break;
-    };
-    escaped[i++] = input[idx]; /* И копируем собственно символ */
-  }
-  escaped[i] = '\0'; /* Терминируем строку */
-  #ifdef debug_printf
-  printf("ESCAPED = '%s'\n", escaped);
-  #endif
-  return escaped;
+    size_t idx;
+    int i=0;
+    for (idx = 0; idx < strlen(input); idx++) {
+      switch (input[idx])
+      { /* Для нежелательных символов */
+        case '[': case ']':
+        case '{': case '}':
+        case '"':
+          escaped[i++] = '\\'; /* Вставляем перед ними backslash */
+          break;
+        default:
+          break;
+      };
+      escaped[i++] = input[idx]; /* И копируем собственно символ */
+    }
+    escaped[i] = '\0'; /* Терминируем строку */
+    #ifdef debug_printf
+    printf("ESCAPED = '%s'\n", escaped);
+    #endif
+    return escaped;
   }
   return strdup("");
 }
@@ -82,14 +82,14 @@ int file_type_of(const char *fname)
   FILE *f;
   char sign[20];
   int nr;
-  
+
   f = fopen(fname, "rb");
   if (!f) return -1;
-  
+
   for (nr = 0; nr < ARCH_TYPES; nr++) {
     if ((fseek(f, magic[nr].offs, SEEK_SET) == -1) || fread(sign, 1, magic[nr].len, f) != magic[nr].len)
       break;
-    
+
     /* If the read went well, we need to compare the characters */
     /* strstr works here, but only if no \0's are in the string */
     /* and if we first terminate the string read too */
@@ -110,7 +110,7 @@ int get_archive_list(const char *archive, const char *list_file) /* Создан
   char *command = NULL;
   int asprintf_result;
   switch (file_type_of(archive)) /* Архивно-зависимая часть */
-  { 
+  {
     case ZIP_FILE:
       #ifdef debug_printf
       printf("File type ZIP: '%s'\n", archive);
@@ -124,10 +124,10 @@ int get_archive_list(const char *archive, const char *list_file) /* Создан
         shutdown(FALSE);
       }
       else
-        xsystem(command); /* Получаем список каталогов и файлов в каноничном формате (каталоги должны завершаться слэшем) */          
-      xfree(&command);      
+        xsystem(command); /* Получаем список каталогов и файлов в каноничном формате (каталоги должны завершаться слэшем) */
+        xfree(&command);
       (void)remove("/tmp/ziplist");
-      (void)remove("/tmp/list");      
+      (void)remove("/tmp/list");
       return TRUE;
 
     case RAR_FILE:
@@ -143,8 +143,8 @@ int get_archive_list(const char *archive, const char *list_file) /* Создан
         shutdown(FALSE);
       }
       else /* Получаем список каталогов и файлов в каноничном формате (каталоги должны завершаться слэшем) */
-        xsystem(command); 
-      xfree(&command);      
+        xsystem(command);
+      xfree(&command);
       (void)remove("/tmp/rarlist");
       (void)remove("/tmp/list");
       return TRUE;
@@ -155,7 +155,7 @@ int get_archive_list(const char *archive, const char *list_file) /* Создан
       #endif
       return FALSE;
   }
-}    
+}
 
 char **archive_get_files_list(struct_panel *panel, const char *cwd) /* Получение списка файлов в подкаталоге архива */
 {
@@ -169,7 +169,7 @@ char **archive_get_files_list(struct_panel *panel, const char *cwd) /* Полу�
     shutdown(FALSE);
   }
   else /* Получаем список каталогов и файлов в каноничном формате (каталоги должны завершаться слэшем) */
-    xsystem(command); /* Вызываем команду */
+    xsystem(command);
   free(escaped);
   xfree(&command);
   if (g_file_test("/tmp/files.list", G_FILE_TEST_EXISTS) == FALSE) /* Если файл со списком не существует */
@@ -193,7 +193,7 @@ char **archive_get_directories_list(struct_panel *panel, const char *directory) 
   escaped=escape(directory);
   asprintf(&command, "grep '^%s[^/]*/$' %s | uniq > /tmp/dirs.list ", escaped, panel->archive_list);
   free(escaped);
-  xsystem(command); /* Вызываем команду */
+  xsystem(command);
   xfree(&command);
   if (g_file_test("/tmp/dirs.list", G_FILE_TEST_EXISTS) != TRUE) /* Если файл со списком не существует */
   {
@@ -273,7 +273,7 @@ void enter_subarchive(const char *name, struct_panel *panel) /* Вход во в
   const char *prefix="/";
   #endif
   archive_extract_file(panel->archive_stack[panel->archive_depth], name, prefix);
-  asprintf(&subarchive, "%s%s/%s", prefix, panel->archive_cwd, name);  
+  asprintf(&subarchive, "%s%s/%s", prefix, panel->archive_cwd, name);
   #ifdef debug_printf
   printf("Entering into subarchive '%s' of archive '%s'\n", subarchive, panel->archive_stack[panel->archive_depth]);
   #endif
@@ -286,7 +286,7 @@ void leave_archive(struct_panel *panel)
   #ifdef debug_printf
   printf("Leaving archive '%s' to dir '%s'\n",panel->archive_stack[panel->archive_depth], panel->path);
   #endif
-  
+
   panel->archive_depth=panel->archive_depth-1;
   if (panel->archive_depth > 0) /* Если мы ешё не достигли ФС */
   {
@@ -328,9 +328,9 @@ int find_prev_archive_directory(struct_panel *panel)
   slash=strrchr(up_dir, '/');
   if (slash==NULL) /* Если значение пути вырождается в NULL (слэша больше не оказалось) */
     up_dir[0]='\0'; /* То делаем archive_cwd нулевой строкой */
-  else
-    *(slash+1)='\0'; /* А иначе просто обрезаем путь в архиве на один уровень */
-  directories_list=archive_get_directories_list(panel, up_dir);
+    else /* А иначе просто обрезаем путь в архиве на один уровень */
+      *(slash+1)='\0';
+    directories_list=archive_get_directories_list(panel, up_dir);
   n=(int)sizeof(directories_list);
   #ifdef debug_printf
   printf("sizeof(directories_list)=%d\n",n);
@@ -349,11 +349,11 @@ int find_prev_archive_directory(struct_panel *panel)
         #endif
 
         /*Очищаем оставшийся список каталогов*/
-        do free(directories_list[i++]);  
+        do free(directories_list[i++]);
         while (directories_list[i] != NULL);
         free(directories_list);
 
-        return FALSE;  /* То возвращаем что переход не удался */
+        return FALSE;  /* Возвращаем что переход не удался */
       }
       else
       {
@@ -363,12 +363,12 @@ int find_prev_archive_directory(struct_panel *panel)
           write_config_string("top_panel.archive_cwd", panel->archive_cwd);
         else
           write_config_string("bottom_panel.archive_cwd", panel->archive_cwd);
-        
+
         /*Очищаем оставшийся список каталогов*/
-        do free(directories_list[i++]);  
+        do free(directories_list[i++]);
         while (directories_list[i] != NULL);
         free(directories_list);
-        
+
         return TRUE;  /* Иначе возвращаем успех */
       }
     }
@@ -381,10 +381,10 @@ int find_prev_archive_directory(struct_panel *panel)
   printf ("Dirname not matched (back)!\n");
   #endif
 
-  do free(directories_list[i++]);  
+  do free(directories_list[i++]);
   while (directories_list[i] != NULL);
   free(directories_list);
-  return FALSE; /* И возвращаем что переход не удался */
+  return FALSE; /* Возвращаем что переход не удался */
 }
 
 int find_next_archive_directory(struct_panel *panel)
@@ -397,12 +397,12 @@ int find_next_archive_directory(struct_panel *panel)
   slash=strrchr(up_dir, '/'); /* Ищем последний слэш в пути */
   if (slash==NULL) /* Если значение пути вырождается в NULL (слэша больше не оказалось) */
     up_dir[0]='\0'; /* То делаем archive_cwd нулевой строкой */
-  else
-    *(slash+1)='\0'; /* А иначе просто обрезаем путь в архиве на один уровень */
-  directories_list=archive_get_directories_list(panel, up_dir);
+    else /* А иначе просто обрезаем путь в архиве на один уровень */
+      *(slash+1)='\0';
+    directories_list=archive_get_directories_list(panel, up_dir);
   while (TRUE)
   {
-    if (directories_list[i]==NULL) 
+    if (directories_list[i]==NULL)
     {
       free(directories_list);
       return FALSE; /* Если достигли конца списка */
@@ -431,17 +431,17 @@ int find_next_archive_directory(struct_panel *panel)
         panel->archive_cwd=strdup(directories_list[i+1]);
         if ( panel == &top_panel )
           write_config_string("top_panel.archive_cwd", panel->archive_cwd);
-        else        
+        else
           write_config_string("bottom_panel.archive_cwd", panel->archive_cwd);
         #ifdef debug_printf
         printf("JUMPING TO %s\n", panel->archive_cwd);
         #endif
-        
+
         /*Очищаем оставшийся список каталогов*/
-        do free(directories_list[i++]);  
-        while (directories_list[i] != NULL);
-        free(directories_list);
-        
+        do free(directories_list[i++]);
+          while (directories_list[i] != NULL);
+          free(directories_list);
+
         return TRUE;  /* Иначе возвращаем успех */
       }
     }
@@ -456,9 +456,9 @@ int find_next_archive_directory(struct_panel *panel)
   #endif
 
   /*Очищаем оставшийся список каталогов*/
-  do free(directories_list[i++]);  
-  while (directories_list[i] != NULL);
-  free(directories_list);
+  do free(directories_list[i++]);
+          while (directories_list[i] != NULL);
+          free(directories_list);
 
   return FALSE; /* И возвращаем значение текущего каталога */
 }
@@ -467,37 +467,37 @@ void archive_go_upper(struct_panel *panel) /* Переходим на урове
 {
   if (panel->archive_cwd[0] == '\0') /* Если на верхнем уровне архива */
     leave_archive(panel); /* То покидаем его */
-  else /* А если нет - */
-  {
-    char *slash=NULL, *path, *iter;
-    trim_line(panel->archive_cwd); /* Удяляем последний символ (слэш) из текущего имени */
-    archive_cwd_prev=xconcat(basename(panel->archive_cwd),"/");
-    slash=strrchr(panel->archive_cwd, '/'); /* Ищем последний слэш в пути */
-    if (slash==NULL) /* Если значение пути вырождается в NULL (слэша больше не оказалось) */
-      panel->archive_cwd[0]='\0'; /* То делаем archive_cwd нулевой строкой */
-    else
-      *(slash+1)='\0'; /* А иначе просто обрезаем путь в архиве на один уровень */
-    
-    if (panel == &top_panel)
+    else /* А если нет - */
     {
-      write_config_string("top_panel.archive_cwd", panel->archive_cwd);
-      top_panel.last_name[0]='\0';
-      write_config_string("top_panel.last_name", top_panel.last_name);
+      char *slash=NULL, *path, *iter;
+      trim_line(panel->archive_cwd); /* Удяляем последний символ (слэш) из текущего имени */
+      archive_cwd_prev=xconcat(basename(panel->archive_cwd),"/");
+      slash=strrchr(panel->archive_cwd, '/'); /* Ищем последний слэш в пути */
+      if (slash==NULL) /* Если значение пути вырождается в NULL (слэша больше не оказалось) то делаем archive_cwd нулевой строкой*/
+        panel->archive_cwd[0]='\0';
+      else /* А иначе просто обрезаем путь в архиве на один уровень */
+        *(slash+1)='\0';
+
+      if (panel == &top_panel)
+      {
+        write_config_string("top_panel.archive_cwd", panel->archive_cwd);
+        top_panel.last_name[0]='\0';
+  write_config_string("top_panel.last_name", top_panel.last_name);
+      }
+      else
+      {
+        write_config_string("bottom_panel.archive_cwd", panel->archive_cwd);
+        bottom_panel.last_name[0]='\0';
+  write_config_string("bottom_panel.last_name", bottom_panel.last_name);
+      }
+      update(panel); /* Перерисовываем список */
+      iter=iter_from_filename (archive_cwd_prev, panel);
+      move_selection(iter, panel); /* И выделяем предыдущий каталог в архиве */
+      free(iter);
+      path=xconcat_path_file(panel->archive_stack[panel->archive_depth],panel->archive_cwd);
+      gtk_label_set_text (GTK_LABEL(panel->path_label), path); /* Пишем имя архива с путём в поле снизу */
+      free(path);
     }
-    else
-    {
-      write_config_string("bottom_panel.archive_cwd", panel->archive_cwd);
-      bottom_panel.last_name[0]='\0';
-      write_config_string("bottom_panel.last_name", bottom_panel.last_name);
-    }
-    update(panel); /* Перерисовываем список */
-    iter=iter_from_filename (archive_cwd_prev, panel);
-    move_selection(iter, panel); /* И выделяем предыдущий каталог в архиве */
-    free(iter);
-    path=xconcat_path_file(panel->archive_stack[panel->archive_depth],panel->archive_cwd);
-    gtk_label_set_text (GTK_LABEL(panel->path_label), path); /* Пишем имя архива с путём в поле снизу */
-    free(path);
-  }
 }
 
 void archive_enter_subdir(const char *subdir, struct_panel *panel)

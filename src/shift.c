@@ -15,7 +15,7 @@ int shift (int height, int sum_frame, int l_scr)
   int fn;			/*индекс для frame_coord() */
   int s_frame;		/*начало кадра */
   int e_frame;		/*конец кадра */
-  
+
   for(fn=0; fn <= sum_frame; fn++) {
     if (frame_coord(0, fn) == -1 || frame_coord(1, fn)== -1) {
       fn--;
@@ -25,7 +25,7 @@ int shift (int height, int sum_frame, int l_scr)
   }/*fn - индекс текущего кадра */
   s_frame = frame_coord(0, fn);
   e_frame = frame_coord(1, fn);
-  
+
   if(s_frame >= r_scr) {
     if(height - r_scr<= width_display)
       return height - r_scr;
@@ -51,13 +51,13 @@ int shift_back (int height, int sum_frame, int l_scr)
   int fn;			/*индекс для frame_coord() */
   int s_frame;		/*начало кадра */
   int e_frame;		/*конец кадра */
-  
+
   if (l_scr + width_display > height) l_scr = l_scr - 2;
   r_scr = l_scr + width_display;
-  
+
   for(fn = sum_frame -1; fn >= 0; fn--)
     if (frame_coord(0,fn) < l_scr) break;
-  s_frame = frame_coord(0, fn);
+    s_frame = frame_coord(0, fn);
   e_frame = frame_coord(1, fn);
   if (e_frame <= l_scr) {
     if (e_frame < width_display)

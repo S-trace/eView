@@ -84,12 +84,12 @@ void wait_state(GtkWidget *window) /* Возврат после смотрелк
   #ifdef debug_printf
   printf("wait_state called\n");
   #endif
-  
+
   update(active_panel);
   gtk_widget_show_all(window);
   select_file_by_name(active_panel->selected_name, active_panel);
   gtk_widget_queue_draw(GTK_WIDGET(active_panel->list)); /* Заставляем GTK перерисовать список каталогов */
-  
+
   /*   g_signal_connect (G_OBJECT (window), "focus_in_event", */
   /*                     G_CALLBACK (focus_in_callback), NULL); */
   /*   g_signal_connect (G_OBJECT (window), "focus_out_event", */
@@ -113,12 +113,12 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
     {
       while( namelist[i] != 0 && namelist[i][0] != '\0' && GTK_IS_WIDGET(main_window) )
       {
-        char *full_name;
+        char *full_name, *text_basename;
         if ((show_hidden_files == FALSE) && namelist[i][0] == '.') {continue;}
         panel->dirs_num++;
         text=strdup(namelist[i]);
         trim_line(text); /* Ампутируем последний слэш */
-        char *text_basename=basename(text);
+        text_basename=basename(text);
         full_name=xconcat(text_basename,"/");
         free(text);
         #ifdef debug_printf
@@ -132,7 +132,7 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
       }
     }
     free(namelist);
-    
+
     namelist=archive_get_files_list(panel, panel->archive_cwd);
     if ( namelist[0] != NULL)
     {
@@ -144,14 +144,14 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
         add_data_to_list(panel->list, text, 1, NO_AUTOSCROLL, "file ");
         panel->files_num++;
         xfree (&namelist[i]);
-//         free(text); // basename() - free() противопоказан!
+        //         free(text); // basename() - free() противопоказан!
         i++;
       }
     }
     free(namelist);
   }
   else /* Поведение в ФС */
-  {    
+  {
     int n = 0;
     struct dirent  **namelist;
     if (panel->path == NULL) return;
@@ -167,8 +167,8 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
         /*Убрать скрытные каталоги */
         if ((show_hidden_files == FALSE) && namelist[i]->d_name[0] == '.' && strcmp(namelist[i]->d_name, "..") != 0) {continue;}
         (void)stat(namelist[i]->d_name, &stat_p);
-        if (S_ISDIR(stat_p.st_mode)) 
-        { 
+        if (S_ISDIR(stat_p.st_mode))
+        {
           char *text;
           text = xconcat_path_file(namelist[i]->d_name, "");
           panel->dirs_num++;
@@ -184,8 +184,8 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
       {
         struct stat stat_p;
         (void)stat(namelist[i]->d_name, &stat_p);
-        if (!S_ISDIR(stat_p.st_mode)) 
-        { 
+        if (!S_ISDIR(stat_p.st_mode))
+        {
           /*Убрать скрытные файлы */
           char *fsize, *text;
           if ((show_hidden_files == FALSE) && namelist[i]->d_name[0] == '.') {continue;}
@@ -215,7 +215,7 @@ char *iter_from_filename (const char *const fname, const struct_panel *const pan
   #ifdef debug_printf
   printf("Trying to find iter for name '%s'\n", fname);
   #endif
-  
+
   model = gtk_tree_view_get_model (panel->list);
   (void)gtk_tree_model_get_iter_first (model, &iter);
   if (iter.stamp != 0)
@@ -256,18 +256,18 @@ void update(struct_panel *panel) /*обновление списка */
     printf ("We are now IN ARCHIVE!\n");
   #endif
   list_fd(panel);
-  
+
   /* подсчет числа строк в листе папок и файлов */
   model = gtk_tree_view_get_model (panel->list);
   (void)gtk_tree_model_get_iter_first (model, &iter);
-  while (valid) 
+  while (valid)
     valid = gtk_tree_model_iter_next (model, &iter);
   /*инфа о числе папок и файлов в загловок окна */
   asprintf(&title, "Dirs: %d Files: %d  %s", panel->dirs_num-1, panel->files_num, VERSION);
   gtk_window_set_title(GTK_WINDOW(main_window), title);
   xfree (&title);
-  if (panel->archive_depth > 0)
-    gtk_label_set_text (GTK_LABEL(panel->path_label), xconcat_path_file(panel->archive_stack[panel->archive_depth], panel->archive_cwd)); /* Пишем имя архива с путём в поле снизу */
+  if (panel->archive_depth > 0) /* Пишем имя архива с путём в поле снизу */
+    gtk_label_set_text (GTK_LABEL(panel->path_label), xconcat_path_file(panel->archive_stack[panel->archive_depth], panel->archive_cwd));
   else
     gtk_label_set_text (GTK_LABEL(panel->path_label), panel->path);
   //   free(model); // Не надо - карается abort()ом
@@ -333,7 +333,7 @@ void delete_dir_or_file (void)
   if (confirm_request(DELETE_CONFIRM, GTK_STOCK_DELETE, GTK_STOCK_CANCEL))
   {
     char *src;
-    if (strncmp (active_panel->selected_name, "../", 3) == 0) 
+    if (strncmp (active_panel->selected_name, "../", 3) == 0)
       return;
     asprintf (&src, "rm -f -r -R \"%s\"", active_panel->selected_name);
     xsystem(src);
@@ -391,22 +391,22 @@ void panel_selector (struct_panel *focus_to) /* Принимает указат�
 {
   if (GTK_IS_WIDGET(GTK_WIDGET(focus_to->list))) /* Если таблица на которую мы собираемся переключиться существует */
     gtk_widget_grab_focus (GTK_WIDGET(focus_to->list)); /* То фокуссируемся на ней */
-  else /* А иначе исходим из того, что верхняя панель существует всегда */
-  {
-    if (GTK_IS_WIDGET(GTK_WIDGET(top_panel.list)))
+    else /* А иначе исходим из того, что верхняя панель существует всегда */
     {
-      #ifdef debug_printf
-      printf ("Specified panel is not exist, it's bad - check Your code!\n");
-      #endif
-      gtk_widget_grab_focus(GTK_WIDGET(top_panel.list)); 
+      if (GTK_IS_WIDGET(GTK_WIDGET(top_panel.list)))
+      {
+        #ifdef debug_printf
+        printf ("Specified panel is not exist, it's bad - check Your code!\n");
+        #endif
+        gtk_widget_grab_focus(GTK_WIDGET(top_panel.list));
+      }
+      else
+      {
+        #ifdef debug_printf
+        printf ("NO TABLES ARE FOUND! SOMETHING REALLY BAD HAPPENED!\n");
+        #endif
+      }
     }
-    else
-    {
-      #ifdef debug_printf
-      printf ("NO TABLES ARE FOUND! SOMETHING REALLY BAD HAPPENED!\n");
-      #endif
-    }
-  }
 }
 
 void second_panel_show(void)
@@ -452,57 +452,57 @@ void init (void)
   }
   else
   {
+    char *string, *message, *ROT;
+    int timer=0;
     QT=TRUE;
     #ifdef debug_printf
     printf ("X is down! Assuming QT\n");
     #endif
-    char *string, *message;
     read_string("/home/root/.GTK_parts.version", &string);
     if (atoi(string) < NEEDED_GTK_PARTS_VERSION)
     {
       asprintf(&message, GTK_PARTS_IS_OUTDATED, string, NEEDED_GTK_PARTS_VERSION);
       Qt_error_message(message);
     }
-    
+
     #ifdef debug_printf
     printf ("Trying to start Xfbdev\n");
     #endif
     xsystem("Xfbdev :0 -br -pn -hide-cursor -dpi 150 -rgba vrgb & ");
-    
-      char *ROT=getenv("ROT"); // Получаем поворот экрана из переменной окружения
-      int timer=0;
-      while (!XOpenDisplay(NULL))
+
+    ROT=getenv("ROT"); // Получаем поворот экрана из переменной окружения
+    while (!XOpenDisplay(NULL))
+    {
+      usleep (1000);
+      if (++timer > 5000)
       {
-        usleep (1000);
-        if (++timer > 5000)
-        {
-          #ifdef debug_printf
-          printf ("Failed to start Xfbdev - timed out!\n");
-          #endif
-          Qt_error_message(XFBDEV_STARTUP_TIMEOUT);
-        }
-      }
-      #ifdef debug_printf
-      printf ("Xfbdev started after 0,%d seconds\n", timer);
-      #endif
-      if (strcmp (ROT, "0") != 0)
-      {
-        xsystem("matchbox-window-manager -theme Sato -use_desktop_mode decorated &"); // На GMini C6LHD/Digma R60G вызывает серую рамку вокруг экрана, да и на других книгах тоже мало хорошего. Но нужен для корректного поворота через xrandr (по сути, ему нужен любой клиент, который до него будет подключен к Xfbdev).
-        (void)usleep(2000000);
         #ifdef debug_printf
-        printf ("ROT=%s\n", ROT);
+        printf ("Failed to start Xfbdev - timed out!\n");
         #endif
-        if (strcmp (ROT, "90" ) == 0) xsystem("xrandr -d :0 -o left");
-        if (strcmp (ROT, "180") == 0) xsystem("xrandr -d :0 -o inverted");
-        if (strcmp (ROT, "270") == 0) xsystem("xrandr -d :0 -o right");
+        Qt_error_message(XFBDEV_STARTUP_TIMEOUT);
       }
+    }
+    #ifdef debug_printf
+    printf ("Xfbdev started after 0,%d seconds\n", timer);
+    #endif
+    if (strcmp (ROT, "0") != 0)
+    {
+      xsystem("matchbox-window-manager -theme Sato -use_desktop_mode decorated &"); // На GMini C6LHD/Digma R60G вызывает серую рамку вокруг экрана, да и на других книгах тоже мало хорошего. Но нужен для корректного поворота через xrandr (по сути, ему нужен любой клиент, который до него будет подключен к Xfbdev).
+      (void)usleep(2000000);
+      #ifdef debug_printf
+      printf ("ROT=%s\n", ROT);
+      #endif
+      if (strcmp (ROT, "90" ) == 0) xsystem("xrandr -d :0 -o left");
+      if (strcmp (ROT, "180") == 0) xsystem("xrandr -d :0 -o inverted");
+      if (strcmp (ROT, "270") == 0) xsystem("xrandr -d :0 -o right");
+    }
     else
     {
       get_system_sleep_timeout();
       set_system_sleep_timeout("86400"); /* Боремся со злостным усыплятором */
     }
-    get_screensavers_list();  
-    
+    get_screensavers_list();
+
   }
   current.name[0]='\0';
   preloaded.name[0]='\0';
@@ -574,19 +574,18 @@ int main (int argc, char **argv)
   width_display = 570 ;
   height_display = 762 ; /* Для отладки на ПК */
   #else /* -6 - ГРЯЗНЫЙ ХАК, потому как по умолчанию ViewImageWindow создаёт окно с рамкой в 3 пиксела вокруг картинки, так что она смещена на 3 пиксела вниз-вправо и 6 пикселов внизу-справа оказываются обрезаны. */
-  GdkScreen *screen;
-  screen = gdk_screen_get_default(); /* Текущий screen */
+  GdkScreen *screen = gdk_screen_get_default(); /* Текущий screen */
   if(hardware_has_backlight)
   {
     width_display = gdk_screen_get_width (screen) - 1; /* Ширина экрана без менеджера окон */
     height_display = gdk_screen_get_height (screen) - 1; /* Высота экрана без менеджера окон*/
   }
   else
-  {    
+  {
     width_display = gdk_screen_get_width (screen) - 6; /* Ширина экрана с менеджером окон*/
     height_display = gdk_screen_get_height (screen) - 6; /* Высота экрана с менеджером окон*/
   }
-//   free(screen); // Это не надо (сегфолт на книге)
+  //   free(screen); // Это не надо (сегфолт на книге)
   framebuffer_descriptor = open("/dev/fb0", O_RDWR); /* Открываем фреймбуффер */
   if (framebuffer_descriptor == 0)
   {
@@ -602,7 +601,7 @@ int main (int argc, char **argv)
   free (directory);
   #endif
   Message(EVIEW_IS_STARTING, PLEASE_WAIT);
-  
+
   if (access(".eView/", F_OK) != 0) /* Действия когда каталог не существует:  */
   {
     create_cfg ();
@@ -611,12 +610,12 @@ int main (int argc, char **argv)
     (void)chdir("/userdata/media/mmcblk0p1/"); /* Для старых книг */
     /* Неизвестно, где мы оказались после предыдущих двух переходов (сработал только один):  */
     top_panel.path = xgetcwd(top_panel.path);
-    write_config_string("top_panel.path", top_panel.path ); 
+    write_config_string("top_panel.path", top_panel.path );
   }
-  else 
+  else
     read_configuration();
   /*debug_msg_win (); //окно только для отладки */
-  set_brightness(backlight);  
+  set_brightness(backlight);
   main_window = window_create(width_display, height_display, 0, VERSION, NOT_MODAL);
   (void)g_signal_connect (G_OBJECT (main_window), "destroy", G_CALLBACK (shutdown), NULL);
   panels_vbox = gtk_vbox_new (TRUE, 0);
@@ -627,7 +626,7 @@ int main (int argc, char **argv)
     enable_refresh=FALSE;
   else
     update(&top_panel);
-  
+
   if ( fm_toggle)
   {
     second_panel_show();
@@ -647,17 +646,17 @@ int main (int argc, char **argv)
     active_panel=&top_panel;
     inactive_panel=NULL;
   }
-  
+
   if (chdir (active_panel->path) == FALSE) /* переход в последний рабочий каталог */
   {
     #ifdef debug_printf
     printf ("Chdir to '%s' failed because %s!\n", active_panel->path, strerror(errno));
     #endif
-  }  
+  }
   if (active_panel->archive_depth > 0 || (inactive_panel != NULL && inactive_panel->archive_depth > 0) )
   {
-    enable_refresh=FALSE;
     char *iter;
+    enable_refresh=FALSE;
     if ( active_panel->archive_depth > 0 )
     {
       enter_archive(active_panel->archive_stack[active_panel->archive_depth], active_panel, FALSE);
@@ -676,18 +675,18 @@ int main (int argc, char **argv)
   }
   update(active_panel); /* Наполняем список каталогов */
   #ifndef __amd64
-  if (clock_toggle)
-    gtk_window_unfullscreen  (GTK_WINDOW(main_window)); /* Показываем часики */
-  else
-    gtk_window_fullscreen  (GTK_WINDOW(main_window)); /* Скрываем их */
+  if (clock_toggle) /* Показываем часики */
+    gtk_window_unfullscreen  (GTK_WINDOW(main_window));
+  else /* Скрываем их */
+    gtk_window_fullscreen  (GTK_WINDOW(main_window));
   #endif
   panel_selector (active_panel); /* Переключаемся в активную панель! */
   gtk_widget_destroy(MessageWindow);
   gtk_widget_show_all(main_window); /* Рисуем интерфейс */
   wait_for_draw();/* Ожидаем отрисовки всего */
   enable_refresh=TRUE;
-  if (is_picture(active_panel->last_name) )
-    ViewImageWindow (active_panel->last_name, active_panel, TRUE); /* Открываем последнюю отображённую картинку */
+  if (is_picture(active_panel->last_name) ) /* Открываем последнюю отображённую картинку */
+    ViewImageWindow (active_panel->last_name, active_panel, TRUE);
   else
     e_ink_refresh_full();
   /*   g_signal_connect (G_OBJECT (window), "show", G_CALLBACK (e_ink_refresh_full), NULL); */
@@ -695,9 +694,9 @@ int main (int argc, char **argv)
   interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
   if (QT)
     preload_next_screensaver(); // Загружаем первую заставку в память для мгновенного отображения
-  if (LED_notify)
-    set_led_state (LED_state[LED_OFF]);
-  start_sleep_timer();
+    if (LED_notify)
+      set_led_state (LED_state[LED_OFF]);
+    start_sleep_timer();
   gtk_main ();
   return 0;
 }

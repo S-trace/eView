@@ -32,23 +32,23 @@
 #include <errno.h>
 
 /* Максимальная глубина вложенных архивов */
-#define MAX_ARCHIVE_DEPTH 16 
+#define MAX_ARCHIVE_DEPTH 16
 #define NEEDED_GTK_PARTS_VERSION 3
 #define FILE_COLUMN	((int) 0)
 #define SIZE_COLUMN     ((int) 1)
 #define PATHSIZE 256
 
 enum {
-	KILOBYTE = 1024,
-	MEGABYTE = (KILOBYTE*1024),
-	GIGABYTE = (MEGABYTE*1024)
+  KILOBYTE = 1024,
+  MEGABYTE = (KILOBYTE*1024),
+  GIGABYTE = (MEGABYTE*1024)
 };
 
-/* Структура описывающая панель файлового менеджера и её состояние. 
- * Принимается большинством функций работающих с файлами и/или панелями (обычно как указатель на конкретную структуру top_panel или bottom_panel). 
- * НЕ реомендуется использовать в функциях указатели *active_panel и *inactive_panel - это может легко вести к глюкам 
- * Исключение - функции, в которых необходимо использовать обе панели (файловые операции к примеру) */ 
-typedef struct { 
+/* Структура описывающая панель файлового менеджера и её состояние.
+ * Принимается большинством функций работающих с файлами и/или панелями (обычно как указатель на конкретную структуру top_panel или bottom_panel).
+ * НЕ реомендуется использовать в функциях указатели *active_panel и *inactive_panel - это может легко вести к глюкам
+ * Исключение - функции, в которых необходимо использовать обе панели (файловые операции к примеру) */
+typedef struct {
   GtkWidget *table; /* Таблица с именами файлов  */
   GtkWidget *path_label; /* Строка с путём ниже таблцицы */
   GtkTreeView *list; /* Список файлов */
@@ -63,7 +63,7 @@ typedef struct {
   int files_num; /* Количество файлов в каталоге на панели */
   int dirs_num; /* Количество подкаталогов в каталоге на панели */
   int archive_depth; /* Глубина вложенных архивов (0 = FS) - количество ненулевых элементов в стеке архивов */
-} struct_panel; 
+} struct_panel;
 
 void update (struct_panel *panel);/*обновление списка */
 void move_selection(const char *move_to, const struct_panel *const panel); /*сдвиг выделения */

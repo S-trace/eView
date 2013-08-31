@@ -6,9 +6,9 @@
 #else
 #define R_SHIFT (width_display) /*смещение правой части изображения к правому краю // ЯХЕЗ какого гхыра, но на ARM возвращается ширина экрана полностью! =_=" */
 #endif
-typedef struct { 
-  char name[PATHSIZE+1]; 
-  GdkPixbuf *pixbuf; 
+typedef struct {
+  char name[PATHSIZE+1];
+  GdkPixbuf *pixbuf;
   int width, height; /* Размеры картинки */
   int frames;   /*количество найденых кадров */
   double aspect_rate; /*aspect rate */

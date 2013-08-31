@@ -1,15 +1,15 @@
 /*
- Based on  libro_hw.h by Andrey Markeev, 2011, digma_hw.c by Alexander Drozdoff <hatred@inbox.ru>
- Update for Qt support by S-trace <s-trace@list.ru>, 2013
- Distributed under GPLv2 Terms
- http://hatred.homelinux.net/~hatred/digma
+ * Based on  libro_hw.h by Andrey Markeev, 2011, digma_hw.c by Alexander Drozdoff <hatred@inbox.ru>
+ * Update for Qt support by S-trace <s-trace@list.ru>, 2013
+ * Distributed under GPLv2 Terms
+ * http://hatred.homelinux.net/~hatred/digma
  */
 #ifndef _DIGMA_HW_H_
 #define _DIGMA_HW_H_
 
 /*
-  Refresh functionality
-*/
+ *  Refresh functionality
+ */
 
 /* IOCTL calls for E-Ink paper update */
 #define EPAPER_UPDATE_LOCAL 0x101         /** Update localarea */

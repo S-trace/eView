@@ -8,7 +8,7 @@
 #include "mylib.h" /* xfree() */
 
 static int x_crop;		/* координаты для вырезания из target->pixbuf */
-static int y_crop;		/* */
+static int y_crop;
 static int width_crop;
 static int height_crop;
 static int coord_crop[4];
@@ -21,13 +21,13 @@ void find_crop_image_coords(const image *target)
   y_crop = 0;
   width_crop = target->width;
   height_crop = target->height;
-  
+
   n_channels = gdk_pixbuf_get_n_channels (target->pixbuf);
   rowstride = gdk_pixbuf_get_rowstride (target->pixbuf);
   pixels = gdk_pixbuf_get_pixels (target->pixbuf);
-  
-  find_x_crop (target->height);                 /*поиск координат левого бордюра */
-  find_y_crop (target->width);  		/*верхнего */
+
+  find_x_crop (target->height);                                 /*поиск координат левого бордюра */
+  find_y_crop (target->width);  		                /*верхнего */
   find_width_crop (target->width, target->height);		/*правого */
   find_height_crop (target->width, target->height);		/*нижнего */
   coord_crop[0] = x_crop;
@@ -45,16 +45,17 @@ void find_crop_image_coords(const image *target)
 /*############################################################################# */
 void find_x_crop (int height)
 {
-  int x, y, red, green, blue, b_color, w_color;
+  int x, y, b_color, w_color;
   int pcm = 0;/*count random color pixel */
   int prm = 0;/*count any random pixel */
   int xy_tmp = 1;/*count for  PIXEL_RESET_COUNT */
-  
+
   b_color = 0;
   w_color = 0;
   x = 0;/*width //y = height; */
   /*////////////////////////////////определение цвета бордюра, черный или белый */
   for  (y=0; y<height-1; y++) {
+    int red, green, blue;
     p = pixels + y * rowstride + x * n_channels;
     red = p[0];
     green = p[1];
@@ -74,12 +75,12 @@ void find_x_crop (int height)
     x_crop = 0;
     return;
   }
-  
+
   if (b_color <= w_color)
     w_color= 1;
   else
     w_color =0;
-  
+
   /*/////////////////////////////////////////определение толщины бордюра */
   if (w_color == 1){
     for (x=1; x<BORDER_SIZE; x++) {
@@ -98,9 +99,9 @@ void find_x_crop (int height)
     }
     x_crop = x;
     return;
-    
+
   } else {
-    
+
     for (x=1; x<BORDER_SIZE; x++) {
       for  (y=0; y<height-1; y++) {
         p = pixels + y * rowstride + x * n_channels;
@@ -124,16 +125,17 @@ void find_x_crop (int height)
 /*############################################################################# */
 void find_y_crop (int width)
 {
-  int x, y, red, green, blue, b_color, w_color;
+  int x, y, b_color, w_color;
   int pcm = 0;/*count random color pixel */
   int prm = 0;/*count any random pixel */
   int xy_tmp = 1;/*count for  PIXEL_RESET_COUNT */
-  
+
   b_color = 0;
   w_color = 0;
   y = 0;/*width //y = height; */
   /*////////////////////////////////определение цвета бордюра, черный или белый */
   for  (x=x_crop; x<width-1; x++) {
+    int red, green, blue;
     p = pixels + y * rowstride + x * n_channels;
     red = p[0];
     green = p[1];
@@ -155,7 +157,7 @@ void find_y_crop (int width)
     y_crop = 0;
     return;
   }
-  
+
   if (b_color <= w_color)
     w_color= 1;
   else
@@ -179,9 +181,9 @@ void find_y_crop (int width)
     }
     y_crop = y;
     return;
-    
+
   } else {
-    
+
     for (y=1; y<BORDER_SIZE; y++) {
       for  (x=x_crop; x<width-1; x++) {
         p = pixels + y * rowstride + x * n_channels;
@@ -205,16 +207,17 @@ void find_y_crop (int width)
 /*############################################################################# */
 void find_width_crop (int width, int height)
 {
-  int x, y, red, green, blue, b_color, w_color;
+  int x, y, b_color, w_color;
   int pcm = 0;/*count random color pixel */
   int prm = 0;/*count any random pixel */
   int xy_tmp = 1;/*count for  PIXEL_RESET_COUNT */
-  
+
   b_color = 0;
   w_color = 0;
   x = width - 1;/*width //y = height; */
   /*////////////////////////////////определение цвета бордюра, черный или белый */
   for  (y=y_crop; y<height-1; y++) {
+    int red, green, blue;
     p = pixels + y * rowstride + x * n_channels;
     red = p[0];
     green = p[1];
@@ -234,7 +237,7 @@ void find_width_crop (int width, int height)
     width_crop = width;
     return;
   }
-  
+
   if (b_color <= w_color)
     w_color= 1;
   else
@@ -258,9 +261,9 @@ void find_width_crop (int width, int height)
     }
     width_crop = x;
     return;
-    
+
   } else {
-    
+
     for (x=width - 1; x > width - BORDER_SIZE; x--) {
       for  (y=y_crop; y<height-1; y++) {
         p = pixels + y * rowstride + x * n_channels;
@@ -284,16 +287,17 @@ void find_width_crop (int width, int height)
 /*############################################################################# */
 void find_height_crop (int width, int height)
 {
-  int x, y, red, green, blue, b_color, w_color;
+  int x, y, b_color, w_color;
   int pcm = 0;/*count random color pixel */
   int prm = 0;/*count any random pixel */
   int xy_tmp = x_crop;/*count for  PIXEL_RESET_COUNT */
-  
+
   b_color = 0;
   w_color = 0;
   y = height - 1;
   /*////////////////////////////////определение цвета бордюра, черный или белый */
   for  (x=x_crop; x<width_crop -1; x++) {
+    int red, green, blue;
     p = pixels + y * rowstride + x * n_channels;
     red = p[0];
     green = p[1];
@@ -301,7 +305,7 @@ void find_height_crop (int width, int height)
     /*цветная или нет */
     if (red != green || red != blue || green != blue) {
       pcm++;
-      
+
       if (pcm > PIXEL_COLOR_MAX){
         height_crop = height;/*color pixel */
         return;
@@ -318,7 +322,7 @@ void find_height_crop (int width, int height)
     w_color= 1;
   else
     w_color =0;
-  
+
   /*/////////////////////////////////////////определение толщины бордюра */
   if (w_color == 1){
     for (y= height - 1; y > height - BORDER_SIZE; y--) {
@@ -337,9 +341,9 @@ void find_height_crop (int width, int height)
     }
     height_crop = y;
     return;
-    
+
   } else {
-    
+
     for (y= height - 1; y > height - BORDER_SIZE; y--) {
       for  (x=x_crop; x<width_crop-1; x++) {
         p = pixels + y * rowstride + x * n_channels;

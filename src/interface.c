@@ -29,7 +29,7 @@ void power_information(void)
   #ifdef debug_printf
   printf ("Show battery_information\n");
   #endif
-  
+
   read_string(BATTERY_POWER_SUPPLIER, &power_supplier); // источник питания (USB)
   read_string(BATTERY_CAPACITY, &battery_capacity); // Заряд в процентах
   read_string(BATTERY_CHIP_TEMP,  &battery_chip_temp); // Температура чипа (градусы)
@@ -38,7 +38,7 @@ void power_information(void)
   read_string(BATTERY_CURRENT, &battery_current); // Ток батареи (милиамперы)
   read_string(BATTERY_TEMP,  &battery_temp); // Температура батареи (градусы)
   read_string(BATTERY_VOLT,  &battery_voltage); // Вольтаж батареи (миливольты)
-  
+
   if (strcmp(power_supplier, "Baterry") == 0)
   {
     char *time_to_empty;
@@ -56,9 +56,9 @@ void power_information(void)
     if (strcmp(power_supplier, "USB") == 0)
     {
       read_string(USB_CURRENT,  &usb_current); // Ток USB
-      read_string(USB_VOLTAGE,  &usb_voltage); // Вольтаж USB  
-      asprintf(&label_text, POWER_SOURCE_IS_USB, battery_capacity, battery_chip_temp, battery_chip_volt, battery_current, power_supplier, battery_status, battery_temp, battery_voltage, time_to_full, usb_current, usb_voltage);      
-      xfree(&usb_current); 
+      read_string(USB_VOLTAGE,  &usb_voltage); // Вольтаж USB
+      asprintf(&label_text, POWER_SOURCE_IS_USB, battery_capacity, battery_chip_temp, battery_chip_volt, battery_current, power_supplier, battery_status, battery_temp, battery_voltage, time_to_full, usb_current, usb_voltage);
+      xfree(&usb_current);
       xfree(&usb_voltage);
     }
     else
@@ -66,22 +66,22 @@ void power_information(void)
       read_string(AC_CURRENT,  &ac_current); // Ток AC
       read_string(AC_VOLTAGE,  &ac_voltage); // Вольтаж AC
       asprintf(&label_text, POWER_SOURCE_IS_AC, battery_capacity, battery_chip_temp, battery_chip_volt, battery_current, power_supplier, battery_status, battery_temp, battery_voltage, time_to_full, ac_current, ac_voltage);
-      xfree(&ac_current); 
+      xfree(&ac_current);
       xfree(&ac_voltage);
     }
     free(time_to_full);
-    free(battery_time_to_full); 
+    free(battery_time_to_full);
   }
   Message(POWER_STATUS, label_text);
   xfree(&label_text);
-  xfree(&power_supplier); 
-  xfree(&battery_capacity); 
-  xfree(&battery_chip_temp); 
-  xfree(&battery_chip_volt); 
-  xfree(&battery_status); 
-  xfree(&battery_current); 
-  xfree(&battery_temp); 
-  xfree(&battery_voltage); 
+  xfree(&power_supplier);
+  xfree(&battery_capacity);
+  xfree(&battery_chip_temp);
+  xfree(&battery_chip_volt);
+  xfree(&battery_status);
+  xfree(&battery_current);
+  xfree(&battery_temp);
+  xfree(&battery_voltage);
   e_ink_refresh_full();
 }
 
@@ -102,11 +102,11 @@ void rotate_image_toggler () // Callback для галки поворота
     gtk_widget_set_sensitive(manga_mode, TRUE); // И включаем галку режима манги
   } else { // Если галка снимается
     rotate = FALSE; // Отключаем поворот
-    
+
     write_config_int("frame", frame=FALSE);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(frame_image), FALSE); // Отключаем с ним умное листание
     gtk_widget_set_sensitive(frame_image, FALSE); // И блокируем его
-    
+
     write_config_int("manga", manga=FALSE); // Отключаем режим манги
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(manga_mode), FALSE); // Отключаем с ним режим манги
     gtk_widget_set_sensitive(manga_mode, FALSE); // И блокируем его
@@ -261,17 +261,17 @@ gint keys_rotation_picture_menu (__attribute__((unused))GtkWidget *window, GdkEv
       {
         gtk_widget_grab_focus (viewed);
         return TRUE;
-      }        
+      }
       else if (gtk_widget_is_focus (manga_mode) && GTK_WIDGET_SENSITIVE(frame_image) == FALSE)
       {
         gtk_widget_grab_focus (viewed);
         wait_for_draw();
         if (QT) usleep (QT_REFRESH_DELAY);
         return TRUE;
-      }        
-      
-        return FALSE;
-      
+      }
+
+      return FALSE;
+
     case   KEY_DOWN:
       if (gtk_widget_is_focus (viewed))
       {
@@ -279,7 +279,7 @@ gint keys_rotation_picture_menu (__attribute__((unused))GtkWidget *window, GdkEv
           gtk_widget_grab_focus (crop_image);
         else if (GTK_WIDGET_SENSITIVE(frame_image))
           gtk_widget_grab_focus (frame_image);
-        else 
+        else
           gtk_widget_grab_focus (manga_mode);
         wait_for_draw();
         if (QT) usleep (QT_REFRESH_DELAY);
@@ -287,7 +287,7 @@ gint keys_rotation_picture_menu (__attribute__((unused))GtkWidget *window, GdkEv
       }
       else
         return FALSE;
-      
+
     default:
       return FALSE;
   }
@@ -302,7 +302,7 @@ void picture_menu_destroy (struct_panel *panel, GtkWidget *dialog) // Уничт
   {
     char *current_name=strdup(current.name);
     (void)load_image(current_name, panel, TRUE, &current); // Повторно загружаем и показываем картинку для учёта изменений
-    (void)show_image(&current, panel, TRUE); 
+    (void)show_image(&current, panel, TRUE);
     free(current_name);
     viewed_pages--; // Откатываем назад счётчик страниц - после открытия-закрытия меню он не должен изменяться
   }
@@ -319,9 +319,9 @@ gint keys_in_loop_dir (GtkWidget *dialog, GdkEventKey *event) //задейств
   if (check_key_press(event->keyval, active_panel)) return TRUE;
   switch (event->keyval){
     case   KEY_OK:
-      if (dialog==loop_dir_none) loop_dir = LOOP_NONE; 
-      if (dialog==loop_dir_loop) loop_dir = LOOP_LOOP; 
-      if (dialog==loop_dir_next) loop_dir = LOOP_NEXT; 
+      if (dialog==loop_dir_none) loop_dir = LOOP_NONE;
+      if (dialog==loop_dir_loop) loop_dir = LOOP_LOOP;
+      if (dialog==loop_dir_next) loop_dir = LOOP_NEXT;
       if (dialog==loop_dir_exit) loop_dir = LOOP_EXIT;
       write_config_int("loop_dir", loop_dir);
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog), TRUE);
@@ -329,21 +329,21 @@ gint keys_in_loop_dir (GtkWidget *dialog, GdkEventKey *event) //задейств
       if (QT) usleep (QT_REFRESH_DELAY);
       e_ink_refresh_part ();
       return TRUE;
-      
+
     case   KEY_UP:
       if (dialog == loop_dir_none) gtk_widget_grab_focus(double_refresh_image);
       if (dialog == loop_dir_loop) gtk_widget_grab_focus(loop_dir_none);
       if (dialog == loop_dir_next) gtk_widget_grab_focus(loop_dir_loop);
       if (dialog == loop_dir_exit) gtk_widget_grab_focus(loop_dir_next);
       return TRUE;
-      
+
     case   KEY_DOWN:
       if (dialog == loop_dir_none) gtk_widget_grab_focus(loop_dir_loop);
       if (dialog == loop_dir_loop) gtk_widget_grab_focus(loop_dir_next);
       if (dialog == loop_dir_next) gtk_widget_grab_focus(loop_dir_exit);
       if (dialog == loop_dir_exit) gtk_widget_grab_focus(preload_enabled_button);
       return TRUE;
-      
+
     default:
       return FALSE;
   }
@@ -360,12 +360,12 @@ gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *
     case   KEY_MENU_QT:
       picture_menu_destroy (panel, dialog);
       return FALSE;
-      
+
     case   KEY_REFRESH_LIBROII:
     case   KEY_REFRESH_QT:
       e_ink_refresh_full();
       return FALSE;
-    
+
     default:
       if (QT) usleep (QT_REFRESH_DELAY);
       e_ink_refresh_part();
@@ -378,76 +378,76 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
   GtkWidget *dialog, *menu_vbox = gtk_vbox_new (FALSE, 0);
   char *battery_capacity, *name, *viewed_count, *viewed_text;
   need_refresh=FALSE;
-  
+
   crop_image = gtk_check_button_new_with_label (CROP_IMAGE);
   if (crop) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(crop_image), TRUE);
   gtk_button_set_relief (GTK_BUTTON(crop_image), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), crop_image, TRUE, TRUE, 0);
   (void)g_signal_connect (G_OBJECT (crop_image), "clicked", G_CALLBACK (crop_image_toggler), NULL);
   (void)g_signal_connect (G_OBJECT (crop_image), "key_press_event",G_CALLBACK (keys_rotation_picture_menu), NULL);
-  
+
   rotate_image = gtk_check_button_new_with_label(ROTATE_IMAGE);
   if (rotate) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(rotate_image), TRUE);
   gtk_button_set_relief (GTK_BUTTON(rotate_image), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), rotate_image, TRUE, TRUE, 0);
   (void)g_signal_connect (G_OBJECT (rotate_image), "clicked", G_CALLBACK (rotate_image_toggler), NULL);
-  
+
   frame_image = gtk_check_button_new_with_label(FRAME_IMAGE);
   if (frame) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(frame_image), TRUE);
   gtk_button_set_relief (GTK_BUTTON(frame_image), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), frame_image, TRUE, TRUE, 0);
   (void)g_signal_connect (G_OBJECT (frame_image), "clicked", G_CALLBACK (frame_image_toggler), NULL);
   (void)g_signal_connect (G_OBJECT (frame_image), "key_press_event",G_CALLBACK (keys_rotation_picture_menu), NULL);
-  
+
   manga_mode = gtk_check_button_new_with_label(MANGA_MODE);
   if (manga) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(manga_mode), TRUE);
   gtk_button_set_relief (GTK_BUTTON(manga_mode), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), manga_mode, TRUE, TRUE, 0);
   (void)g_signal_connect (G_OBJECT (manga_mode), "clicked", G_CALLBACK (manga_mode_toggler), NULL);
   (void)g_signal_connect (G_OBJECT (manga_mode), "key_press_event",G_CALLBACK (keys_rotation_picture_menu), NULL);
-  
+
   keepaspect_image = gtk_check_button_new_with_label(KEEP_ASPECT);
   if (keepaspect) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(keepaspect_image), TRUE);
   gtk_button_set_relief (GTK_BUTTON(keepaspect_image), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), keepaspect_image, TRUE, TRUE, 0);
   g_signal_connect (G_OBJECT (keepaspect_image), "clicked", G_CALLBACK (keepaspect_image_toggler), NULL);
-  
+
   double_refresh_image = gtk_check_button_new_with_label(DOUBLE_REFRESH);
   if (double_refresh) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(double_refresh_image), TRUE);
   gtk_button_set_relief (GTK_BUTTON(double_refresh_image), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), double_refresh_image, TRUE, TRUE, 0);
   (void)g_signal_connect (G_OBJECT (double_refresh_image), "clicked", G_CALLBACK (double_refresh_toggler), NULL);
-  
+
   loop_dir_frame = gtk_frame_new (ACTION_ON_LAST_FILE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), loop_dir_frame, FALSE, TRUE, 0);
-  
+
   loop_dir_vbox = gtk_vbox_new (TRUE, 0);
   gtk_container_add (GTK_CONTAINER (loop_dir_frame), loop_dir_vbox);
-  
+
   loop_dir_none = gtk_radio_button_new_with_label (NULL, DO_NOTHING);
   if (loop_dir == LOOP_NONE) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_none), TRUE);
   gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_none, TRUE, TRUE, 0);
   gtk_button_set_relief (GTK_BUTTON(loop_dir_none), GTK_RELIEF_NONE);
   (void)g_signal_connect (G_OBJECT (loop_dir_none), "key_press_event",G_CALLBACK (keys_in_loop_dir), NULL);
-  
+
   loop_dir_loop = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (loop_dir_none), LOOP_DIRECTORY);
   if (loop_dir == LOOP_LOOP) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_loop), TRUE);
   gtk_button_set_relief (GTK_BUTTON(loop_dir_loop), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_loop, TRUE, TRUE, 0);
   (void)g_signal_connect (G_OBJECT (loop_dir_loop), "key_press_event",G_CALLBACK (keys_in_loop_dir), NULL);
-  
+
   loop_dir_next = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (loop_dir_none), NEXT_DIRECTORY);
   if (loop_dir == LOOP_NEXT) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_next), TRUE);
   gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_next, TRUE, TRUE, 0);
   gtk_button_set_relief (GTK_BUTTON(loop_dir_next), GTK_RELIEF_NONE);
   (void)g_signal_connect (G_OBJECT (loop_dir_next), "key_press_event",G_CALLBACK (keys_in_loop_dir), NULL);
-  
+
   loop_dir_exit = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (loop_dir_none), EXIT_TO_FILEMANAGER);
   if (loop_dir == LOOP_EXIT) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (loop_dir_exit), TRUE);
   gtk_box_pack_start (GTK_BOX (loop_dir_vbox), loop_dir_exit, TRUE, TRUE, 0);
   gtk_button_set_relief (GTK_BUTTON(loop_dir_exit), GTK_RELIEF_NONE);
   (void)g_signal_connect (G_OBJECT (loop_dir_exit), "key_press_event",G_CALLBACK (keys_in_loop_dir), NULL);
-  
+
   preload_enabled_button = gtk_check_button_new_with_label(ALLOW_PRELOADING);
   if (preload_enable) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(preload_enabled_button), TRUE);
   gtk_button_set_relief (GTK_BUTTON(preload_enabled_button), GTK_RELIEF_NONE);
@@ -471,7 +471,7 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
   gtk_button_set_relief (GTK_BUTTON(boost_contrast_button), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), boost_contrast_button, TRUE, TRUE, 0);
   (void)g_signal_connect (G_OBJECT (boost_contrast_button), "clicked", G_CALLBACK (boost_contrast_callback), NULL);
-  
+
   if (QT == FALSE)
   {
     suppress_panel_button = gtk_check_button_new_with_label (SUPPRESS_BATTERY_WARNINGS);
@@ -490,7 +490,7 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
   (void)g_signal_connect (G_OBJECT (viewed), "clicked", G_CALLBACK (power_information), NULL);
   xfree(&battery_capacity);
   xfree(&name);
-  
+
   viewed_count=itoa(viewed_pages);
   viewed_text=xconcat(VIEWED_PAGES, viewed_count);
   viewed = gtk_button_new_with_label (viewed_text);
@@ -501,7 +501,7 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
   gtk_box_pack_start (GTK_BOX (menu_vbox), viewed, FALSE, FALSE, 0);
   (void)g_signal_connect (G_OBJECT (viewed), "clicked", G_CALLBACK (reset_statistics), NULL);
   (void)g_signal_connect (G_OBJECT (viewed), "key_press_event",G_CALLBACK (keys_rotation_picture_menu), NULL);
-  
+
   if (rotate == FALSE) { // Если поворот отключен
     frame = FALSE; // Отключаем умное листание
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(frame_image), FALSE); // Выключаем галку умного листания
@@ -511,13 +511,13 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
     gtk_widget_set_sensitive(manga_mode, FALSE); // И блокируем её
     write_config_int("manga", manga=FALSE); // Сохраняем конфиги
   }
-  
+
   if (frame) { // Если включено умное листание
     gtk_widget_set_sensitive(crop_image, FALSE); // Блокируем галки обрезки полей
     gtk_widget_set_sensitive(rotate_image, FALSE); // Поворота
     gtk_widget_set_sensitive(manga_mode, FALSE); // И режима манги
   }
-  
+
   if (manga) { // Если включен режим манги
     gtk_widget_set_sensitive(crop_image, FALSE); // Блокируем галки обрезки полей
     gtk_widget_set_sensitive(rotate_image, FALSE); // Поворота
@@ -530,7 +530,7 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
   gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), menu_vbox);
   gtk_window_set_position (GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_widget_show_all (dialog);
-  
+
   (void)g_signal_connect (G_OBJECT (dialog), "key_press_event", G_CALLBACK (keys_in_picture_menu), panel);
   e_ink_refresh_local();
 }
@@ -589,7 +589,7 @@ void show_hidden_files_callback ()
 {
   write_config_int("show_hidden_files", show_hidden_files=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(show_hidden_files_chk)));
   update(active_panel);
-  if (fm_toggle) 
+  if (fm_toggle)
     update(&bottom_panel);
   e_ink_refresh_part ();
 }
@@ -612,7 +612,7 @@ void reset_configuration_callback() // Callback для кнопки сброса
     if (QT) xsystem("killall Xfbdev");
     #ifdef debug_printf
     printf("Resetting configuration done, bye!\n");
-    #endif    
+    #endif
   }
 }
 
@@ -631,10 +631,10 @@ void sleep_timeout_changed(GtkWidget *scalebutton)
   sleep_timer=sleep_timeout;
   #ifdef debug_printf
   printf("Sleep timeout set to %d\n", sleep_timeout);
-  #endif  
+  #endif
   if(pthread_kill(sleep_timer_tid, 0) == ESRCH) // Если поток таймера умер
     start_sleep_timer();
-    
+
 }
 
 
@@ -668,7 +668,7 @@ gint keys_rotation_options (__attribute__((unused))GtkWidget *window, GdkEventKe
       }
       else
         return FALSE;
-      
+
     case   KEY_DOWN:
       if (gtk_widget_is_focus (about_program))
       {
@@ -677,7 +677,7 @@ gint keys_rotation_options (__attribute__((unused))GtkWidget *window, GdkEventKe
       }
       else
         return FALSE;
-      
+
     default:
       return FALSE;
   }
@@ -689,10 +689,10 @@ gint keys_updown_backlight (__attribute__((unused))GtkWidget *window, GdkEventKe
   switch (event->keyval){
     case   KEY_UP:
       gtk_widget_grab_focus (LED_notify_checkbox);
-      return TRUE;      
+      return TRUE;
     case   KEY_DOWN:
       gtk_widget_grab_focus (sleep_timeout_scale);
-      return TRUE;      
+      return TRUE;
     default:
       return FALSE;
   }
@@ -703,14 +703,14 @@ gint keys_updown_sleep_timeout (__attribute__((unused))GtkWidget *window, GdkEve
   if (check_key_press(event->keyval, active_panel)) return TRUE;
   switch (event->keyval){
     case   KEY_UP:
-      if(hardware_has_backlight)      
+      if(hardware_has_backlight)
         gtk_widget_grab_focus (backlight_scale);
       else
         gtk_widget_grab_focus (LED_notify_checkbox);
-      return TRUE;      
+      return TRUE;
     case   KEY_DOWN:
       gtk_widget_grab_focus (reset_configuration);
-      return TRUE;      
+      return TRUE;
     default:
       return FALSE;
   }
@@ -727,12 +727,12 @@ gint keys_in_options (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel
     case   KEY_MENU_QT:
       options_destroy (dialog);
       return FALSE;
-      
+
     case   KEY_REFRESH_LIBROII:
     case   KEY_REFRESH_QT:
       e_ink_refresh_full();
       return FALSE;
-      
+
     default:
       e_ink_refresh_part();
       return FALSE;
@@ -747,32 +747,32 @@ void options_menu_create(GtkWidget *main_menu) //Создание меню оп�
                                                            GTK_DIALOG_MODAL /*|GTK_DIALOG_DESTROY_WITH_PARENT*/,
                                                            NULL);
   GtkWidget *menu_vbox = gtk_vbox_new (FALSE, 0);
-  
+
   fmanager = gtk_check_button_new_with_label (FILEMANAGER_MODE);
   if (fm_toggle) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(fmanager), TRUE);
   gtk_button_set_relief (GTK_BUTTON(fmanager), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), fmanager, TRUE, TRUE, 0);
   (void)g_signal_connect (G_OBJECT (fmanager), "clicked", G_CALLBACK (fm_start), NULL);
   (void)g_signal_connect (G_OBJECT (fmanager), "key_press_event", G_CALLBACK (keys_rotation_options), NULL);
-  
+
   ink_speed = gtk_check_button_new_with_label (PARTIAL_UPDATE);
   if (speed_toggle) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ink_speed), TRUE);
   gtk_button_set_relief (GTK_BUTTON(ink_speed), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), ink_speed, FALSE, FALSE, 0);
   (void)g_signal_connect (G_OBJECT (ink_speed), "clicked", G_CALLBACK (type_refresh), NULL);
-  
+
   move_chk = gtk_check_button_new_with_label (CONFIRM_MOVE);
   if (move_toggle) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(move_chk), TRUE);
   gtk_button_set_relief (GTK_BUTTON(move_chk), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), move_chk, TRUE, TRUE, 0);
   (void)g_signal_connect (G_OBJECT (move_chk), "clicked", G_CALLBACK (move_confirm), NULL);
-  
+
   show_hidden_files_chk = gtk_check_button_new_with_label (SHOW_HIDDEN_FILES);
   if (show_hidden_files) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(show_hidden_files_chk), TRUE);
   gtk_button_set_relief (GTK_BUTTON(show_hidden_files_chk), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), show_hidden_files_chk, TRUE, TRUE, 0);
   (void)g_signal_connect (G_OBJECT (show_hidden_files_chk), "clicked", G_CALLBACK (show_hidden_files_callback), NULL);
-  
+
   if (QT == FALSE)
   {
     clock_panel = gtk_check_button_new_with_label(SHOW_PANEL);
@@ -781,13 +781,13 @@ void options_menu_create(GtkWidget *main_menu) //Создание меню оп�
     gtk_box_pack_start (GTK_BOX (menu_vbox), clock_panel, TRUE, TRUE, 0);
     (void)g_signal_connect (G_OBJECT (clock_panel), "clicked", G_CALLBACK (clock_panel_toggler), NULL);
   }
-  
+
   LED_notify_checkbox = gtk_check_button_new_with_label (LED_NOTIFY);
   if (LED_notify) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(LED_notify_checkbox), TRUE);
   gtk_button_set_relief (GTK_BUTTON(LED_notify_checkbox), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), LED_notify_checkbox, TRUE, TRUE, 0);
   (void)g_signal_connect (G_OBJECT (LED_notify_checkbox), "clicked", G_CALLBACK (LED_notify_callback), NULL);
-  
+
   if (hardware_has_backlight)
   {
     GtkWidget *backlight_frame = gtk_frame_new (BACKLIGHT);
@@ -798,42 +798,42 @@ void options_menu_create(GtkWidget *main_menu) //Создание меню оп�
     gtk_container_add (GTK_CONTAINER (backlight_frame), backlight_scale);
     (void)g_signal_connect (G_OBJECT (backlight_frame), "key_press_event", G_CALLBACK (keys_updown_backlight), NULL);
   }
-    sleep_timeout_frame = gtk_frame_new (SLEEP_TIMEOUT);
-    gtk_box_pack_start (GTK_BOX (menu_vbox), sleep_timeout_frame, FALSE, TRUE, 0);
-    sleep_timeout_scale = gtk_hscale_new_with_range ((gdouble)0,(gdouble) 600,(gdouble) 5);
-    gtk_range_set_value (GTK_RANGE(sleep_timeout_scale), (gdouble)sleep_timeout);
-    (void)g_signal_connect (G_OBJECT (sleep_timeout_scale), "key_press_event", G_CALLBACK (keys_updown_sleep_timeout), NULL);
-    (void)g_signal_connect(sleep_timeout_scale, "value-changed", G_CALLBACK(sleep_timeout_changed), NULL);
-    gtk_container_add (GTK_CONTAINER (sleep_timeout_frame), sleep_timeout_scale);
-    
-  
-//   GtkWidget *LED_test_frame = gtk_frame_new ("LED_TEST");
-//   gtk_box_pack_start (GTK_BOX (menu_vbox), LED_test_frame, FALSE, TRUE, 0);
-//   GtkWidget *led_test_scale = gtk_hscale_new_with_range (0, 255, 1);
-//   g_signal_connect(led_test_scale, "value-changed", G_CALLBACK(led_changed), NULL);
-//   gtk_container_add (GTK_CONTAINER (LED_test_frame), led_test_scale);
-  
+  sleep_timeout_frame = gtk_frame_new (SLEEP_TIMEOUT);
+  gtk_box_pack_start (GTK_BOX (menu_vbox), sleep_timeout_frame, FALSE, TRUE, 0);
+  sleep_timeout_scale = gtk_hscale_new_with_range ((gdouble)0,(gdouble) 600,(gdouble) 5);
+  gtk_range_set_value (GTK_RANGE(sleep_timeout_scale), (gdouble)sleep_timeout);
+  (void)g_signal_connect (G_OBJECT (sleep_timeout_scale), "key_press_event", G_CALLBACK (keys_updown_sleep_timeout), NULL);
+  (void)g_signal_connect(sleep_timeout_scale, "value-changed", G_CALLBACK(sleep_timeout_changed), NULL);
+  gtk_container_add (GTK_CONTAINER (sleep_timeout_frame), sleep_timeout_scale);
+
+
+  //   GtkWidget *LED_test_frame = gtk_frame_new ("LED_TEST");
+  //   gtk_box_pack_start (GTK_BOX (menu_vbox), LED_test_frame, FALSE, TRUE, 0);
+  //   GtkWidget *led_test_scale = gtk_hscale_new_with_range (0, 255, 1);
+  //   g_signal_connect(led_test_scale, "value-changed", G_CALLBACK(led_changed), NULL);
+  //   gtk_container_add (GTK_CONTAINER (LED_test_frame), led_test_scale);
+
   reset_configuration = gtk_button_new_with_label ("   "RESET_CONFIGURATION);
   gtk_button_set_alignment (GTK_BUTTON(reset_configuration), (gfloat)0.0, (gfloat)0.0);
   gtk_button_set_relief (GTK_BUTTON(reset_configuration), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), reset_configuration, FALSE, FALSE, 0);
-  (void)g_signal_connect (G_OBJECT (reset_configuration), "clicked", G_CALLBACK (reset_configuration_callback), NULL);  
-  
+  (void)g_signal_connect (G_OBJECT (reset_configuration), "clicked", G_CALLBACK (reset_configuration_callback), NULL);
+
   about_program = gtk_button_new_with_label ("   "ABOUT_PROGRAM);
   gtk_button_set_alignment (GTK_BUTTON(about_program), (gfloat)0.0, (gfloat)0.0);
   gtk_button_set_relief (GTK_BUTTON(about_program), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), about_program, FALSE, FALSE, 0);
-  (void)g_signal_connect (G_OBJECT (about_program), "clicked", G_CALLBACK (about_program_callback), NULL);  
+  (void)g_signal_connect (G_OBJECT (about_program), "clicked", G_CALLBACK (about_program_callback), NULL);
   (void)g_signal_connect (G_OBJECT (about_program), "key_press_event", G_CALLBACK (keys_rotation_options), NULL);
-  
-  
+
+
   gtk_container_add (GTK_CONTAINER (GTK_DIALOG(options_dialog)->vbox), menu_vbox);
   gtk_window_set_position (GTK_WINDOW(options_dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_widget_show_all (options_dialog);
-  
+
   (void)g_signal_connect (G_OBJECT (options_dialog), "key_press_event", G_CALLBACK (keys_in_options), NULL);
   e_ink_refresh_local();
-}  
+}
 
 
 // ********************************  Main menu!  **************************************
@@ -851,7 +851,7 @@ gint keys_rotation_menu (__attribute__((unused))GtkWidget *window, GdkEventKey *
   if (check_key_press(event->keyval, active_panel)) return TRUE;
   switch (event->keyval){
     case   KEY_UP:
-      
+
       if (gtk_widget_is_focus (create))
       {
         gtk_widget_grab_focus (exit_button);
@@ -865,19 +865,19 @@ gint keys_rotation_menu (__attribute__((unused))GtkWidget *window, GdkEventKey *
       }
       else
         return FALSE;
-      
+
     case   KEY_DOWN:
       if (gtk_widget_is_focus (exit_button))
       {
-        if (GTK_WIDGET_SENSITIVE(create)) 
+        if (GTK_WIDGET_SENSITIVE(create))
           gtk_widget_grab_focus (create);
-        else 
+        else
           gtk_widget_grab_focus (options);
         return TRUE;
       }
       else
         return FALSE;
-      
+
     default:
       return FALSE;
   }
@@ -896,12 +896,12 @@ gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *pan
       (void)chdir(top_panel.path);
       e_ink_refresh_local();
       return FALSE;
-      
+
     case   KEY_REFRESH_LIBROII:
     case   KEY_REFRESH_QT:
       e_ink_refresh_full();
       return FALSE;
-      
+
     default:
       e_ink_refresh_default ();
       return FALSE;
@@ -915,7 +915,7 @@ void start_main_menu (struct_panel *panel)
                                                    GTK_DIALOG_MODAL /*|GTK_DIALOG_DESTROY_WITH_PARENT*/,
                                                    NULL);
   GtkWidget *menu_vbox = gtk_vbox_new (TRUE, 0);
-  
+
   create = gtk_button_new_with_label (CREATE_TEMPORARY_DIRECTORY);
   gtk_button_set_alignment (GTK_BUTTON(create), (gfloat)0.0, (gfloat)0.0);
   gtk_button_set_relief (GTK_BUTTON(create), GTK_RELIEF_NONE);
@@ -923,7 +923,7 @@ void start_main_menu (struct_panel *panel)
   if (active_panel->archive_depth > 0 ) gtk_widget_set_sensitive(create, FALSE); // В архиве не поддерживается
   (void)g_signal_connect (G_OBJECT (create), "clicked", G_CALLBACK (create_folder), NULL);
   (void)g_signal_connect (G_OBJECT (create), "key_press_event", G_CALLBACK (keys_rotation_menu), NULL);
-  
+
   copy = gtk_button_new_with_label (COPY);
   gtk_button_set_alignment (GTK_BUTTON(copy), (gfloat)0.0, (gfloat)0.0);
   gtk_button_set_relief (GTK_BUTTON(copy), GTK_RELIEF_NONE);
@@ -931,7 +931,7 @@ void start_main_menu (struct_panel *panel)
   if (fm_toggle == FALSE) gtk_widget_set_sensitive(copy, FALSE);
   if (top_panel.archive_depth > 0 || bottom_panel.archive_depth > 0) gtk_widget_set_sensitive(copy, FALSE); // В архиве не поддерживается
   (void)g_signal_connect (G_OBJECT (copy), "clicked", G_CALLBACK (copy_dir_or_file), NULL);
-  
+
   moving = gtk_button_new_with_label (MOVE_FILE);
   gtk_button_set_alignment (GTK_BUTTON(moving), (gfloat)0.0, (gfloat)0.0);
   gtk_button_set_relief (GTK_BUTTON(moving), GTK_RELIEF_NONE);
@@ -939,33 +939,33 @@ void start_main_menu (struct_panel *panel)
   if (fm_toggle == FALSE) gtk_widget_set_sensitive(moving, FALSE);
   if (top_panel.archive_depth > 0 || bottom_panel.archive_depth > 0) gtk_widget_set_sensitive(moving, FALSE); // В архиве не поддерживается
   (void)g_signal_connect (G_OBJECT (moving), "clicked", G_CALLBACK (move_dir_or_file), NULL);
-  
+
   del = gtk_button_new_with_label (DELETE);
   gtk_button_set_alignment (GTK_BUTTON(del), (gfloat)0.0, (gfloat)0.0);
   gtk_button_set_relief (GTK_BUTTON(del), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), del, FALSE, FALSE, 0);
   if (top_panel.archive_depth > 0 || bottom_panel.archive_depth > 0) gtk_widget_set_sensitive(del, FALSE); // В архиве не поддерживается
   (void)g_signal_connect (G_OBJECT (del), "clicked", G_CALLBACK (delete_dir_or_file), NULL);
-  
+
   options = gtk_button_new_with_label (OPTIONS);
   gtk_button_set_alignment (GTK_BUTTON(options), (gfloat)0.0, (gfloat)0.0);
   gtk_button_set_relief (GTK_BUTTON(options), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), options, FALSE, FALSE, 0);
   (void)g_signal_connect_swapped (G_OBJECT (options), "clicked", G_CALLBACK (options_menu_create), dialog);
   (void)g_signal_connect (G_OBJECT (options), "key_press_event", G_CALLBACK (keys_rotation_menu), NULL);
-  
+
   exit_button = gtk_button_new_with_label (EXIT);
   gtk_button_set_alignment (GTK_BUTTON(exit_button), (gfloat)0.0, (gfloat)0.0);
   gtk_button_set_relief (GTK_BUTTON(exit_button), GTK_RELIEF_NONE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), exit_button, FALSE, FALSE, 0);
   (void)g_signal_connect (G_OBJECT (exit_button), "clicked", G_CALLBACK (shutdown), NULL);
   (void)g_signal_connect (G_OBJECT (exit_button), "key_press_event", G_CALLBACK (keys_rotation_menu), NULL);
-  
+
   gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), menu_vbox);
   gtk_widget_queue_draw(GTK_DIALOG(dialog)->vbox);
   gtk_window_set_position (GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_widget_show_all (dialog);
-  
+
   (void)g_signal_connect (GTK_WIDGET(dialog), "key_press_event", G_CALLBACK (keys_in_main_menu), panel);
   e_ink_refresh_local();
 }

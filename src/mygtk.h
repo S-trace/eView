@@ -1,5 +1,5 @@
 /*
- * 
+ *
  * Gtk+2.x Utility routines
  * Copyright (C) 2002-2006 by Tito Ragusa <tito-wolit@tiscali.it>
  *
@@ -252,7 +252,7 @@ extern int enable_refresh;/*Принудительно запретить обн
 /* extern char focus_in_processed; // Количество обработанных событий получения фокуса */
 /* gint focus_in_callback (void); // реакция на получение фокуса */
 /* gint focus_out_callback (void); // реакция на потерю фокуса */
-void wait_for_draw (void); 
+void wait_for_draw (void);
 gboolean confirm_request(const char *title, const char *confirm_button, const char *reject_button);
 void create_panel (struct_panel *panel);
 char *get_current_iter (struct_panel *panel); /*возвращает итератор текущего файла из списка */

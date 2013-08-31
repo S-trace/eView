@@ -73,7 +73,7 @@ void read_config_string(char *name, char **destination) /*Чтение стро�
     *destination=strdup(temp);
     free(config_file_single);
     (void)fclose(file_descriptor);
-    return;  
+    return;
   }
 }
 
@@ -100,13 +100,13 @@ void read_archive_stack(const char *name, struct_panel *panel) /*Чтение с
     {
       #ifdef debug_printf
       printf("Reading %d element from '%s' (archive stack)\n", i, config_file_single);
-      #endif    
+      #endif
       (void)fgets(panel->archive_stack[i], PATHSIZE, file_descriptor);
       if (panel->archive_stack[i][0] == '\0')
       {
         #ifdef debug_printf
         printf("Readed empty line, break\n");
-        #endif    
+        #endif
         break; /* Прерывание при обнаружении пустой строки в стеке архивов */
       }
       trim_line(panel->archive_stack[i]);
@@ -114,7 +114,7 @@ void read_archive_stack(const char *name, struct_panel *panel) /*Чтение с
     }
     #ifdef debug_printf
     printf("Readed %d elements from '%s' (archive stack)\n", i, config_file_single);
-    #endif    
+    #endif
     free(config_file_single);
     (void)fclose(file_descriptor);
     panel->archive_depth=--i;
@@ -205,7 +205,7 @@ void create_cfg (void)  /*создание файлов настроек по у
 {
   char *current_dir=xgetcwd (cfg_directory);
   cfg_directory = xconcat_path_file(current_dir, ".eView");
-  xfree(&current_dir);
+  free(current_dir);
   if ((mkdir (cfg_directory, S_IRWXU)) == -1)
   {
     #ifdef debug_printf
@@ -236,14 +236,14 @@ void create_cfg (void)  /*создание файлов настроек по у
   write_config_int("sleep_timeout", 60);
   write_config_int("HD_scaling", FALSE);
   write_config_int("boost_contrast", FALSE);
-  
+
   write_config_string("top_panel.path", cfg_directory); // Хз почему, но если установить "/" - прога крашится при первом запуске
   write_config_string("top_panel.selected_name", "../");
   write_config_string("top_panel.archive_cwd", "");
   write_config_string("top_panel.last_name", "");
   write_config_string("top_panel.archive_stack", "filesystem\n");
-  write_config_string("top_panel.archive_list", "/tmp/top.archive_list");  
-  
+  write_config_string("top_panel.archive_list", "/tmp/top.archive_list");
+
   write_config_string("bottom_panel.path", "/");
   write_config_string("bottom_panel.selected_name", "../");
   write_config_string("bottom_panel.archive_cwd", "");
@@ -256,15 +256,15 @@ void create_cfg (void)  /*создание файлов настроек по у
 void read_panel_configuration(struct_panel *panel)
 {
   const char *name_prefix;
-  char *path_file, *selected_name_file, *archive_cwd_file, *archive_list_file, *last_name_file, *archive_stack_file; 
+  char *path_file, *selected_name_file, *archive_cwd_file, *archive_list_file, *last_name_file, *archive_stack_file;
   if (panel == &top_panel)
     name_prefix = "top";
   else
     name_prefix = "bottom";
   #ifdef debug_printf
   printf("Reading %s panel configuration\n", name_prefix);
-  #endif    
-  
+  #endif
+
   path_file=xconcat(name_prefix, "_panel.path");
   selected_name_file=xconcat(name_prefix, "_panel.selected_name");
   archive_cwd_file=xconcat(name_prefix, "_panel.archive_cwd");
@@ -289,7 +289,7 @@ void read_configuration (void)
 {
   char *current_dir=xgetcwd (cfg_directory);
   cfg_directory = xconcat_path_file(current_dir, ".eView");
-  
+
   crop=read_config_int("crop");
   rotate=read_config_int("rotate");
   frame=read_config_int("frame");
@@ -312,7 +312,7 @@ void read_configuration (void)
   sleep_timeout=read_config_int("sleep_timeout");
   HD_scaling=read_config_int("HD_scaling");
   boost_contrast=read_config_int("boost_contrast");
-  
+
   read_panel_configuration(&top_panel);
   read_panel_configuration(&bottom_panel);
   free (current_dir);

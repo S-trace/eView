@@ -26,7 +26,7 @@ static int wh, ht;
 
 /*воозвращает количество кадров и сохраняет их соординаты в frame_map[][] */
 int frames_search (image *target)
-{  
+{
   int f;
   y = FRAME_SIZE;
   f_num = 0;
@@ -125,7 +125,7 @@ void frame_map_clear()
 /*возвращает 1 если  линия-разделитель найдена */
 int line_separator ()
 {
-  int x, red, green, blue, b_color, w_color, prev, line, rp;
+  int x, b_color, w_color, prev, line, rp;
   rp = 0;		/* count  random pixel */
   prev = 1;	/* previous pixel   0 black     1  white */
   line = 1;	/* 1 сплошная линия или нет 0 */
@@ -134,6 +134,7 @@ int line_separator ()
 
   /*поиск горизонтальной линии относительно равномерного цвета */
   for  (x =0; x<wh-1; x++) {
+    int red, green, blue;
     p = pixels + y * rowstride + x * n_channels;
     red = p[0];
     green = p[1];

@@ -27,7 +27,7 @@ void print_msg (char *msg)
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0);
   gtk_window_set_position (GTK_WINDOW (dbg_win), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
-  
+
   gtk_widget_show_all (dbg_win);
   while (gtk_events_pending ())    gtk_main_iteration ();
   epaperUpdatePart();

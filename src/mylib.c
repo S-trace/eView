@@ -29,7 +29,7 @@ void get_system_sleep_timeout(void)
   FILE *process=popen("echo 20", "r");
   #else
   FILE *process=popen("dbus-send --print-reply --type=method_call --dest=com.sibrary.BoeyeServer /PowerManager com.sibrary.Service.PowerManager.getSuspendTime|cut -d ' ' -f 5|tail -n 1", "r");
-  #endif 
+  #endif
   char temp_buffer[PATHSIZE+1];
   if (fgets(temp_buffer, PATHSIZE, process) == 0)
   {
@@ -50,7 +50,7 @@ void get_system_sleep_timeout(void)
 }
 
 void set_system_sleep_timeout(const char *timeout)
-{  
+{
   char *command;
   asprintf(&command,"dbus-send --print-reply --type=method_call --dest=com.sibrary.BoeyeServer /PowerManager com.sibrary.Service.PowerManager.setSuspendTime int32:%s", timeout);
   xsystem(command);
@@ -85,7 +85,7 @@ void get_screensavers_list(void)
     #endif
     strcpy(screensavers_array[screensavers_count], temp_buffer);
     screensavers_count++;
-  }  
+  }
 }
 
 void read_string(const char *name, char **destination) /*Чтение строкового параметра из файла name в переменную destination */
@@ -169,7 +169,7 @@ char *get_natural_time(int seconds) /* Возвращает строку в фо
     asprintf(&value,"%02d:%02d:%02d", seconds/3600, (seconds%3600)/60, seconds%60);
     return(value);
   }
-  else 
+  else
   {
     if (seconds/60>0) /* Если 3600 > число секунд > 60 */
     {
@@ -189,14 +189,14 @@ void xsystem(const char *command) /* Вывод на экран и запуск 
   #ifdef debug_printf
   printf("Executing '%s'\n", command);
   #endif
-  (void)system(command); // FIXME: Хорошо бы возвращать это значение
+  (void)system(command);
 }
 
 void trim_line(char *input_line) /* Удаляет последний символ у строки */
 {
   #ifdef debug_printf
   printf("trim_line called for line '%s'\n", input_line);
-  #endif  
+  #endif
   if (input_line[0] != '\0')
   {
     size_t len=strlen(input_line)-1;
@@ -207,75 +207,78 @@ void trim_line(char *input_line) /* Удаляет последний симво
     return;
 }
 
-char *find_first_picture_name(struct_panel *panel) 
+char *find_first_picture_name(struct_panel *panel)
 {
   #ifdef DEBUG_PRINTF
   printf("entering find_first_picture_name\n");
   #endif
   GtkTreeIter iter;
   GtkTreeModel *model;
-  gboolean valid = TRUE;
-  char *tmp, *current_position_name=NULL;
+  char *tmp;
+  gboolean valid;
   model = gtk_tree_view_get_model (panel->list);
-  valid=gtk_tree_model_get_iter_first (model, &iter);  
-  while (valid) 
+  valid=gtk_tree_model_get_iter_first (model, &iter);
+  while (valid)
   {
+    char *current_position_name;
     gtk_tree_model_get (model, &iter, FILE_COLUMN, &tmp, -1);
     current_position_name = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
     xfree(&tmp);
     if (is_picture(current_position_name))
     {
-//       free(model); // Не надо - карается abort()ом
+      //       free(model); // Не надо - карается abort()ом
       return current_position_name;
     }
     valid = gtk_tree_model_iter_next (model, &iter);
   }
-//   free(model); // Не надо - карается abort()ом
+  //   free(model); // Не надо - карается abort()ом
   return NULL;
 }
 
-char *find_next_picture_name(struct_panel *panel) 
+char *find_next_picture_name(struct_panel *panel)
 {
   GtkTreeIter iter;
   GtkTreeModel *model;
-  gboolean valid = TRUE;
-  char *tmp, *current_position_name=NULL;
+  char *tmp;
+  gboolean valid;
   #ifdef DEBUG_PRINTF
   printf("entering find_next_picture_name\n");
   #endif
   model = gtk_tree_view_get_model (panel->list);
-  (void)gtk_tree_model_get_iter_from_string (model, &iter, panel->selected_iter);  
+  (void)gtk_tree_model_get_iter_from_string (model, &iter, panel->selected_iter);
   gtk_tree_model_get (model, &iter, FILE_COLUMN , &tmp, -1);
   valid = gtk_tree_model_iter_next (model, &iter);
-  while (valid) 
+  while (valid)
   {
+    char *current_position_name;
     gtk_tree_model_get (model, &iter, FILE_COLUMN, &tmp, -1);
     current_position_name = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
     xfree(&tmp);
     if (is_picture(current_position_name))
     {
-//       free(model); // Не надо - карается abort()ом
+      //       free(model); // Не надо - карается abort()ом
       return current_position_name;
     }
     valid = gtk_tree_model_iter_next (model, &iter);
   }
-//   free(model); // Не надо - карается abort()ом
+  //   free(model); // Не надо - карается abort()ом
   return NULL;
 }
 
-char *find_prev_picture_name(struct_panel *panel) 
+char *find_prev_picture_name(struct_panel *panel)
 {
   #ifdef DEBUG_PRINTF
   printf("entering find_prev_picture_name\n");
   #endif
   GtkTreeIter iter;
   GtkTreeModel *model;
-  gboolean valid = TRUE;
-  char *tmp, *last_found_image=NULL, *current_position_name;
+  char *tmp, *last_found_image=NULL;
+  gboolean valid;
   model = gtk_tree_view_get_model (panel->list);
-  valid=gtk_tree_model_get_iter_first (model, &iter);  
-  while (valid) 
+  valid=gtk_tree_model_get_iter_first (model, &iter);
+  while (valid)
   {
+    char *current_position_name;
     gtk_tree_model_get (model, &iter, FILE_COLUMN, &tmp, -1);
     current_position_name = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
     xfree(&tmp);
@@ -283,7 +286,7 @@ char *find_prev_picture_name(struct_panel *panel)
     {
       if (strcmp(current_position_name, panel->selected_name) == 0)
       {
-//         free(model); // Не надо - карается abort()ом
+        //         free(model); // Не надо - карается abort()ом
         return last_found_image;
       }
       else
@@ -291,7 +294,7 @@ char *find_prev_picture_name(struct_panel *panel)
     }
     valid = gtk_tree_model_iter_next (model, &iter);
   }
-//   free(model); // Не надо - карается abort()ом
+  //   free(model); // Не надо - карается abort()ом
   return NULL;
 }
 
@@ -302,12 +305,13 @@ char *find_last_picture_name(struct_panel *panel)
   #endif
   GtkTreeIter iter;
   GtkTreeModel *model;
-  gboolean valid = TRUE;
-  char *tmp, *last_found_image=NULL, *current_position_name;
+  char *tmp, *last_found_image=NULL;
+  gboolean valid;
   model = gtk_tree_view_get_model (panel->list);
-  valid=gtk_tree_model_get_iter_first (model, &iter);  
-  while (valid) 
+  valid=gtk_tree_model_get_iter_first (model, &iter);
+  while (valid)
   {
+    char *current_position_name;
     gtk_tree_model_get (model, &iter, FILE_COLUMN, &tmp, -1);
     current_position_name = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
     xfree(&tmp);
@@ -323,8 +327,8 @@ char *find_next_directory(struct_panel *panel) /* Поиск следующей 
 {
   FILE *fp; /* Указатель на файл */
   char next_directory[PATHSIZE+1];
-  char *command; 
-  asprintf(&command, "find \"$(dirname \"`pwd`\")\" -type d|sed 's-$-/-g'|%s > dirlist", SORT_COMMAND); 
+  char *command;
+  asprintf(&command, "find \"$(dirname \"`pwd`\")\" -type d|sed 's-$-/-g'|%s > dirlist", SORT_COMMAND);
   xsystem(command);  /* Получаем список каталогов */
   free (command);
   fp = fopen("dirlist", "r"); /* Открываем его */
@@ -341,7 +345,7 @@ char *find_next_directory(struct_panel *panel) /* Поиск следующей 
     trim_line(next_directory); /* Удаляем \n с конца строки */
     if ((strcmp (next_directory, panel->path) == 0)) /* Сравниваем строку с текущим каталогом */
     {
-      if (fgets (next_directory, PATHSIZE+1, fp) == 0) /* При совпадении читаем ещё одну строку из файла */ 
+      if (fgets (next_directory, PATHSIZE+1, fp) == 0) /* При совпадении читаем ещё одну строку из файла */
       {
         #ifdef debug_printf
         printf("Reading next directory failed (we in last directory?)\n");
@@ -349,7 +353,7 @@ char *find_next_directory(struct_panel *panel) /* Поиск следующей 
         (void)fclose(fp);/* Закрываем файл при неудачном чтении */
         return strdup(panel->path); /* И возвращаем значение текущего каталога */
       }
-      
+
       (void)fclose(fp);/* Закрываем файл */
       trim_line(next_directory); /* Удаляем \n с конца строки */
       #ifdef debug_printf
@@ -368,7 +372,7 @@ char *find_prev_directory(struct_panel *panel) /* Поиск предыдуще�
   char next_line[PATHSIZE+1]={'\0'}; /* Строка для следующего каталога */
   char *command;
   char prev_directory[PATHSIZE+1];
-  asprintf(&command, "find \"$(dirname \"`pwd`\")\" -type d|sed 's-$-/-g'|%s > dirlist", SORT_COMMAND); 
+  asprintf(&command, "find \"$(dirname \"`pwd`\")\" -type d|sed 's-$-/-g'|%s > dirlist", SORT_COMMAND);
   xsystem(command);  /* Получаем список каталогов */
   free (command);
   fp = fopen("dirlist", "r"); /* Открываем его */
@@ -376,7 +380,7 @@ char *find_prev_directory(struct_panel *panel) /* Поиск предыдуще�
   while(! feof(fp)) { /* Пока не конец файла */
     strcpy(prev_directory, next_line); /* Копируем считанную ранее строку в выходную */
 
-    if (fgets (next_line, PATHSIZE+1, fp) == 0) /* Читаем ещё одну строку из файла */ 
+    if (fgets (next_line, PATHSIZE+1, fp) == 0) /* Читаем ещё одну строку из файла */
     {
       #ifdef debug_printf
       printf("Reading next directory failed (we in last directory?)\n");
@@ -415,7 +419,7 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
   char *now_name, *next_name;
   int next_number;
   now_name=basename(input_name);/* Хрен уследишь, откуда с путём прилетит, а откуда без! */ // Не нуждается во free()!
-  if (panel->archive_depth > 0) 
+  if (panel->archive_depth > 0)
     now_name=xconcat(panel->archive_cwd,now_name);
   else
     now_name=strdup(now_name);
@@ -424,7 +428,7 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
   #endif
   free(now_name);
   next_name=find_next_picture_name(panel);
-  if (next_name == NULL) 
+  if (next_name == NULL)
     next_number=panel->files_num;
   else
   {
@@ -432,7 +436,7 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
     next_number=atoi(iter)-1;
     free(iter);
   }
-  
+
   if (panel->files_num == next_number) /* При достижении конца списка */
   {
     if (loop_dir == LOOP_NONE)
@@ -454,7 +458,7 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       #ifdef debug_printf
       printf("Loop reached for forward\n");
       #endif
-      if (allow_actions) 
+      if (allow_actions)
       {
         GtkWidget *message=Message (INFORMATION,LAST_FILE_REACHED_LOOP);
         pthread_t MessageDieDelayed_tid;
@@ -498,7 +502,7 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
           #ifdef debug_printf
           printf("NEXT_DIR=%s\n",next_dir);
           #endif
-          strcpy(panel->path, next_dir); 
+          strcpy(panel->path, next_dir);
           free(next_dir);
           if (panel == &top_panel)
             write_config_string("top_panel.path", top_panel.path);
@@ -527,7 +531,7 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       #ifdef debug_printf
       printf("Got last image, exiting\n");
       #endif
-      if (allow_actions) 
+      if (allow_actions)
       {
         GtkWidget *message=Message (INFORMATION,LAST_FILE_REACHED_EXIT);
         MessageDieDelayed (message);
@@ -545,7 +549,7 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
   char *now_name, *prev_name;
   int prev_number;
   now_name=basename(input_name);/* Хрен уследишь, откуда с путём прилетит, а откуда без! */ // Не требует free()!
-  if (panel->archive_depth > 0) 
+  if (panel->archive_depth > 0)
     now_name=xconcat(panel->archive_cwd,now_name);
   else
     now_name=strdup(now_name);
@@ -554,7 +558,7 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
   #endif
   free(now_name);
   prev_name=find_prev_picture_name(panel);
-  if (prev_name == NULL) 
+  if (prev_name == NULL)
     prev_number=0;
   else
   {
@@ -562,7 +566,7 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
     prev_number=atoi(iter);
     free(iter);
   }
-  
+
   if (prev_number == 0) /* При достижении начала списка */
   {
     if (loop_dir == LOOP_NONE)
@@ -584,7 +588,7 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       #ifdef debug_printf
       printf("Loop reached for backward\n");
       #endif
-      if (allow_actions) 
+      if (allow_actions)
       {
         GtkWidget *message=Message (INFORMATION,FIRST_FILE_REACHED_LOOP);
         pthread_t MessageDieDelayed_tid;
@@ -614,7 +618,7 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
           #ifdef debug_printf
           printf("JUMP BACKWARD FAILED!\n");
           #endif
-          if (allow_actions) 
+          if (allow_actions)
             Message (ERROR, UNABLE_TO_ENTER_PREVIOUS_DIRECTORY);
           update(active_panel);
           free(prev_name);
@@ -624,7 +628,7 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       else
       {
         char *prev_directory=find_prev_directory(panel); /* Получаем следующий каталог */
-        strcpy(panel->path, prev_directory); 
+        strcpy(panel->path, prev_directory);
         free(prev_directory);
         if (panel == &top_panel)
           write_config_string("top_panel.path", top_panel.path);
@@ -647,7 +651,7 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       #ifdef debug_printf
       printf("Got first image, exiting\n");
       #endif
-      if (allow_actions) 
+      if (allow_actions)
       {
         GtkWidget *message=Message (INFORMATION,FIRST_FILE_REACHED_EXIT);
         pthread_t MessageDieDelayed_tid;
@@ -728,7 +732,7 @@ void *xrealloc(void *ptr, size_t size)
 {
   /* It avoids to free ptr if size = 0 */
   /* if ptr == NULL it does malloc(size) */
-  if ((ptr = realloc(ptr, (size) ? size : 1))) return ptr;  
+  if ((ptr = realloc(ptr, (size) ? size : 1))) return ptr;
   err_msg_and_die(msg_memory_exhausted);
   return(NULL);
 }
@@ -740,11 +744,11 @@ void xfree(void *ptr)
   #ifdef debug_printf
   /*   printf("called xfree\n"); */
   #endif
-  
+
   void **pp = (void **)ptr;
-  
+
   if (*pp == NULL) return;
-  
+
   free(*pp);
   *pp = NULL;
 }
@@ -753,11 +757,11 @@ char *xgetcwd (char *cwd)
 {
   char *ret;
   size_t path_max = (size_t) PATH_MAX;
-  
+
   path_max += 2;                /* The getcwd docs say to do this. */
-  
+
   if (cwd == 0) cwd = (char*)xmalloc (path_max);
-  
+
   while ((ret = getcwd (cwd, path_max)) == NULL && errno == ERANGE) {
     path_max += 32;
     cwd = (char*)xrealloc (cwd, path_max);
@@ -771,9 +775,9 @@ char *xgetcwd (char *cwd)
 
 char *xconcat(const char *path,const char *filename)/* просто слияние */
 {
-  char *buffer;  
+  char *buffer;
   if (!path) path = "";
-  
+
   asprintf(&buffer, "%s%s", path, filename);
   return buffer;
 }
@@ -784,14 +788,14 @@ char *xconcat_path_file(const char *path,const char *filename)
    *      Concatenate path and file name to new allocated buffer,
    *      not adding '/' if path name already have it.
    */
-  
+
   char *buffer;
-  if (!path) 
+  if (!path)
     path = "";
   if (path[strlen(path)-1] == '/')
-    asprintf(&buffer, "%s%s", path, filename);  
+    asprintf(&buffer, "%s%s", path, filename);
   else
-    asprintf(&buffer, "%s%s%s", path, "/", filename);  
+    asprintf(&buffer, "%s%s%s", path, "/", filename);
   return buffer;
 }
 
@@ -803,7 +807,7 @@ char *itoa(long i)
 }
 
 void preload_next_screensaver(void)
-{  
+{
   /* сохраняем предыдущие настройки смотрелки */
   int saved_crop=crop;
   int saved_rotate=rotate;
@@ -811,14 +815,16 @@ void preload_next_screensaver(void)
   int saved_preload_enable=preload_enable;
   int saved_keepaspect=keepaspect;
   int saved_suspended=suspended;
+  int saved_boost_contrast=boost_contrast;
+
   if (++suspend_count==screensavers_count-1) /* Закольцовываем список картинок для скринсейвера (последняя запись - фигня!) */
     suspend_count=0;
 
   #ifdef debug_printf
   printf("Preloading screensaver %s\n", screensavers_array[suspend_count]);
   #endif
-  
-  crop=rotate=frame=preload_enable=FALSE; /* Грязно перенастраиваем смотрелку */
+
+  crop=rotate=frame=preload_enable=boost_contrast=FALSE; /* Грязно перенастраиваем смотрелку */
   suspended=keepaspect=TRUE;
   (void)load_image(screensavers_array[suspend_count], active_panel, FALSE, &screensaver);
   /* Восстанавливаем предыдущие настройки */
@@ -828,4 +834,5 @@ void preload_next_screensaver(void)
   preload_enable=saved_preload_enable;
   keepaspect=saved_keepaspect;
   suspended=saved_suspended;
+  boost_contrast=saved_boost_contrast;
 }
