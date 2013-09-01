@@ -27,7 +27,7 @@ void add_toggle_button_to_menu(GtkWidget *widget, GtkWidget *menu_vbox, void *cl
   gtk_button_set_relief (GTK_BUTTON(widget), GTK_RELIEF_NONE);
   gtk_button_set_alignment (GTK_BUTTON(widget), (gfloat)0.0, (gfloat)0.0);
   gtk_box_pack_start (GTK_BOX (menu_vbox), widget, TRUE, TRUE, 0);
-  (void)g_signal_connect (G_OBJECT (widget), "focus-in-event", G_CALLBACK (e_ink_refresh_part), NULL);
+  (void)g_signal_connect (G_OBJECT (widget), "focus-in-event", G_CALLBACK (e_ink_refresh_default), NULL);
   (void)g_signal_connect (G_OBJECT (widget), "key_press_event", G_CALLBACK (keypress_callback), panel);
   if (clicked_callback)
     (void)g_signal_connect (G_OBJECT (widget), "clicked", G_CALLBACK (clicked_callback), NULL);
@@ -85,6 +85,7 @@ void power_information(void)
     free(time_to_full);
     free(battery_time_to_full);
   }
+  interface_is_locked=TRUE; // Чтобы при возврате из окна не было двойного обновления
   Message(POWER_STATUS, label_text);
   xfree(&label_text);
   xfree(&power_supplier);
@@ -508,24 +509,34 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
 
 void fm_start () // Callback для галки включения ФМ в настройках
 {
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(fmanager))) {
-    fm_toggle = TRUE;
+  if ((fm_toggle = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(fmanager)))) {
     second_panel_show();
     update(&bottom_panel);
-    gtk_widget_set_sensitive(create, TRUE);
     gtk_widget_set_sensitive(copy, TRUE);
     gtk_widget_set_sensitive(moving, TRUE);
     write_config_int ("fm_toggle", fm_toggle);
   } else {
-    fm_toggle = FALSE;
     top_panel_active=TRUE;
-    second_panel_hide();
-    gtk_widget_set_sensitive(create, FALSE);
+    #ifdef debug_printf
+    printf("hiding second panel\n");
+    #endif
+    gtk_widget_destroy (bottom_panel.table);
+    gtk_widget_destroy (bottom_panel.path_label);
+    top_panel_active = TRUE;
+    active_panel=&top_panel;
+    inactive_panel=NULL;
+    panel_selector(active_panel);
+    write_config_string("bottom_panel.selected_name", bottom_panel.selected_name);
+    write_config_int ("top_panel_active", top_panel_active);
+    gtk_widget_queue_draw(GTK_WIDGET(top_panel.list)); /* Заставляем GTK перерисовать список каталогов */
+    wait_for_draw();
     gtk_widget_set_sensitive(copy, FALSE);
     gtk_widget_set_sensitive(moving, FALSE);
-    if (!QT) usleep(GTK_REFRESH_DELAY);
+    e_ink_refresh_full();
+//     if (!QT) usleep(GTK_REFRESH_DELAY*2);
   }
-  if (!QT) usleep(GTK_REFRESH_DELAY);
+  wait_for_draw();
+//   if (!QT) usleep(GTK_REFRESH_DELAY);
   write_config_int ("fm_toggle", fm_toggle);
 }
 
@@ -556,9 +567,15 @@ void type_refresh ()
 
 void show_hidden_files_callback ()
 {
+  enable_refresh=FALSE;
+  interface_is_locked=TRUE;
   write_config_int("show_hidden_files", show_hidden_files=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(show_hidden_files_chk)));
   update(&top_panel);
   if (fm_toggle) update(&bottom_panel);
+  wait_for_draw();
+  interface_is_locked=FALSE;
+  enable_refresh=TRUE;
+  e_ink_refresh_default();
 }
 
 void LED_notify_callback ()
@@ -613,14 +630,17 @@ static void led_changed(GtkWidget *scalebutton)
 
 void about_program_callback() // Callback для кнопки информации о программе
 {
+  interface_is_locked=TRUE; // Чтобы при возврате из окна не было двойного обновления
   Message(ABOUT_PROGRAM, ABOUT_PROGRAM_TEXT);
 }
 
 void options_destroy (GtkWidget *dialog) // Уничтожаем меню настроек ФМ
 {
+  enable_refresh=FALSE;
   gtk_widget_destroy(dialog);
   wait_for_draw();
   if (QT) usleep (QT_REFRESH_DELAY);
+  enable_refresh=TRUE;
   e_ink_refresh_local();
 }
 
@@ -690,10 +710,10 @@ gint keys_in_options (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel
   }
 }
 
-void options_menu_create(GtkWidget *parent_menu) //Создание меню опций в ФМ
+void options_menu_create(void) //Создание меню опций в ФМ
 {
   GtkWidget *sleep_timeout_frame;
-  options_menu = gtk_dialog_new_with_buttons (SETTINGS, GTK_WINDOW(parent_menu),
+  options_menu = gtk_dialog_new_with_buttons (SETTINGS, GTK_WINDOW(main_menu),
                                               GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT|GTK_DIALOG_NO_SEPARATOR, NULL);
   GtkWidget *menu_vbox = gtk_vbox_new (FALSE, 0);
 
@@ -766,10 +786,15 @@ void options_menu_create(GtkWidget *parent_menu) //Создание меню о�
 // ********************************  Main menu!  **************************************
 void create_folder(void)
 {
+  enable_refresh=FALSE;
+  interface_is_locked=TRUE;
   xsystem("mkdir -p temp000");
   if ((inactive_panel != NULL) && (strcmp (active_panel->path, inactive_panel->path) == 0))
     update(inactive_panel);
   update(active_panel);
+  enable_refresh=TRUE;
+  interface_is_locked=FALSE;
+  wait_for_draw();
   e_ink_refresh_local ();
 }
 
@@ -823,7 +848,6 @@ gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *pan
 
     case KEY_OK:
     default:
-      e_ink_refresh_default ();
       return FALSE;
   }
 }
@@ -842,11 +866,13 @@ void start_main_menu (struct_panel *panel)
   copy = gtk_button_new_with_label (COPY);
   add_toggle_button_to_menu(copy, menu_vbox, copy_dir_or_file, keys_in_main_menu, FALSE, panel);
   if (top_panel.archive_depth > 0 || bottom_panel.archive_depth > 0) gtk_widget_set_sensitive(copy, FALSE); // В архиве не поддерживается
-
+  if (fm_toggle == FALSE) gtk_widget_set_sensitive(copy, FALSE);
+  
   moving = gtk_button_new_with_label (MOVE_FILE);
   add_toggle_button_to_menu(moving, menu_vbox, move_dir_or_file, keys_in_main_menu, FALSE, panel);
   if (top_panel.archive_depth > 0 || bottom_panel.archive_depth > 0) gtk_widget_set_sensitive(moving, FALSE); // В архиве не поддерживается
-
+  if (fm_toggle == FALSE) gtk_widget_set_sensitive(moving, FALSE);
+  
   del = gtk_button_new_with_label (DELETE);
   add_toggle_button_to_menu(del, menu_vbox, delete_dir_or_file, keys_in_main_menu, FALSE, panel);
   if (active_panel->archive_depth > 0) gtk_widget_set_sensitive(del, FALSE); // В архиве не поддерживается

@@ -282,23 +282,6 @@ void move_selection(const char *const move_to, const struct_panel *const panel) 
   wait_for_draw();
 }
 
-void second_panel_hide(void)
-{
-  #ifdef debug_printf
-  printf("hiding second_panel_hide\n");
-  #endif
-  gtk_widget_destroy (bottom_panel.table);
-  gtk_widget_destroy (bottom_panel.path_label);
-  top_panel_active = TRUE;
-  active_panel=&top_panel;
-  inactive_panel=NULL;
-  panel_selector(active_panel);
-  write_config_string("bottom_panel.selected_name", bottom_panel.selected_name);
-  write_config_int ("top_panel_active", top_panel_active);
-  wait_for_draw();
-  e_ink_refresh_local();
-}
-
 void menu_destroy (GtkWidget *dialog)
 {
   #ifdef debug_printf
@@ -318,7 +301,6 @@ void after_delete_update (struct_panel *panel)
   #endif
   update(panel);
   move_selection (str_iter, panel);
-  e_ink_refresh_local();
   free(str_iter);
 }
 
@@ -326,6 +308,7 @@ void delete_dir_or_file (void)
 {
   if (confirm_request(DELETE_CONFIRM, GTK_STOCK_DELETE, GTK_STOCK_CANCEL))
   {
+    enable_refresh=FALSE;
     char *src;
     if (strncmp (active_panel->selected_name, "../", 3) == 0)
       return;
@@ -338,6 +321,8 @@ void delete_dir_or_file (void)
       after_delete_update (inactive_panel);
       (void)chdir(active_panel->path);
     }
+    wait_for_draw();
+    enable_refresh=TRUE;
     e_ink_refresh_local();
   }
 }
@@ -345,8 +330,10 @@ void delete_dir_or_file (void)
 void move_dir_or_file (void)
 {
   if ( fm_toggle == FALSE) return;
+
   if ((move_toggle == FALSE) || ((move_toggle == TRUE) && confirm_request(MOVE_CONFIRM, MOVE, GTK_STOCK_CANCEL)))
   {
+    enable_refresh=FALSE;
     char *src, *str_iter;
     if (strcmp (active_panel->selected_name, "../" ) == 0) return;
     asprintf (&src, "mv -f \"%s\" \"%s\"", active_panel->selected_name, inactive_panel->path);
@@ -361,46 +348,52 @@ void move_dir_or_file (void)
     e_ink_refresh_local();
     move_selection (str_iter, inactive_panel);
     free(str_iter);
+    wait_for_draw();
+    enable_refresh=TRUE;
+    e_ink_refresh_full();
   }
 }
 
 void copy_dir_or_file (void)
 {
+  if ( fm_toggle == FALSE) return;
   if (strcmp (active_panel->selected_name, "../") == 0) return;
-  if (fm_toggle)
-  {
-    char *src, *str_iter;
-    asprintf (&src, "cp -fpR \"%s\" \"%s\"", active_panel->selected_name, inactive_panel->path);
-    xsystem(src);
-    xfree (&src);
-    str_iter=get_current_iter(inactive_panel);
-    update(inactive_panel);
-    move_selection (str_iter, inactive_panel);
-    free(str_iter);
-    (void)chdir (active_panel->path);
-  }
+  enable_refresh=FALSE;
+  char *src, *str_iter;
+  asprintf (&src, "cp -fpR \"%s\" \"%s\"", active_panel->selected_name, inactive_panel->path);
+  xsystem(src);
+  xfree (&src);
+  str_iter=get_current_iter(inactive_panel);
+  update(inactive_panel);
+  move_selection (str_iter, inactive_panel);
+  free(str_iter);
+  (void)chdir (active_panel->path);
+  wait_for_draw();
+  enable_refresh=TRUE;
+  e_ink_refresh_full();
 }
 
 void panel_selector (struct_panel *focus_to) /* Принимает указатель на panel - &top_panel, &bottom_panel или inactive_struct_panel */
 {
-  if (GTK_IS_WIDGET(GTK_WIDGET(focus_to->list))) /* Если таблица на которую мы собираемся переключиться существует */
-    gtk_widget_grab_focus (GTK_WIDGET(focus_to->list)); /* То фокуссируемся на ней */
-    else /* А иначе исходим из того, что верхняя панель существует всегда */
+  if (GTK_IS_WIDGET(GTK_WIDGET(focus_to->list))) /* Если таблица на которую мы собираемся переключиться существует - то фокуссируемся на ней */
+    gtk_widget_grab_focus (GTK_WIDGET(focus_to->list));
+  else /* А иначе исходим из того, что верхняя панель существует всегда */
+  {
+    if (GTK_IS_WIDGET(GTK_WIDGET(top_panel.list)))
     {
-      if (GTK_IS_WIDGET(GTK_WIDGET(top_panel.list)))
-      {
-        #ifdef debug_printf
-        printf ("Specified panel is not exist, it's bad - check Your code!\n");
-        #endif
-        gtk_widget_grab_focus(GTK_WIDGET(top_panel.list));
-      }
-      else
-      {
-        #ifdef debug_printf
-        printf ("NO TABLES ARE FOUND! SOMETHING REALLY BAD HAPPENED!\n");
-        #endif
-      }
+      #ifdef debug_printf
+      printf ("Specified panel is not exist, it's bad - check Your code!\n");
+      #endif
+      gtk_widget_grab_focus(GTK_WIDGET(top_panel.list));
     }
+    else
+    {
+      #ifdef debug_printf
+      printf ("NO TABLES ARE FOUND! SOMETHING REALLY BAD HAPPENED!\n");
+      #endif
+    }
+  }
+  wait_for_draw();
 }
 
 void second_panel_show(void)

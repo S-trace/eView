@@ -102,32 +102,32 @@ gboolean confirm_request(const char *title, const char *confirm_button, const ch
   return answer;
 }
 
-/* char focus_in_processed; // Количество обработанных сигналов */
-/* gint focus_in_callback () // Обработка события получения фокуса окном. Теоретически должна выстреливать только при реальной потере-получении фокуса окном (извне)! */
-/* { */
-/*   #ifdef debug_printf */
-/*   printf ("GOT FOCUS_IN\n"); */
-/*   #endif */
-/*   if (focus_in_processed == 1) */
-/*   { */
-/*     e_ink_refresh_local(); */
-/*     focus_in_processed = -1; */
-/*   } */
-/*   else */
-/*   { */
-/*     focus_in_processed++; */
-/*   } */
-/*   return TRUE; */
-/* } */
-/*  */
-/* gint focus_out_callback (void) // реакция на потерю фокуса */
-/* { */
-/*   #ifdef debug_printf */
-/*   printf ("GOT FOCUS_OUT\n"); */
-/*   #endif */
-/*   focus_in_processed = 0; // Чтобы не выстреливать focus_in_callback когда попало */
-/*   return FALSE; */
-/* } */
+/* char focus_in_processed; // Количество обработанных сигналов 
+ gint focus_in_callback () // Обработка события получения фокуса окном. Теоретически должна выстреливать только при реальной потере-получении фокуса окном (извне)! 
+ { 
+   #ifdef debug_printf 
+   printf ("GOT FOCUS_IN\n"); 
+   #endif 
+   if (focus_in_processed == 1) 
+   { 
+     e_ink_refresh_local(); 
+     focus_in_processed = -1; 
+   } 
+   else 
+   { 
+     focus_in_processed++; 
+   } 
+   return TRUE; 
+ } 
+  
+ gint focus_out_callback (void) // реакция на потерю фокуса 
+ { 
+   #ifdef debug_printf 
+   printf ("GOT FOCUS_OUT\n"); 
+   #endif 
+   focus_in_processed = 0; // Чтобы не выстреливать focus_in_callback когда попало 
+   return FALSE; 
+ } */
 /*           asprintf(&command, "dbus-send  --type=method_call --dest=com.test.reader /reader/registry com.test.reader.registry.input string:\"%s%s\"",panel->path, panel->selected_name);  */
 /* signal sender=:1.1 -> dest=(null destination) serial=131 path=/PowerManager; interface=com.sibrary.Service.PowerManager; member=requestSuspend */
 
@@ -187,7 +187,10 @@ int MessageDie (GtkWidget *Window)
   free(iter);
   wait_for_draw();
   if (QT) usleep (QT_REFRESH_DELAY);
-  e_ink_refresh_full();
+  if (interface_is_locked)
+    interface_is_locked=FALSE;
+  else
+    e_ink_refresh_full();
 //   interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
   return TRUE;
 }
@@ -253,6 +256,7 @@ void e_ink_refresh_part(void)
   printf("Updating eINK (part)\n");
   #endif
   wait_for_draw();
+//   create_backtrace(); // FIXME: убрать
   epaperUpdatePart();
 }
 
@@ -262,6 +266,7 @@ void e_ink_refresh_local(void)
   printf("Updating eINK (local)\n");
   #endif
   wait_for_draw();
+//   create_backtrace(); // FIXME: убрать
   epaperUpdateLocal();
 }
 
@@ -271,6 +276,7 @@ void e_ink_refresh_full(void)
   printf("Updating eINK (full)\n");
   #endif
   wait_for_draw();
+//   create_backtrace(); // FIXME: убрать
   epaperUpdateFull();
 }
 
@@ -364,20 +370,27 @@ void dirlist_select(GtkWidget *const widget, struct_panel *const panel) /* Чт�
   //     free(selection); // Не надо - карается abort()ом
 }
 
-void after_dirlist_select(void) /* Что происходит при перемещении выделенной строки по списку (часть 2) */
+void after_dirlist_select(__attribute__((unused)) GtkWidget *const widget, struct_panel *const panel) /* Что происходит при перемещении выделенной строки по списку (часть 2) */
 {
   if (interface_is_locked) /* Чтобы не дёргалось при просмотре изображений (каждый раз, приводя к двойному обновлению) */
     return;
-
+  
   if (need_full_refresh)
+  {
+    wait_for_draw();
+    gtk_widget_queue_draw(GTK_WIDGET(panel->list)); /* Заставляем GTK перерисовать список каталогов */
+    wait_for_draw();
+    if (!QT) usleep(GTK_REFRESH_DELAY);
     e_ink_refresh_full();
+    need_full_refresh=FALSE;
+  }
   else
     e_ink_refresh_default();
 }
 
 void panel_focussed(struct_panel *panel)
 {
-  if (interface_is_locked) /* Чтобы игнорировать сигнал о фокуссировке на верхней панели во время инициализации программы */
+  if (interface_is_locked) /* Чтобы игнорировать сигнал о фокуссировке на панели во время закрытия смотрелки */
   {
     #ifdef debug_printf
     printf("Interface was locked, panel focus change signal ignored!\n");
@@ -398,7 +411,8 @@ void panel_focussed(struct_panel *panel)
     (void)chdir(bottom_panel.path);
     write_config_int("top_panel_active", top_panel_active=FALSE);
   }
-  e_ink_refresh_local();
+  wait_for_draw();
+  e_ink_refresh_default();
 }
 
 void go_upper(struct_panel *panel) /* Переход на уровень вверх в дереве */
@@ -610,6 +624,9 @@ gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
 
     case KEY_PGDOWN:
     case KEY_PGUP:
+      need_full_refresh=TRUE;
+      return FALSE;
+      
     case KEY_OK:
       return FALSE;
 
@@ -645,12 +662,10 @@ void create_panel (struct_panel *panel)
   gtk_label_set_text (GTK_LABEL(panel->path_label), panel->path);
   panel->list = string_list_create_on_table(2, panel->table, 0, 1, 0, 30, SHOW, NOT_EDITABLE, " Name", "size/dir", 0.0,0.0);
   wait_for_draw(); /* Ожидаем отрисовки всего */
-  (void)g_signal_connect (GTK_TREE_SELECTION(gtk_tree_view_get_selection (panel->list)),
-                          "changed", G_CALLBACK (dirlist_select), panel ); /*реакция на сдвиг выделения */
-  (void)g_signal_connect_after (GTK_TREE_SELECTION(gtk_tree_view_get_selection (panel->list)),
-                                "changed", G_CALLBACK (after_dirlist_select), NULL); /*обновление экрана после перемещения курсора */
+  (void)g_signal_connect (GTK_TREE_SELECTION(gtk_tree_view_get_selection (panel->list)), "changed", G_CALLBACK (dirlist_select), panel); /*реакция на сдвиг выделения */
+  (void)g_signal_connect_after (GTK_TREE_SELECTION(gtk_tree_view_get_selection (panel->list)), "changed", G_CALLBACK (after_dirlist_select), panel); /*обновление экрана после перемещения курсора */
   (void)g_signal_connect_swapped (panel->list, "row-activated", G_CALLBACK (actions), panel); /*реакция на клик по выбору */
-  (void)g_signal_connect (G_OBJECT (panel->list), "key_press_event", G_CALLBACK (which_keys_main), panel); /*обаботка назначенных кнопок */
+  (void)g_signal_connect (G_OBJECT (panel->list), "key_press_event", G_CALLBACK (which_keys_main), panel); /* Обработка назначенных кнопок */
   (void)g_signal_connect_swapped (G_OBJECT (panel->list), "focus_in_event", G_CALLBACK (panel_focussed), panel);
 }
 
