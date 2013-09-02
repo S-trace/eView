@@ -660,6 +660,7 @@ void create_panel (struct_panel *panel)
   gtk_misc_set_alignment (GTK_MISC (panel->path_label ), (gfloat)0, (gfloat)0);
   gtk_box_pack_start (GTK_BOX (panels_vbox), panel->path_label , (gfloat)FALSE, (gfloat)FALSE, 0);
   gtk_label_set_text (GTK_LABEL(panel->path_label), panel->path);
+  gtk_label_set_ellipsize (GTK_LABEL(panel->path_label), PANGO_ELLIPSIZE_START);
   panel->list = string_list_create_on_table(2, panel->table, 0, 1, 0, 30, SHOW, NOT_EDITABLE, " Name", "size/dir", 0.0,0.0);
   wait_for_draw(); /* Ожидаем отрисовки всего */
   (void)g_signal_connect (GTK_TREE_SELECTION(gtk_tree_view_get_selection (panel->list)), "changed", G_CALLBACK (dirlist_select), panel); /*реакция на сдвиг выделения */
