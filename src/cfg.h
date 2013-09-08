@@ -17,7 +17,7 @@ extern gboolean keepaspect;/* растянуть ли картинку на ве
 extern gboolean fm_toggle;    /*чекбокс файлменеджер */
 extern gboolean move_toggle;  /*чекбокс подтверждение перемещения */
 extern gboolean speed_toggle; /*режим обновления (1 для нормального) */
-extern gboolean clock_toggle; /*чекбокс показывать панельку с часами */
+extern gboolean show_clock; /*чекбокс показывать панельку с часами */
 extern gboolean top_panel_active;/*какая панель в фокусе */
 extern gboolean loop_dir; /* Режим зацикливания при окончании файлов, 0 - ничего, 1 - зацикливание, 2 - переход в следующий каталог, 3 - переход в файлменеджер */
 extern gboolean double_refresh;/*двойное обновление в смотрелке */
@@ -29,6 +29,7 @@ extern gboolean show_hidden_files;/*Показывать ли в файл-мен
 extern gboolean LED_notify; /* Оповещение светодиодом об обновлении панелей и загрузке */
 extern gboolean HD_scaling; /* Высококачественное масштабирование изображений */
 extern gboolean boost_contrast; /* Усиление контраста */
+extern int refresh_type; /* Тип используемого обновления экрана - определяется автоматически, не нужно устанавливать вручную! */
 extern int backlight; /* Уровень яркости подсветки */
 extern int sleep_timeout; /* Таймер сна на Qt прошивках */
 extern char *system_sleep_timeout;  /* Таймер сна в системе на Qt прошивках */

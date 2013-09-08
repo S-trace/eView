@@ -27,7 +27,6 @@ void add_toggle_button_to_menu(GtkWidget *widget, GtkWidget *menu_vbox, void *cl
   gtk_button_set_relief (GTK_BUTTON(widget), GTK_RELIEF_NONE);
   gtk_button_set_alignment (GTK_BUTTON(widget), (gfloat)0.0, (gfloat)0.0);
   gtk_box_pack_start (GTK_BOX (menu_vbox), widget, TRUE, TRUE, 0);
-  (void)g_signal_connect (G_OBJECT (widget), "focus-in-event", G_CALLBACK (e_ink_refresh_default), NULL);
   (void)g_signal_connect (G_OBJECT (widget), "key_press_event", G_CALLBACK (keypress_callback), panel);
   if (clicked_callback)
     (void)g_signal_connect (G_OBJECT (widget), "clicked", G_CALLBACK (clicked_callback), NULL);
@@ -85,7 +84,6 @@ void power_information(void)
     free(time_to_full);
     free(battery_time_to_full);
   }
-  interface_is_locked=TRUE; // Чтобы при возврате из окна не было двойного обновления
   Message(POWER_STATUS, label_text);
   xfree(&label_text);
   xfree(&power_supplier);
@@ -133,9 +131,9 @@ void rotate_image_toggler () // Callback для галки поворота
 
 void frame_image_toggler () // Callback для галки умного листания
 {
+  enable_refresh=FALSE;
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(frame_image))) { // Если галка активируется
     frame = TRUE; // Включаем умное листание
-    crop = TRUE; // И обрезку полей
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(crop_image), TRUE); // Принудительно активируем галку обрезки полей на экране (для красоты)
     gtk_widget_set_sensitive(crop_image, FALSE); // А затем отключаем выключатели обрезки полей
     gtk_widget_set_sensitive(rotate_image, FALSE); // Поворота
@@ -146,9 +144,8 @@ void frame_image_toggler () // Callback для галки умного лист�
     gtk_widget_set_sensitive(rotate_image, TRUE); // Поворота
     gtk_widget_set_sensitive(manga_mode, TRUE); // И режима манги
   }
-  write_config_int("crop", crop);   // Сохраняем конфиги
   write_config_int("frame", frame); // Сохраняем конфиги
-  need_refresh=TRUE;
+  enable_refresh=need_refresh=TRUE;
   wait_for_draw();
   if (QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_part ();
@@ -158,18 +155,14 @@ void manga_mode_toggler () // Callback для галки просмотра ка
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(manga_mode))) { // Если галка активируется
     manga = TRUE; // Включаем режим манги
-    crop = TRUE; // И обрезку полей
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(crop_image), TRUE); // Принудительно активируем галку обрезки полей на экране (для красоты)
-    gtk_widget_set_sensitive(crop_image, FALSE); // А затем отключаем выключатели обрезки полей
-    gtk_widget_set_sensitive(rotate_image, FALSE); // Поворота
+    gtk_widget_set_sensitive(rotate_image, FALSE); // А затем отключаем выключатели поворота
     gtk_widget_set_sensitive(frame_image, FALSE); // И умного просмотра
   } else { // Если галка снимается
     manga = FALSE; // Отключаем листание манги
-    gtk_widget_set_sensitive(crop_image, TRUE); // А затем включаем выключатели обрезки полей
-    gtk_widget_set_sensitive(rotate_image, TRUE); // Поворота
+    gtk_widget_set_sensitive(rotate_image, TRUE); // А затем включаем выключатели поворота
     gtk_widget_set_sensitive(frame_image, TRUE); // И умного просмотра
   }
-  write_config_int("crop", crop);   // Сохраняем конфиги
   write_config_int("manga", manga); // Сохраняем конфиги
   need_refresh=TRUE;
   wait_for_draw();
@@ -257,6 +250,7 @@ void reset_statistics() // Callback для кнопки статистики (с
     wait_for_draw();
     if (QT) usleep (QT_REFRESH_DELAY);
   }
+  e_ink_refresh_local();
 }
 
 void picture_menu_destroy (struct_panel *panel) // Уничтожаем меню настроек отображения
@@ -308,7 +302,7 @@ gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog), TRUE);
         wait_for_draw();
         if (QT) usleep (QT_REFRESH_DELAY); else usleep(GTK_REFRESH_DELAY);
-        e_ink_refresh_part ();
+        e_ink_refresh_local ();
         return TRUE;
       }
       return FALSE;
@@ -321,28 +315,23 @@ gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *
         if (dialog == loop_dir_next) gtk_widget_grab_focus(loop_dir_loop);
         if (dialog == loop_dir_exit) gtk_widget_grab_focus(loop_dir_next);
         if (QT) usleep (QT_REFRESH_DELAY); else usleep(GTK_REFRESH_DELAY);
-        e_ink_refresh_part ();
+        e_ink_refresh_local ();
         return TRUE;
       }
 
       if (gtk_widget_is_focus (crop_image))
       {
         gtk_widget_grab_focus (viewed);
+        e_ink_refresh_local ();
         return TRUE;
       }
       else if (gtk_widget_is_focus (frame_image) && GTK_WIDGET_SENSITIVE(crop_image) == FALSE)
       {
         gtk_widget_grab_focus (viewed);
+        e_ink_refresh_local ();
         return TRUE;
       }
-      else if (gtk_widget_is_focus (manga_mode) && GTK_WIDGET_SENSITIVE(frame_image) == FALSE)
-      {
-        gtk_widget_grab_focus (viewed);
-        wait_for_draw();
-        if (QT) usleep (QT_REFRESH_DELAY);
-        return TRUE;
-      }
-
+      e_ink_refresh_local ();
       return FALSE;
       
     case   KEY_DOWN:
@@ -353,7 +342,7 @@ gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *
         if (dialog == loop_dir_next) gtk_widget_grab_focus(loop_dir_exit);
         if (dialog == loop_dir_exit) gtk_widget_grab_focus(preload_enabled_button);
         if (QT) usleep (QT_REFRESH_DELAY); else usleep(GTK_REFRESH_DELAY);
-        e_ink_refresh_part ();
+        e_ink_refresh_local ();
         return TRUE;
       }
 
@@ -367,15 +356,15 @@ gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *
           gtk_widget_grab_focus (manga_mode);
         wait_for_draw();
         if (QT) usleep (QT_REFRESH_DELAY);
+        e_ink_refresh_local ();
         return TRUE;
       }
-      else
-        return FALSE;
-
+      e_ink_refresh_local ();
       return FALSE;
-      
+
     default:
       if (QT) usleep (QT_REFRESH_DELAY);
+      e_ink_refresh_local ();
       return FALSE;
   }
 }
@@ -491,7 +480,6 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
   }
 
   if (manga) { // Если включен режим манги
-    gtk_widget_set_sensitive(crop_image, FALSE); // Блокируем галки обрезки полей
     gtk_widget_set_sensitive(rotate_image, FALSE); // Поворота
     gtk_widget_set_sensitive(frame_image, FALSE); // И умного просмотра
   }
@@ -503,6 +491,7 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
   gtk_window_set_position (GTK_WINDOW(picture_menu), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_widget_show_all (picture_menu);
   wait_for_draw();
+  e_ink_refresh_local();
 }
 
 // **************************************************  Options menu  ***********************************************************
@@ -516,27 +505,20 @@ void fm_start () // Callback для галки включения ФМ в нас
     gtk_widget_set_sensitive(moving, TRUE);
     write_config_int ("fm_toggle", fm_toggle);
   } else {
-    top_panel_active=TRUE;
+    enable_refresh=FALSE;
     #ifdef debug_printf
     printf("hiding second panel\n");
     #endif
-    gtk_widget_destroy (bottom_panel.table);
     gtk_widget_destroy (bottom_panel.path_label);
-    top_panel_active = TRUE;
-    active_panel=&top_panel;
+    gtk_widget_destroy (bottom_panel.table);
     inactive_panel=NULL;
-    panel_selector(active_panel);
     write_config_string("bottom_panel.selected_name", bottom_panel.selected_name);
-    write_config_int ("top_panel_active", top_panel_active);
-    gtk_widget_queue_draw(GTK_WIDGET(top_panel.list)); /* Заставляем GTK перерисовать список каталогов */
-    wait_for_draw();
     gtk_widget_set_sensitive(copy, FALSE);
     gtk_widget_set_sensitive(moving, FALSE);
+    if (!QT) usleep(GTK_REFRESH_DELAY);
+    enable_refresh=TRUE;
     e_ink_refresh_full();
-//     if (!QT) usleep(GTK_REFRESH_DELAY*2);
   }
-  wait_for_draw();
-//   if (!QT) usleep(GTK_REFRESH_DELAY);
   write_config_int ("fm_toggle", fm_toggle);
 }
 
@@ -549,13 +531,13 @@ void move_confirm ()
 void clock_panel_toggler ()
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(clock_panel))) {
-    clock_toggle = FALSE;
+    show_clock = TRUE;
     gtk_window_unfullscreen  (GTK_WINDOW(main_window));
   } else {
-    clock_toggle = TRUE;
+    show_clock = FALSE;
     gtk_window_fullscreen  (GTK_WINDOW(main_window));
   }
-  write_config_int("clock_toggle", clock_toggle);
+  write_config_int("show_clock", show_clock);
   e_ink_refresh_part ();
 }
 
@@ -598,12 +580,14 @@ void reset_configuration_callback() // Callback для кнопки сброса
     printf("Resetting configuration done, bye!\n");
     #endif
   }
+  e_ink_refresh_local();
 }
 
 void backlight_changed(GtkWidget *scalebutton)
 {
   write_config_int("backlight", backlight = gtk_range_get_value(GTK_RANGE(scalebutton)));
   set_brightness(backlight);
+  e_ink_refresh_default();
   #ifdef debug_printf
   printf("Brightness set to %d\n", backlight);
   #endif
@@ -616,9 +600,9 @@ void sleep_timeout_changed(GtkWidget *scalebutton)
   #ifdef debug_printf
   printf("Sleep timeout set to %d\n", sleep_timeout);
   #endif
+  e_ink_refresh_default();
   if(pthread_kill(sleep_timer_tid, 0) == ESRCH) // Если поток таймера умер
     start_sleep_timer();
-
 }
 
 #ifdef debug_printf
@@ -630,7 +614,6 @@ static void led_changed(GtkWidget *scalebutton)
 
 void about_program_callback() // Callback для кнопки информации о программе
 {
-  interface_is_locked=TRUE; // Чтобы при возврате из окна не было двойного обновления
   Message(ABOUT_PROGRAM, ABOUT_PROGRAM_TEXT);
 }
 
@@ -644,7 +627,7 @@ void options_destroy (GtkWidget *dialog) // Уничтожаем меню нас
   e_ink_refresh_local();
 }
 
-gint keys_in_options (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel) //задействует кнопки
+gint keys_in_options (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel)
 {
   if (check_key_press(event->keyval, panel)) return TRUE;
   switch (event->keyval){
@@ -668,40 +651,48 @@ gint keys_in_options (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel
           gtk_widget_grab_focus (backlight_scale);
         else
           gtk_widget_grab_focus (LED_notify_checkbox);
+        e_ink_refresh_local();
         return TRUE;
       }
       
       if (dialog == backlight_scale)    
       {
         gtk_widget_grab_focus (LED_notify_checkbox);
+        e_ink_refresh_local();
         return TRUE;
       }
       
       if (gtk_widget_is_focus (fmanager))
       {
         gtk_widget_grab_focus (about_program);
+        e_ink_refresh_local();
         return TRUE;
       }
+      e_ink_refresh_local();
       return FALSE;
       
     case KEY_DOWN:
       if (dialog == sleep_timeout_scale)
       {
         gtk_widget_grab_focus (reset_configuration);
+        e_ink_refresh_local();
         return TRUE;
       }
       
       if (dialog == backlight_scale)
       {
         gtk_widget_grab_focus (sleep_timeout_scale);
+        e_ink_refresh_local();
         return TRUE;
       }
       
       if (gtk_widget_is_focus (about_program))
       {
         gtk_widget_grab_focus (fmanager);
+        e_ink_refresh_local();
         return TRUE;
       }
+      e_ink_refresh_local();
       return FALSE;
       
     case KEY_OK:
@@ -732,7 +723,7 @@ void options_menu_create(void) //Создание меню опций в ФМ
   if (QT == FALSE)
   {
     clock_panel = gtk_check_button_new_with_label(SHOW_PANEL);
-    add_toggle_button_to_menu(clock_panel, menu_vbox, clock_panel_toggler, keys_in_options, clock_toggle, active_panel);
+    add_toggle_button_to_menu(clock_panel, menu_vbox, clock_panel_toggler, keys_in_options, show_clock, active_panel);
   }
 
   LED_notify_checkbox = gtk_check_button_new_with_label (LED_NOTIFY);
@@ -778,10 +769,8 @@ void options_menu_create(void) //Создание меню опций в ФМ
   gtk_container_add (GTK_CONTAINER (GTK_DIALOG(options_menu)->vbox), menu_vbox);
   gtk_window_set_position (GTK_WINDOW(options_menu), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_widget_show_all (options_menu);
-
-//   e_ink_refresh_local();
+  e_ink_refresh_local();
 }
-
 
 // ********************************  Main menu!  **************************************
 void create_folder(void)
@@ -798,6 +787,17 @@ void create_folder(void)
   e_ink_refresh_local ();
 }
 
+void menu_destroy (GtkWidget *dialog)
+{
+  #ifdef debug_printf
+  printf("Destroying menu\n");
+  #endif
+  gtk_widget_destroy(dialog);
+  gtk_widget_grab_focus (GTK_WIDGET(active_panel->list));
+  /*   g_signal_handlers_unblock_by_func( window, focus_in_callback, NULL ); */
+  /*   g_signal_handlers_unblock_by_func( window, focus_out_callback, NULL ); */
+}
+
 gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel) //задействует кнопку М в меню
 {
   if (check_key_press(event->keyval, panel)) return TRUE;
@@ -810,9 +810,11 @@ gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *pan
       interface_is_locked=TRUE;
       menu_destroy (main_menu);
       (void)chdir(active_panel->path);
+      wait_for_draw();
+      if (QT) usleep(QT_REFRESH_DELAY);
       e_ink_refresh_local();
       interface_is_locked=FALSE;
-      return FALSE;
+      return TRUE;
 
     case   KEY_REFRESH_LIBROII:
     case   KEY_REFRESH_QT:
@@ -823,16 +825,18 @@ gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *pan
       if (dialog == create)
       {
         gtk_widget_grab_focus (exit_button);
+        e_ink_refresh_local();
         return TRUE;
       }
       else if ((dialog == options) && GTK_WIDGET_SENSITIVE(create) == FALSE)
       {
         printf("options\n");
         gtk_widget_grab_focus (exit_button);
+        e_ink_refresh_local();
         return TRUE;
       }
-      else
-        return FALSE;
+      e_ink_refresh_local();
+      return FALSE;
 
     case   KEY_DOWN:
       if (dialog == exit_button)
@@ -841,12 +845,12 @@ gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *pan
           gtk_widget_grab_focus (create);
         else
           gtk_widget_grab_focus (options);
+        e_ink_refresh_local();
         return TRUE;
       }
-      else
-        return FALSE;
+      e_ink_refresh_local();
+      return FALSE;
 
-    case KEY_OK:
     default:
       return FALSE;
   }

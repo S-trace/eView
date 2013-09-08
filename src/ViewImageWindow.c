@@ -52,9 +52,11 @@ void pixbuf_unref(GdkPixbuf *pixbuf)
 
 void die_viewer_window (void)
 {
+  int silent=FALSE; // Флаг того, что рефреш и блокировку интерфейса не трогать
   #ifdef debug_printf
   printf("Destroying ViewImageWindow\n");
   #endif
+  silent=interface_is_locked;
   interface_is_locked=TRUE; // Чтобы не стреляло обновление экрана из фокусировки панелей
   enable_refresh=FALSE;
   gtk_widget_destroy(ImageWindow);
@@ -62,9 +64,13 @@ void die_viewer_window (void)
   if ((suppress_panel == TRUE) && QT != TRUE)
     start_panel();
   wait_for_draw();
-  if (!QT) usleep(GTK_REFRESH_DELAY*2);
-  interface_is_locked=FALSE;
-  enable_refresh=TRUE;
+  if (QT) usleep(QT_REFRESH_DELAY);
+  if (silent == FALSE)
+  {
+    interface_is_locked=FALSE;
+    enable_refresh=TRUE;
+    e_ink_refresh_full();
+  }
 }
 
 int check_image_settings(const image *const target) __attribute__((pure));
@@ -310,7 +316,9 @@ gboolean show_image(image *target, struct_panel *panel, int enable_actions) /* �
   printf("Going to show '%s' (enable_actions=%d)\n", target->name, enable_actions);
   #endif
   gtk_image_set_from_pixbuf (GTK_IMAGE(gimage), target->pixbuf);
+  #ifdef debug_printf
   printf("showed '%s' (enable_actions=%d)\n", target->name, enable_actions);
+  #endif
   if (enable_actions)
   {
     char *iter;
@@ -397,9 +405,7 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
           }
         }
       }
-      enable_refresh=FALSE; // Чтобы не дать Message спровоцировать двойное обновление при появлении
       next_file = next_image (panel->selected_name, TRUE, panel);
-      enable_refresh=TRUE;
       if (next_file==NULL)
       {
         interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
@@ -494,9 +500,7 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
           }
         }
         if (rotate) gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), R_SHIFT);
-        enable_refresh=FALSE;
         next_file = prev_image (panel->selected_name, TRUE, panel);
-        enable_refresh=TRUE;
         if (next_file==NULL)
         {
           interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
@@ -731,7 +735,6 @@ void ViewImageWindow(const char *file, struct_panel *panel, int enable_actions) 
   #endif
   ImageWindow = window_create (width_display, height_display, 0, "", NOT_MODAL);
   gtk_window_set_decorated (GTK_WINDOW(ImageWindow), FALSE);
-  /*   g_signal_connect (G_OBJECT (ImageWindow), "expose-event", G_CALLBACK (e_ink_refresh_full), NULL); */
   #ifndef __amd64
   gtk_window_fullscreen  (GTK_WINDOW(ImageWindow));  /*блокировка окошка "часиков", нужно отключать для отображения на пк */
   #endif

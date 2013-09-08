@@ -246,8 +246,8 @@ void e_ink_refresh_default(void);
 #define COLUMN_W (width_display * 83 / 100) /* Первая колонка в файлменеджере (для имён). 80 - ширина в процентах */
 #define COLUMN_W2 (width_display * 17 / 100)/* Вторая колонка в файлменеджере (для размеров). 20 - ширина в процентах */
 void *MessageDieDelayed (void *arg);
-GtkWidget *Message(const char *title,const char *message);
-extern GtkWidget *MessageWindow;
+int MessageDie (GtkWidget *Window);
+GtkWidget *Message (const char *const title, const char *const message);
 extern int enable_refresh;/*Принудительно запретить обновлять экран в особых случаях */
 /* extern char focus_in_processed; // Количество обработанных событий получения фокуса */
 /* gint focus_in_callback (void); // реакция на получение фокуса */

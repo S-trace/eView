@@ -36,6 +36,17 @@ extern int LED_notify; /* Оповещение светодиодом об об�
 int (*apm_suspend)(int fd); /* Функция из libapm.so, загружается через dlopen */
 
 /* Helper FB update function */
+int epaper_update_helper(int fb, unsigned long int ioctl_call, int *mode)
+{
+  if (framebuffer_descriptor >= 0)
+  {
+    errno=0;
+    ioctl(fb, ioctl_call, mode);
+    return errno;
+  }
+  return TRUE;
+}
+
 void epaperUpdate(unsigned long int ioctl_call, int mode)
 {
   if (enable_refresh == FALSE)
@@ -46,13 +57,50 @@ void epaperUpdate(unsigned long int ioctl_call, int mode)
     return;
   }
   #ifndef __amd64
-  if (framebuffer_descriptor >= 0)
+  int ioctl_result;
+  /* Иначе запись в видеопамять не успевает завершиться и получаем верхний левый угол новой картинки и нижний правый - прежней. */
+  if (QT) (void)usleep(355000);
+  ioctl_result=epaper_update_helper(framebuffer_descriptor, ioctl_call, &mode);
+  #ifdef debug_printf
+  if (ioctl_result != TRUE)
   {
-    /* Иначе запись в видеопамять не успевает завершиться и получаем верхний левый угол новой картинки и нижний правый - прежней. */
-    if (QT) (void)usleep(355000);
-    (void)ioctl(framebuffer_descriptor, ioctl_call, &mode);
+    printf("Display refresh ioctl call FAILED %d (%s)\n", ioctl_result, strerror(ioctl_result));
+    // GTK прошивка, обновление от Qt: 1 (Операция не позволяется)
+    // Qt прошивка, обновление от GTK: 22 (Недопустимый аргумент)
   }
   #endif
+  #endif
+  return;
+}
+
+
+int detect_refresh_type (void)
+{
+  if (refresh_type == REFRESH_UNKNOWN)
+  {
+    int mode=3;
+    if (epaper_update_helper(framebuffer_descriptor, EPAPER_UPDATE_FULL, &mode) == 0)
+    {
+      refresh_type=REFRESH_LEGACY;
+      #ifdef debug_printf
+      printf ("Display refresh was successed, legacy\n");
+      #endif
+    }
+    else if (epaper_update_helper(framebuffer_descriptor, EPAPER_UPDATE_DISPLAY_QT, &mode) == 0)
+    {
+      refresh_type=REFRESH_NEW;
+      #ifdef debug_printf
+      printf ("Display refresh was successed, new\n");
+      #endif
+    }
+    else
+    {
+      #ifdef debug_printf
+      printf ("Display refresh was not detected!\n");
+      #endif
+    }
+  }
+  return (refresh_type);
 }
 
 /**
@@ -60,10 +108,16 @@ void epaperUpdate(unsigned long int ioctl_call, int mode)
  */
 void epaperUpdateFull(void)
 {
-  if (QT)
+  if (refresh_type == REFRESH_NEW)
     epaperUpdate(EPAPER_UPDATE_DISPLAY_QT, 3);
+  else if (refresh_type == REFRESH_LEGACY)
+    epaperUpdate(EPAPER_UPDATE_FULL, 3);
   else
-    epaperUpdate(EPAPER_UPDATE_FULL, 3); /* Выполняется за 0,847s */
+  {
+    #ifdef debug_printf
+    printf("Unable to refresh display - refresh type is unknown!\n");
+    #endif
+  }
 }
 
 /**
@@ -71,10 +125,16 @@ void epaperUpdateFull(void)
  */
 void epaperUpdateLocal(void)
 {
-  if (QT)
+  if (refresh_type == REFRESH_NEW)
     epaperUpdate(EPAPER_UPDATE_DISPLAY_QT, 2);
+  else if (refresh_type == REFRESH_LEGACY)
+    epaperUpdate(EPAPER_UPDATE_LOCAL, 2);
   else
-    epaperUpdate(EPAPER_UPDATE_LOCAL, 2); /* Выполняется за 0,847s */
+  {
+    #ifdef debug_printf
+    printf("Unable to refresh display - refresh type is unknown!\n");
+    #endif
+  }
 }
 
 /**
@@ -82,10 +142,16 @@ void epaperUpdateLocal(void)
  */
 void epaperUpdatePart(void)
 {
-  if (QT)
+  if (refresh_type == REFRESH_NEW)
     epaperUpdate(EPAPER_UPDATE_DISPLAY_QT, 1);
+  else if (refresh_type == REFRESH_LEGACY)
+    epaperUpdate(EPAPER_UPDATE_PART, 1);
   else
-    epaperUpdate(EPAPER_UPDATE_PART, 1); /* Выполняется за 0,847s */
+  {
+    #ifdef debug_printf
+    printf("Unable to refresh display - refresh type is unknown!\n");
+    #endif
+  }
 }
 
 int check_for_file (const char *fpath)  /* Проверка наличия файла в файловой системе */
@@ -243,7 +309,7 @@ void detect_hardware(void) /* Обнаружение оборудования и
       printf ("Found sysfs sleep trigger at file %s\n", sysfs_sleep_path);
       #endif
     }
-  }
+  }  
 
   #ifdef debug_printf
   if (! hardware_has_LED)

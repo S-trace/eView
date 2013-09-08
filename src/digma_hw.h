@@ -16,7 +16,7 @@
 #define EPAPER_UPDATE_PART  0x102         /** ???              */
 #define EPAPER_UPDATE_FULL  0x103         /** Fully update     */
 #define EPAPER_UPDATE_DISPLAY_QT  0x120d  /** Update all display */
-#define QT_REFRESH_DELAY  520000
+#define QT_REFRESH_DELAY  550000
 #define GTK_REFRESH_DELAY 400000
 
 
@@ -47,6 +47,7 @@ void epaperUpdatePart(void);
 void set_brightness(int value);
 void set_led_state (int state);
 void detect_hardware(void);
+int detect_refresh_type (void);
 extern int hardware_has_backlight, hardware_has_LED;
 extern pthread_t suspend_helper_tid;
 
@@ -58,6 +59,14 @@ enum
   LED_ON,
   LED_STATES
 };
+enum
+{
+  REFRESH_UNKNOWN,
+  REFRESH_LEGACY,
+  REFRESH_NEW,
+  REFRESH_TYPE
+};
+
 extern int LED_state[LED_STATES]; /* Состояния светодиода */
 extern int previous_backlight_level; /* Уровень подсветки перед запуском eView */
 extern int suspended; /* Текущее состояние книги */

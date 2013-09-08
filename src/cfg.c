@@ -7,9 +7,10 @@
 #include "gtk_file_manager.h"
 #include "mylib.h"
 #include "cfg.h"
+#include "digma_hw.h"
 
 static char *cfg_directory; /*путь к файлу с настройками */
-int crop, rotate, frame, keepaspect, fm_toggle, move_toggle, speed_toggle, clock_toggle, top_panel_active, loop_dir, double_refresh, viewed_pages, preload_enable, caching_enable, suppress_panel, show_hidden_files, manga, HD_scaling, boost_contrast, LED_notify=TRUE;
+int crop, rotate, frame, keepaspect, fm_toggle, move_toggle, speed_toggle, show_clock, top_panel_active, loop_dir, double_refresh, viewed_pages, preload_enable, caching_enable, suppress_panel, show_hidden_files, manga, HD_scaling, boost_contrast, refresh_type, LED_notify=TRUE;
 int backlight, sleep_timeout;
 char *system_sleep_timeout;
 
@@ -34,7 +35,7 @@ int read_config_int(const char *name) /*Чтение числового пара
     value=atoi(value_string);
     (void)fclose(file_descriptor);
     #ifdef debug_printf
-    printf("reading %s from %s (%d)\n", name, config_file_single, value);
+    printf("Reading %s from %s (%d)\n", name, config_file_single, value);
     #endif
     free(config_file_single);
     return(value);
@@ -94,7 +95,7 @@ void read_archive_stack(const char *name, struct_panel *panel) /*Чтение с
   {
     int i=0;
     #ifdef debug_printf
-    printf("reading %s from '%s' (archive stack)\n", name, config_file_single);
+    printf("Reading %s from '%s' (archive stack)\n", name, config_file_single);
     #endif
     while((feof(file_descriptor) == FALSE) && i <= MAX_ARCHIVE_DEPTH )
     {
@@ -221,7 +222,7 @@ void create_cfg (void)  /*создание файлов настроек по у
   write_config_int("fm_toggle", fm_toggle=FALSE);
   write_config_int("move_toggle", move_toggle=TRUE);
   write_config_int("speed_toggle", speed_toggle=FALSE);
-  write_config_int("clock_toggle", clock_toggle=TRUE);
+  write_config_int("show_clock", show_clock=TRUE);
   write_config_int("top_panel_active", top_panel_active=TRUE);
   write_config_int("loop_dir", loop_dir=LOOP_NONE);
   write_config_int("double_refresh", double_refresh=FALSE);
@@ -235,7 +236,8 @@ void create_cfg (void)  /*создание файлов настроек по у
   write_config_int("sleep_timeout", sleep_timeout=60);
   write_config_int("HD_scaling", HD_scaling=FALSE);
   write_config_int("boost_contrast", boost_contrast=FALSE);
-
+  write_config_int("refresh_type", refresh_type=detect_refresh_type());
+  
   write_config_string("top_panel.path", top_panel.path=xgetcwd(NULL));
   write_config_string("top_panel.selected_name", top_panel.selected_name=strdup("../"));
   write_config_string("top_panel.archive_cwd", top_panel.archive_cwd=strdup(""));
@@ -301,7 +303,7 @@ void read_configuration (void)
   fm_toggle=read_config_int("fm_toggle");
   move_toggle=read_config_int("move_toggle");
   speed_toggle=read_config_int("speed_toggle");
-  clock_toggle=read_config_int("clock_toggle");
+  show_clock=read_config_int("show_clock");
   top_panel_active=read_config_int("top_panel_active");
   loop_dir=read_config_int("loop_dir");
   double_refresh=read_config_int("double_refresh");
@@ -315,9 +317,13 @@ void read_configuration (void)
   sleep_timeout=read_config_int("sleep_timeout");
   HD_scaling=read_config_int("HD_scaling");
   boost_contrast=read_config_int("boost_contrast");
-
+  refresh_type=read_config_int("refresh_type");
+  if (refresh_type == REFRESH_UNKNOWN) // Для корректного обновления с прошлых версий 
+    write_config_int("refresh_type", refresh_type=detect_refresh_type());
+  
   read_panel_configuration(&top_panel);
   read_panel_configuration(&bottom_panel);
+
   free (current_dir);
 }
 

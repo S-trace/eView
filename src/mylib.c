@@ -532,9 +532,14 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       #endif
       if (allow_actions)
       {
-        GtkWidget *message=Message (INFORMATION,LAST_FILE_REACHED_EXIT);
-        MessageDieDelayed (message);
+        interface_is_locked=TRUE; // Чтобы не было двойного обновления при закрытии окна сообщения
+        enable_refresh=FALSE;
         die_viewer_window(); /* Если действия разрешены */
+        wait_for_draw();
+        enable_refresh=TRUE;
+        GtkWidget *message=Message (INFORMATION,LAST_FILE_REACHED_EXIT);
+        pthread_t MessageDieDelayed_tid;
+        pthread_create(&MessageDieDelayed_tid, NULL, MessageDieDelayed, (void *)message);
       }
       free(next_name);
       return(strdup(panel->selected_name));
@@ -618,7 +623,10 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
           printf("JUMP BACKWARD FAILED!\n");
           #endif
           if (allow_actions)
+          {
+            interface_is_locked=FALSE;
             Message (ERROR, UNABLE_TO_ENTER_PREVIOUS_DIRECTORY);
+          }
           update(active_panel);
           free(prev_name);
           return find_first_picture_name(panel);
@@ -652,10 +660,14 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       #endif
       if (allow_actions)
       {
+        interface_is_locked=TRUE; // Чтобы не было двойного обновления при закрытии окна сообщения
+        enable_refresh=FALSE;
+        die_viewer_window(); /* Если действия разрешены */
+        wait_for_draw();
+        enable_refresh=TRUE;
         GtkWidget *message=Message (INFORMATION,FIRST_FILE_REACHED_EXIT);
         pthread_t MessageDieDelayed_tid;
         pthread_create(&MessageDieDelayed_tid, NULL, MessageDieDelayed, (void *)message);
-        die_viewer_window(); /* Если действия разрешены */
       }
       free(prev_name);
       return find_first_picture_name(panel);

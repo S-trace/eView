@@ -56,16 +56,16 @@ void /*@null@*/  *sleep_thread(__attribute__((unused)) /*@unused@*/ void* arg)
   #endif
   for (;;)
   {
-    if (sleep_timeout == 0)
-    {
-      #ifdef debug_printf
-      printf("Sleep timeout disabled, ending thread\n");
-      #endif
-      break;
-    }
     (void)usleep(1000000); /* Спим 1 секунду */
     if (--sleep_timer <= 0)
     {
+      if (sleep_timeout == 0)
+      {
+        #ifdef debug_printf
+        printf("Sleep timeout disabled, ending thread\n");
+        #endif
+        break;
+      }
       #ifdef debug_printf
       printf("Sleep timeout reached, go sleep\n");
       #endif
@@ -87,7 +87,7 @@ void /*@null@*/  *sleep_thread(__attribute__((unused)) /*@unused@*/ void* arg)
 //   enable_refresh=FALSE;
 //   update(active_panel);
 //   gtk_widget_show_all(window);
-//   select_file_by_name(active_panel->selected_name, active_panel);
+//   
 //   gtk_widget_queue_draw(GTK_WIDGET(active_panel->list)); /* Заставляем GTK перерисовать список каталогов */
 //   /*   g_signal_connect (G_OBJECT (window), "focus_in_event", */
 //   /*                     G_CALLBACK (focus_in_callback), NULL); */
@@ -99,7 +99,7 @@ void /*@null@*/  *sleep_thread(__attribute__((unused)) /*@unused@*/ void* arg)
 void list_fd(struct_panel *panel) /*добавление списка имен каталогов, файлов и их размеров в панель struct_panel */
 {
   int i = 0;
-  panel->files_num = 0;
+  panel->files_num=0;
   panel->dirs_num=0;
   if (panel->archive_depth > 0) /* Поведение в архиве */
   {
@@ -152,8 +152,10 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
   else /* Поведение в ФС */
   {
     int n = 0;
+    char *previous_path=xgetcwd(NULL);
     struct dirent  **namelist;
     if (panel->path == NULL) return;
+    (void)chdir(panel->path);
     if ((n = scandir(panel->path, &namelist, 0, versionsort)) >= 0)
     {
       for( i = 0; i < n && GTK_IS_WIDGET(main_window); i++ ) /* Первый обход списка - каталоги */
@@ -165,43 +167,65 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
         if (strcmp(namelist[i]->d_name, "..") == 0 && strcmp (panel->path, "/") == 0) {continue;}
         /*Убрать скрытные каталоги */
         if ((show_hidden_files == FALSE) && namelist[i]->d_name[0] == '.' && strcmp(namelist[i]->d_name, "..") != 0) {continue;}
-        (void)stat(namelist[i]->d_name, &stat_p);
-        if (S_ISDIR(stat_p.st_mode))
+        errno=0;
+        if (stat(namelist[i]->d_name, &stat_p) == 0)
         {
-          char *text;
-          text = xconcat_path_file(namelist[i]->d_name, "");
-          panel->dirs_num++;
+          if (S_ISDIR(stat_p.st_mode))
+          {
+            char *text;
+            text = xconcat_path_file(namelist[i]->d_name, "");
+            panel->dirs_num++;
+            #ifdef debug_printf
+            printf("Adding %d dir '%s'\n", i, text);
+            fflush(stdout);
+            #endif
+            add_data_to_list(panel->list, text, 1, NO_AUTOSCROLL, "dir ");
+            free(text);
+          }
+        }
+        else
+        {
           #ifdef debug_printf
-          printf("Adding %d dir '%s'\n", i, text);
-          fflush(stdout);
+          printf("stat() for '%s' failed (%s)\n",namelist[i]->d_name, strerror(errno));
           #endif
-          add_data_to_list(panel->list, text, 1, NO_AUTOSCROLL, "dir ");
-          free(text);
         }
       }
       for( i = 0; i < n && GTK_IS_WIDGET(main_window); i++ )  /* Второй обход списка - файлы */
       {
         struct stat stat_p;
         (void)stat(namelist[i]->d_name, &stat_p);
-        if (!S_ISDIR(stat_p.st_mode))
+        errno=0;
+        if (stat(namelist[i]->d_name, &stat_p) == 0)
         {
-          /*Убрать скрытные файлы */
-          char *fsize, *text;
-          if ((show_hidden_files == FALSE) && namelist[i]->d_name[0] == '.') {continue;}
-          text = namelist[i]->d_name;
-          panel->files_num++;
-          fsize = get_natural_size(stat_p.st_size); /*размер файла */
-          #ifdef debug_printf
-          printf("Adding %d file '%s', size %s\n", i, text, fsize);
-          fflush(stdout);
-          #endif
-          add_data_to_list(panel->list, text, 1, NO_AUTOSCROLL, fsize);
-          free (fsize);
+          if (!S_ISDIR(stat_p.st_mode))
+          {
+            /*Убрать скрытные файлы */
+            char *fsize, *text;
+            if ((show_hidden_files == FALSE) && namelist[i]->d_name[0] == '.') {continue;}
+            text = namelist[i]->d_name;
+            panel->files_num++;
+            fsize = get_natural_size(stat_p.st_size); /*размер файла */
+            #ifdef debug_printf
+            printf("Adding %d file '%s', size %s\n", i, text, fsize);
+            fflush(stdout);
+            #endif
+            add_data_to_list(panel->list, text, 1, NO_AUTOSCROLL, fsize);
+            free (fsize);
+          }
         }
+        else
+        {
+          #ifdef debug_printf
+          printf("stat() for '%s' failed (%s)\n",namelist[i]->d_name, strerror(errno));
+          #endif
+        }
+        
         xfree(&namelist[i]);
       }
     }
-    /*     xfree(&namelist); */
+    (void)chdir(previous_path);
+    free(previous_path);
+    free(namelist);
   }
 }
 
@@ -241,10 +265,17 @@ char *iter_from_filename (const char *const fname, const struct_panel *const pan
   return (NULL);
 }
 
-void update(struct_panel *panel) /*обновление списка */
+void update_window_title(struct_panel *panel)
 {
   char *title;
-  if (LED_notify) set_led_state (LED_state[LED_BLINK_FAST]); /* Индикация активности */
+  asprintf(&title, "Dirs: %d Files: %d %s", panel->dirs_num-1, panel->files_num, VERSION); // Устанавливаем правильное количество файлов в каталоге
+  gtk_window_set_title(GTK_WINDOW(main_window), title);
+  xfree (&title);
+}
+
+void update(struct_panel *panel) /*обновление списка */
+{
+  if (LED_notify) set_led_state (LED_state[LED_BLINK_FAST]);
   panel->files_num=0; /* Обнуляем число файлов в просмотрщике */
   clear_list(panel->list);
   #ifdef debug_printf
@@ -253,10 +284,10 @@ void update(struct_panel *panel) /*обновление списка */
   #endif
   list_fd(panel);
 
-  /*инфа о числе папок и файлов в загловок окна */
-  asprintf(&title, "Dirs: %d Files: %d %s", panel->dirs_num-1, panel->files_num, VERSION);
-  gtk_window_set_title(GTK_WINDOW(main_window), title);
-  xfree (&title);
+  if (panel == active_panel)
+  {
+    update_window_title(panel);
+  }
   if (panel->archive_depth > 0) /* Пишем имя архива с путём в поле снизу */
   {
     char *path=xconcat_path_file(panel->archive_stack[panel->archive_depth], panel->archive_cwd);
@@ -267,6 +298,8 @@ void update(struct_panel *panel) /*обновление списка */
     gtk_label_set_text (GTK_LABEL(panel->path_label), panel->path);
   //   free(model); // Не надо - карается abort()ом
   select_file_by_name (panel->selected_name, panel);
+  gtk_widget_queue_draw(GTK_WIDGET(active_panel->list)); /* Заставляем GTK перерисовать список каталогов */
+  wait_for_draw();
   if (LED_notify) set_led_state (LED_state[LED_OFF]); /* Индикация активности */
 }
 
@@ -280,17 +313,6 @@ void move_selection(const char *const move_to, const struct_panel *const panel) 
   gtk_tree_view_set_cursor (panel->list, path, NULL, FALSE);
   gtk_tree_path_free(path);
   wait_for_draw();
-}
-
-void menu_destroy (GtkWidget *dialog)
-{
-  #ifdef debug_printf
-  printf("Destroying menu\n");
-  #endif
-  gtk_widget_destroy(dialog);
-  gtk_widget_grab_focus (GTK_WIDGET(active_panel->list));
-  /*   g_signal_handlers_unblock_by_func( window, focus_in_callback, NULL ); */
-  /*   g_signal_handlers_unblock_by_func( window, focus_out_callback, NULL ); */
 }
 
 void after_delete_update (struct_panel *panel)
@@ -323,14 +345,13 @@ void delete_dir_or_file (void)
     }
     wait_for_draw();
     enable_refresh=TRUE;
-    e_ink_refresh_local();
   }
+  e_ink_refresh_local();
 }
 
 void move_dir_or_file (void)
 {
   if ( fm_toggle == FALSE) return;
-
   if ((move_toggle == FALSE) || ((move_toggle == TRUE) && confirm_request(MOVE_CONFIRM, MOVE, GTK_STOCK_CANCEL)))
   {
     enable_refresh=FALSE;
@@ -350,8 +371,8 @@ void move_dir_or_file (void)
     free(str_iter);
     wait_for_draw();
     enable_refresh=TRUE;
-    e_ink_refresh_full();
   }
+  e_ink_refresh_full();
 }
 
 void copy_dir_or_file (void)
@@ -373,10 +394,13 @@ void copy_dir_or_file (void)
   e_ink_refresh_full();
 }
 
-void panel_selector (struct_panel *focus_to) /* Принимает указатель на panel - &top_panel, &bottom_panel или inactive_struct_panel */
+void panel_selector (struct_panel *panel) /* Принимает указатель на panel - &top_panel, &bottom_panel или inactive_struct_panel */
 {
-  if (GTK_IS_WIDGET(GTK_WIDGET(focus_to->list))) /* Если таблица на которую мы собираемся переключиться существует - то фокуссируемся на ней */
-    gtk_widget_grab_focus (GTK_WIDGET(focus_to->list));
+  if (GTK_IS_WIDGET(GTK_WIDGET(panel->list))) /* Если таблица на которую мы собираемся переключиться существует - то фокуссируемся на ней */
+  {
+    gtk_widget_grab_focus (GTK_WIDGET(panel->list));
+    update_window_title(panel);
+  }
   else /* А иначе исходим из того, что верхняя панель существует всегда */
   {
     if (GTK_IS_WIDGET(GTK_WIDGET(top_panel.list)))
@@ -385,6 +409,7 @@ void panel_selector (struct_panel *focus_to) /* Принимает указат�
       printf ("Specified panel is not exist, it's bad - check Your code!\n");
       #endif
       gtk_widget_grab_focus(GTK_WIDGET(top_panel.list));
+      update_window_title(&top_panel);
     }
     else
     {
@@ -394,6 +419,7 @@ void panel_selector (struct_panel *focus_to) /* Принимает указат�
     }
   }
   wait_for_draw();
+  e_ink_refresh_default();
 }
 
 void second_panel_show(void)
@@ -407,7 +433,6 @@ void second_panel_show(void)
   gtk_widget_show_all (main_window);
   (void)g_signal_connect_swapped (G_OBJECT (bottom_panel.table), "destroy", G_CALLBACK (panel_selector), &top_panel);
   wait_for_draw();
-//   e_ink_refresh_local();
 }
 
 void init (void)
@@ -431,6 +456,13 @@ void init (void)
   detect_hardware();
   #ifdef debug_printf
   set_led_state (LED_state[LED_ON]);
+  xsystem("uname -a"); // Проверка машины:
+  // GTK Ritmix RBK700HD: 
+  // Linux sibrary 2.6.24.2-Boeye #26 PREEMPT Sat Oct 22 11:30:10 CST 2011 armv5tejl unknown
+  // Qt GMini M6HD:
+  // Linux boeye 2.6.24.2-Boeye #346 PREEMPT Tue Jul 17 13:50:49 CST 2012 armv5tejl GNU/Linux
+  
+  
   #endif
   if (XOpenDisplay(NULL))
   {
@@ -451,6 +483,7 @@ void init (void)
     {
       asprintf(&message, GTK_PARTS_IS_OUTDATED, string, NEEDED_GTK_PARTS_VERSION);
       Qt_error_message(message);
+      free(message); // Хотя этого уже никто не увидит...
     }
 
     #ifdef debug_printf
@@ -554,6 +587,7 @@ void sigsegv_handler(void) /* Обработчик для вывода Backtrace
 
 int main (int argc, char **argv)
 {
+  GtkWidget *starting_message;
   signal(SIGSEGV, (__sighandler_t)sigsegv_handler);
   signal(SIGABRT, (__sighandler_t)sigsegv_handler);
   init();
@@ -588,8 +622,7 @@ int main (int argc, char **argv)
   printf ("Starting eView in directory '%s'\n",directory);
   free (directory);
   #endif
-  Message(EVIEW_IS_STARTING, PLEASE_WAIT);
-
+  
   if (access(".eView/", F_OK) != 0) /* Действия когда каталог не существует:  */
   {
     create_cfg ();
@@ -597,10 +630,16 @@ int main (int argc, char **argv)
     (void)chdir("/userdata/media/mmcblk0p1/"); /* Для старых книг */
     /* Неизвестно, где мы оказались после предыдущих двух переходов (сработал только один):  */
     top_panel.path = xgetcwd(top_panel.path);
+    bottom_panel.path = xgetcwd(bottom_panel.path);
     write_config_string("top_panel.path", top_panel.path );
+    write_config_string("bottom_panel.path", bottom_panel.path );
   }
   else
     read_configuration();
+
+  starting_message=Message(EVIEW_IS_STARTING, PLEASE_WAIT);
+  wait_for_draw();
+  enable_refresh=FALSE;
   /*debug_msg_win (); //окно только для отладки */
   set_brightness(backlight);
   main_window = window_create(width_display, height_display, 0, VERSION, NOT_MODAL);
@@ -629,23 +668,20 @@ int main (int argc, char **argv)
     active_panel=&top_panel;
     inactive_panel=NULL;
   }
-
-  if (chdir (active_panel->path) == FALSE) /* переход в последний рабочий каталог */
+  
+  errno=0;
+  if (chdir (active_panel->path) == -1) /* переход в последний рабочий каталог */
   {
     #ifdef debug_printf
     printf ("Chdir to '%s' failed because %s!\n", active_panel->path, strerror(errno));
     #endif
   }
   
-  enable_refresh=FALSE;
   #ifndef __amd64
-  if (clock_toggle) /* Показываем часики */
-    gtk_window_unfullscreen  (GTK_WINDOW(main_window));
-  else /* Скрываем их */
-    gtk_window_fullscreen  (GTK_WINDOW(main_window));
+  if (show_clock == FALSE) /* Скрываем часики */
+    gtk_window_fullscreen (GTK_WINDOW(main_window));
   #endif
   panel_selector (active_panel); /* Переключаемся в активную панель! */
-  gtk_widget_destroy(MessageWindow);
   gtk_widget_show_all(main_window); /* Рисуем интерфейс */
   
   // Строим списки файлов в панелях
@@ -654,24 +690,26 @@ int main (int argc, char **argv)
   else
     update(active_panel);
   
+  select_file_by_name(active_panel->selected_name, active_panel);
+  
   if (inactive_panel != NULL)
   {
     if (inactive_panel->archive_depth > 0 )
       enter_archive(inactive_panel->archive_stack[inactive_panel->archive_depth], inactive_panel, FALSE);
     else
       update(inactive_panel);
-  } 
-    
-  wait_for_draw();/* Ожидаем отрисовки всего */
-  enable_refresh=TRUE;
+    select_file_by_name(inactive_panel->selected_name, inactive_panel);
+  }
+  else
   
-  if (is_picture(active_panel->last_name) ) /* Открываем последнюю отображённую картинку */
+  gtk_widget_destroy(starting_message);
+  wait_for_draw();/* Ожидаем отрисовки всего */
+  
+  enable_refresh=TRUE;
+  if (is_picture(active_panel->last_name)) /* Открываем последнюю отображённую картинку */
     ViewImageWindow (active_panel->last_name, active_panel, TRUE);
   else
     e_ink_refresh_full();
-  /*   g_signal_connect (G_OBJECT (window), "show", G_CALLBACK (e_ink_refresh_full), NULL); */
-  /*   g_signal_connect_after (current_panel->list, "move_cursor", G_CALLBACK (e_ink_refresh_default), NULL ); // Обновление экрана при сдвиге выделения */
-  interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
   if (QT) 
   {
     preload_next_screensaver(); // Загружаем первую заставку в память для мгновенного отображения
@@ -679,6 +717,7 @@ int main (int argc, char **argv)
   }
   if (LED_notify)
     set_led_state (LED_state[LED_OFF]);
+  interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
   gtk_main ();
   return 0;
 }
