@@ -79,6 +79,7 @@ release:
 	cp $(name)_reset_configuration.sh $(name)$(version)/
 	cp readme.txt $(name)$(version)/
 	cp S-trace-changelog.txt $(name)$(version)/
+	cp hardware_support.txt $(name)$(version)/
 	cp LICENSE $(name)$(version)/
 	zip -r $(name)$(version).zip $(name)$(version)/
 	mv $(name)$(version).zip $(name)$(version)/
