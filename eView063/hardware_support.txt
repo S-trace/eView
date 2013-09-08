@@ -1,0 +1,63 @@
+Программа eView предназначена для чтения манги и комиксов на электронных книгах Boeye Sibrary (в России известны под торговыми марками Ritmix, Digma, GMini, Prestigio, Qumo). 
+Состояние поддержки оборудования на данный момент: 
+
+Полная поддержка: 2 устройства
+eView активно тестировалась на данных устройствах, выявленные баги исправлялись: 
+http://www.ritmixrussia.ru/products/rbk-700hd (съёмная задняя крышка, 128Mb RAM, экран 6" Pearl 768x1024, CPU Samsung S3C2416 400MHz) (S-trace)
+http://www.digma.ru/products/catalog/ebook/ebook-e-ink/s605 (несъёмная задняя крышка, 64Mb RAM, экран 6" Pearl 768x1024, CPU ???) (userok@ddixlab.ru, PuzzleMaster@ddixlab.ru)
+
+Неплохая поддержка: 
+eView тестировалась на данных устройствах, основная функциональность реализована, но имеются некоторые недостатки не позволяющие назвать поддержку полной.
+http://www.digma.ru/products/catalog/ebook/ebook-e-ink/r60g (128Mb RAM, экран 6" Pearl 758x1024 с подсветкой, CPU Rockchip 600MHz) - некорректное управление светодиодом, периодическое подвисание интерфейса (забытая блокировочка обновления где-то), неполная прорисовка интерфейса при обновлениях экрана (лечится принудительным обновлением) - gmini C6LHD с прошивкой от digma R60G. (аrtpainter@ddixlab.ru)
+http://www.digma.ru/products/catalog/ebook/ebook-e-ink/e600 (съёмная задняя крышка, 128Mb RAM, экран 6" Pearl 600x800, CPU Samsung S3C2416 400MHz) - старая прошивка, нет возможности инсталляции, управление светодиодом не тестировалось, нет вывода информации об энергопитании (max13@the-ebook.org)
+
+Полная поддержка, предположительно: 
+eView не тестировалась на данных устройствах, но (судя по строению файлов прошивки) должна работать не хуже, чем на устройствах с полной поддержкой.
+http://www.ritmixrussia.ru/products/rbk-700 (съёмная задняя крышка, 128Mb RAM, экран 6" Pearl 600x800, CPU Samsung S3C2416 400MHz) для серийных номеров, начинающихся с 2011 и выше
+http://www.digma.ru/products/catalog/ebook/ebook-e-ink/e601hd (128Mb RAM, экран 6" Pearl 768x1024, CPU Samsung S3C2416 400MHz) - аналог Ritmix RBK700HD
+http://www.digma.ru/products/catalog/ebook/ebook-e-ink/e601 (128Mb RAM, экран 6" Pearl 600x800, CPU Samsung S3C2416 400MHz) - аналог Ritmix RBK700 новой версии
+http://www.digma.ru/products/catalog/ebook/ebook-e-ink/s605f (несъёмная задняя крышка, 128Mb RAM, FLEX экран 6" Pearl 768x1024, CPU Samsung 2416 533MHz) - аналог Digma S605 
+http://www.digma.ru/products/catalog/ebook/ebook-e-ink/s602w (???Mb RAM, экран 6" Pearl 768x1024, CPU ???, QWERTY, WLAN)
+http://www.digma.ru/products/catalog/ebook/ebook-e-ink/s602w (???Mb RAM, экран 6" Pearl 768x1024, CPU ???, QWERTY)
+http://www.g-mini.ru/products/19 GMini MagicBook M6HD (128Mb RAM, экран 6" Pearl 768x1024, CPU Samsung S3C2416 400MHz) - аналог Ritmix RBK700HD
+http://www.g-mini.ru/products/33 GMini MagicBook M6FHD (128Mb RAM, экран 6" Pearl 768x1024 FLEX, CPU Samsung S3C2416 400MHz) - аналог Ritmix RBK700HD
+http://www.qumo.ru/catalogue/products/508.xhtml - Qumo Libro II (128Mb RAM, экран 6" Pearl 768x1024, CPU Samsung S3C2416 400MHz, QWERTY, WLAN)
+
+Средний уровень, предположительно:
+eView не тестировалась на данных устройствах, но теоретически должна работать. Возможно, не сработает инсталляция eView в прошивку, не будет отображаться информация о состоянии энергопитания или управление светодиодом.
+http://www.digma.ru/products/catalog/ebook/ebook-e-ink/s605t (???Mb RAM, сенсорный экран 6" Pearl 600x800, CPU ???) - аналог Digma S605 - поддержка управления с использованием сенсорного экрана в eView ещё не реализована
+http://www.digma.ru/products/catalog/ebook/ebook-e-ink/e605 (несъёмная задняя крышка, ???Mb RAM, экран 6" Pearl 600x800, CPU Rockchip RK2818 600MHz) - аналог Digma R60G
+http://www.g-mini.ru/products/52 - Gmini MagicBook C6LHD (128Mb RAM, экран 6" Pearl 768x1024 с подсветкой, CPU Rockchip2818, 600 МГц) - аналог Digma R60G
+http://www.g-mini.ru/products/50 - Gmini MagicBook C6HD (128Mb RAM, экран 6" Pearl 768x1024, CPU Rockchip2818, 600MHz) - аналог Digma R60G без подсветки
+http://www.g-mini.ru/products/28 - Gmini MagicBook R6HD (128Mb RAM, экран 6" Pearl 768x1024, CPU Samsung 2416, 533MHz) - аналог Ritmix RBK700HD, но прошивка не встала на RBK700HD, возможны проблемы с обновлением экрана
+http://www.g-mini.ru/products/53 - Gmini MagicBook R6L (128Mb RAM, экран 6" Pearl 600x800 с подсветкой, Rockchip RK2818 600MHz) - возможны проблемы с обновлением экрана, может не работать управление подсветкой
+http://www.g-mini.ru/products/42 - Gmini MagicBook Z6  (128Mb RAM, экран 6" Pearl 600x800 с подсветкой, Rockchip RK2818 600MHz) - возможны проблемы с обновлением экрана
+http://www.g-mini.ru/products/32 - Gmini MagicBook V6HD (128Mb RAM, экран 6" Pearl 768x1024, CPU Samsung 2416, 533MHz, QWERTY, WLAN) - возможны проблемы с обновлением экрана
+http://www.ritmixrussia.ru/products/rbk-700 для серийных номеров, начинающихся с 2010 и ниже (съёмная задняя крышка, 128Mb RAM, экран 6" Pearl 600x800, CPU Samsung S3C2416 400MHz) - старая прошивка (см. выше)
+http://www.digma.ru/products/catalog/ebook/ebook-e-ink/e501 (съёмная задняя крышка, 128Mb RAM, экран 6" Pearl 600x800, CPU Samsung S3C2416 400MHz) - старая прошивка (см. выше) - аналог Ritmix RBK700 старой версии
+http://www.digma.ru/products/catalog/ebook/ebook-e-ink/e500 (несъёмная задняя крышка, 128Mb RAM, экран 6" Pearl 600x800, CPU Samsung S3C2416 400MHz) - старая прошивка (см. выше) - аналог Ritmix RBK700 старой версии
+http://www.digma.ru/products/catalog/ebook/ebook-e-ink/q1000 (???Mb RAM, экран 9,7" Pearl 1200 х 825, CPU ???, QWERTY, WLAN) - старая прошивка (см. выше) 
+http://www.qumo.ru/catalogue/products/323.xhtml - Qumo Colibri (128Mb RAM, экран 5" Pearl 600x800, CPU Samsung S3C2416 400MHz) - старая прошивка (см. выше) 
+http://www.qumo.ru/catalogue/products/313.xhtml - Qumo Libro (128Mb RAM, экран 6" Pearl 600x800, CPU Samsung S3C2416 400MHz, QWERTY) - старая прошивка (см. выше) 
+
+Не поддерживается пока (поддержка возможна, предположительно):
+eView не тестировалась на данных устройствах, но возможно сможет работать. Вероятно потребуется доработка программы под эти устройства.
+http://www.ritmixrussia.ru/products/rbk-520 (64Mb RAM, экран 6" 600x800, CPU STMP3780)
+http://www.ritmixrussia.ru/products/rbk-900 (128Mb RAM, сенсорный экран 6" 600x800, CPU Freescale iMX35XX)
+http://www.digma.ru/products/catalog/ebook/ebook-e-ink/q600 (64Mb RAM, экран 6" 600x800, CPU Freescale STMP3780 (ARM926, 454M))
+http://www.digma.ru/products/catalog/ebook/ebook-e-ink/e5 (???Mb RAM, экран 5" 600x800, CPU Freescale?)
+http://www.digma.ru/products/catalog/ebook/ebook-e-ink/e6 (???Mb RAM, экран 6" 600x800, CPU Freescale?)
+http://www.g-mini.ru/products/28 GMini MagicBook R6HD (128Mb RAM, экран 6" Pearl 768x1024 FLEX, CPU Samsung 2416, 533MHz)
+http://www.ritmixrussia.ru/products/rbk-750 (Несъёмная задняя крышка, QWERTY-клавиатура, WLAN, 128Mb RAM, экран 6" Pearl 600x800, CPU Samsung 533MHz) - Нет прошивки, оценить невозможно
+http://www.qumo.ru/catalogue/products/556.xhtml Qumo Libro Classic (128Mb RAM, экран 6" Pearl 600x800, CPU Samsung 2416, 533MHz) - Нет прошивки, оценить невозможно
+http://shop.prestigio.ru/ebook-readers/16-prestigio-per5162b-5291485338411.html - Prestigio PER5162B (128Mb RAM, экран 6" Pearl 600x800, CPU Samsung 533MHz, QWERTY, WLAN) - Прошивка отсутствует
+
+Не поддерживается пока (возможность поддержки неизвестна):
+http://www.ritmixrussia.ru/products/rbk-500 (32Mb RAM, экран 6" 600x800, CPU Samsung S3C2440 400 МГц) - распаковать прошивку не удалось, мало дискового пространства и оперативки, набор библиотек неизвестен, но процессор совместимый.
+http://www.g-mini.ru/products/31 GMini MagicBook M61SHD (???Mb RAM, экран 6" 768x1024, CPU Ingenic 4760 600 МГц)
+http://www.qumo.ru/catalogue/products/723.xhtml Qumo Libro Basic - Нет информации об устройстве 
+http://www.qumo.ru/catalogue/products/724.xhtml Qumo Libro Lux - Нет информации об устройстве 
+http://www.qumo.ru/catalogue/products/725.xhtml Qumo Libro TouchLux - Нет информации об устройстве 
+
+Неподдерживаемые модели: 
+Все книги под управлением Android.
