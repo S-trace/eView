@@ -41,7 +41,7 @@ int check_key_press(guint keyval, struct_panel *panel) /* Возвращает T
       pthread_cancel(suspend_helper_tid); // Принудительно завершаем работу потока, который усыпляет книгу (если он сам не завершился ещё)
       if(was_in_picture_viewer)
       {
-        (void)show_image(&current, panel, FALSE);
+        (void)show_image(&current, panel, FALSE, current_page);
         e_ink_refresh_full();
       }
       else
@@ -852,7 +852,7 @@ void enter_suspend(struct_panel *panel)
     suspended=keepaspect=TRUE;
     if (in_picture_viewer)
     {
-      (void)show_image(&screensaver, panel, FALSE);
+      (void)show_image(&screensaver, panel, FALSE, PAGE_FULL);
       e_ink_refresh_full();
       was_in_picture_viewer=in_picture_viewer;
     }

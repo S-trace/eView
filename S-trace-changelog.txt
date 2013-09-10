@@ -193,6 +193,7 @@ x Баг: При покидании вложенного архива оказы
 http://www.the-ebook.org/forum/viewtopic.php?t=20294
 http://ddixlab.ru/forum/viewtopic.php?f=17&t=2804
 http://list.ivsor.net/forum/viewtopic.php?f=4&t=10
+http://rutracker.org/forum/viewtopic.php?t=4125521&start=120
 
 063 от 08.sep.2013
 + Поддержка LED на Digma E600 // TODO: тестирование!
@@ -223,3 +224,7 @@ http://list.ivsor.net/forum/viewtopic.php?f=4&t=10
 * Теперь строка с количеством файлов обновляется при смене панелей, чтобы соответствовать текущей панели
 * Исправлена ошибка, приводящая к неправильной прокрутке списка назад (построчно, а не постранично)
 x Баг: не всегда закрывается автоматически сообщение о достижении конца каталога или зацикливании, выходе в ФМ на прошивках GTK
+https://github.com/S-trace/eView/raw/master/eView_screenshoots.rar]eView_screenshoots.rar - архив с несколькими скриншотами интерфейса программы, по ним можно оценить возможности и гибкость настроек.
+
+064t1 от 10.sep.2013
+* Использование gdk_subpixbuf вместо scrolled window для просмотра изображений с поворотом

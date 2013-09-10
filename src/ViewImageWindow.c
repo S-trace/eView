@@ -28,6 +28,7 @@ int shift_val; /*на сколько сдвигать картинку */
 int value;     /*текущая позиция сдвига */
 int move_left_to_left; /*флаг слайдера, нужен только для правильного обновления на книге */
 int in_picture_viewer=FALSE; /* Индикатор, что открыто окно картинки (для корректной работы скринсейвера) */
+int current_page;
 
 /* void print_adjust(GtkAdjustment *adjust, gpointer data) */
 /* { // это только для отладки */
@@ -120,6 +121,8 @@ void copy_image(image *target, image *source)
 {
   strncpy(target->name, source->name, PATHSIZE);
   target->pixbuf=source->pixbuf;
+  target->left_page_subpixbuf=source->left_page_subpixbuf;
+  target->right_page_subpixbuf=source->right_page_subpixbuf;
   target->valid=source->valid;
   copy_image_settings(target,source);
 }
@@ -151,7 +154,11 @@ void reset_image(image *const target)
   target->name[0] = '\0';
   target->valid=target->keepaspect=target->rotate=target->frame=target->crop=target->width=target->height=0; /* Сбрасываем всё остальное в структуре */
   target->aspect_rate=(double)0;
+  pixbuf_unref(target->left_page_subpixbuf);
+  pixbuf_unref(target->right_page_subpixbuf);
   pixbuf_unref(target->pixbuf);
+  target->left_page_subpixbuf=NULL;
+  target->right_page_subpixbuf=NULL;
   target->pixbuf=NULL;
 }
 
@@ -304,18 +311,33 @@ gboolean load_image(const char *const filename, const struct_panel *const panel,
       free (extracted_file_name);
     }
     image_resize (target);
-    if (boost_contrast)
-      adjust_contrast (target, 512); // Увеличиваем контраст в два раза
+    if (boost_contrast) // Увеличиваем контраст в два раза
+      adjust_contrast (target, 512);
+    target->left_page_subpixbuf=gdk_pixbuf_new_subpixbuf(target->pixbuf, 0, 0, target->width/2, target->height);
+    target->right_page_subpixbuf=gdk_pixbuf_new_subpixbuf(target->pixbuf, target->width/2, 0, target->width/2, target->height);
   }
   return TRUE;
 }
 
-gboolean show_image(image *target, struct_panel *panel, int enable_actions) /* Показываем картинку */
+gboolean show_image(image *target, struct_panel *panel, int enable_actions, int page) /* Показываем картинку */
 {
   #ifdef debug_printf
   printf("Going to show '%s' (enable_actions=%d)\n", target->name, enable_actions);
   #endif
-  gtk_image_set_from_pixbuf (GTK_IMAGE(gimage), target->pixbuf);
+  switch (page){
+    case PAGE_FULL:
+      gtk_image_set_from_pixbuf (GTK_IMAGE(gimage), target->pixbuf);
+      break;
+    case PAGE_LEFT:
+      gtk_image_set_from_pixbuf (GTK_IMAGE(gimage), target->left_page_subpixbuf);
+      break;
+    case PAGE_RIGHT:
+      gtk_image_set_from_pixbuf (GTK_IMAGE(gimage), target->right_page_subpixbuf);
+      break;
+    default: 
+      break;
+  }
+  current_page=page;
   #ifdef debug_printf
   printf("showed '%s' (enable_actions=%d)\n", target->name, enable_actions);
   #endif
@@ -347,7 +369,7 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
   #endif
   switch (event->keyval){
     case KEY_PGDOWN:/*GDK_Right */
-    case KEY_RIGHT:/*GDK_Right */
+    case KEY_RIGHT:/*GDK_Right */ {
       interface_is_locked=TRUE; /* Блокируем интерфейс на время длительной операции по показу картинки */
       move_left_to_left = FALSE;
       if (frame && current.frames >= 2)/* Действия при просмотре в покадровом режиме */
@@ -370,21 +392,10 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
         {
           if (manga)
           {
-            value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust)); /* Получаем положение картинки в окне */
-            #ifdef debug_printf
-            printf("In manga mode gtk_adjustment_get_value returned %d, but R_SHIFT=%d\n", value, R_SHIFT);
-            #endif
-            if (value == R_SHIFT) /* Если она у правого края */
+            if (current_page == PAGE_RIGHT) /* Если она у правого края */
             {
-              #ifdef debug_printf
-              printf("In manga mode scrolling to %d\n", L_SHIFT);
-              #endif
-              gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), L_SHIFT); /* Перемещаем её в левый край */
-              value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust)); /* Получаем положение картинки в окне */
+              (void)show_image (&current, panel, TRUE, PAGE_LEFT);
               wait_for_draw();
-              #ifdef debug_printf
-              printf("In manga mode gtk_adjustment_get_value returned new value %d\n", value);
-              #endif
               if (double_refresh) e_ink_refresh_local();
               e_ink_refresh_full ();
               interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
@@ -393,10 +404,9 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
           }
           else
           {
-            value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
-            if (value == L_SHIFT)
+            if (current_page == PAGE_LEFT)
             {
-              gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), R_SHIFT);
+              (void)show_image (&current, panel, TRUE, PAGE_RIGHT);
               if (double_refresh) e_ink_refresh_local();
               e_ink_refresh_full ();
               interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
@@ -429,16 +439,18 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
         return FALSE;
       }
       /*g_print ("загрузка новой картинки\n"); */
+      reset_image(&current);
       (void)load_image (next_file, panel, TRUE, &current);
-      (void)show_image (&current, panel, TRUE);
+      if (!rotate) 
+        (void)show_image (&current, panel, TRUE, PAGE_FULL);
+      else if (manga)
+        (void)show_image (&current, panel, TRUE, PAGE_RIGHT);
+      else 
+        (void)show_image (&current, panel, TRUE, PAGE_LEFT);
       free(next_file);
 
       if (frame && current.frames >= 2)
         move_left_to_left = TRUE;
-      if (manga)
-        gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), R_SHIFT);
-      else
-        gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), L_SHIFT);
       if (move_left_to_left) move_left_to_left = FALSE;
       wait_for_draw(); /* Ожидаем отрисовки всего */
       if (panel == &top_panel)
@@ -455,10 +467,10 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
       }
       interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
       return FALSE;
-
-      case KEY_PGUP:/*GDK_Left: */
-      case KEY_LEFT:/*GDK_Left: */
-        interface_is_locked=TRUE; /* Блокируем интерфейс на время длительной операции по показу картинки */
+    }
+    case KEY_PGUP:/*GDK_Left: */
+    case KEY_LEFT:/*GDK_Left: */ {
+      interface_is_locked=TRUE; /* Блокируем интерфейс на время длительной операции по показу картинки */
         if ((frame == TRUE) && current.frames >= 2)
         {
           value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
@@ -476,11 +488,11 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
         {
           if (rotate)
           {
-            value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
             if (manga)
             {
-              if (value == L_SHIFT) {
-                gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), R_SHIFT);
+              if (current_page == PAGE_LEFT) 
+              {
+                (void)show_image (&current, panel, TRUE, PAGE_RIGHT);
                 if (double_refresh) e_ink_refresh_local();
                 e_ink_refresh_full ();
                 interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
@@ -489,8 +501,8 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
             }
             else
             {
-              if (value == R_SHIFT) {
-                gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), L_SHIFT);
+              if (current_page == PAGE_LEFT) {
+                (void)show_image (&current, panel, TRUE, PAGE_LEFT);
                 if (double_refresh) e_ink_refresh_local();
                 e_ink_refresh_full ();
                 interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
@@ -499,7 +511,6 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
             }
           }
         }
-        if (rotate) gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), R_SHIFT);
         next_file = prev_image (panel->selected_name, TRUE, panel);
         if (next_file==NULL)
         {
@@ -514,7 +525,12 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
           return FALSE;
         }
         (void)load_image (panel->selected_name, panel, TRUE, &current);
-        (void)show_image (&current, panel, TRUE);
+        if (!rotate) 
+          (void)show_image (&current, panel, TRUE, PAGE_FULL);
+        else if (manga)
+          (void)show_image (&current, panel, TRUE, PAGE_LEFT);
+        else 
+          (void)show_image (&current, panel, TRUE, PAGE_RIGHT);
         free(next_file);
 
         if (manga)
@@ -543,7 +559,7 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
         }
         interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
         return FALSE;
-
+    }
         case KEY_BACK:/*GDK_x: */
           die_viewer_window();
           return FALSE;
@@ -564,7 +580,7 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
           if (boost_contrast) write_config_int("boost_contrast", boost_contrast=FALSE);
           else write_config_int("boost_contrast", boost_contrast=TRUE);
           load_image(panel->last_name, panel, TRUE, &current);
-          show_image(&current, panel, TRUE);
+          show_image(&current, panel, TRUE, current_page);
           e_ink_refresh_full();
           return FALSE;
 
@@ -748,8 +764,13 @@ void ViewImageWindow(const char *file, struct_panel *panel, int enable_actions) 
   gimage = gtk_image_new ();
 
   (void)load_image(file, panel, enable_actions, &current);
-  (void)show_image(&current, panel, enable_actions);
-
+  if (!rotate) 
+    (void)show_image (&current, panel, TRUE, PAGE_FULL);
+  else if (manga)
+    (void)show_image (&current, panel, TRUE, PAGE_RIGHT);
+  else 
+    (void)show_image (&current, panel, TRUE, PAGE_LEFT);
+  
   adjust = gtk_adjustment_new (0.0, 0.0, 200.0, 0.1, 1.0, 1.0);
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW(scrolled_window), GTK_WIDGET(gimage));
   gtk_scrolled_window_set_hadjustment (GTK_SCROLLED_WINDOW(scrolled_window), GTK_ADJUSTMENT(adjust));

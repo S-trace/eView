@@ -262,7 +262,7 @@ void picture_menu_destroy (struct_panel *panel) // Уничтожаем меню
   {
     char *current_name=strdup(current.name);
     (void)load_image(current_name, panel, TRUE, &current); // Повторно загружаем и показываем картинку для учёта изменений
-    (void)show_image(&current, panel, TRUE);
+    (void)show_image(&current, panel, TRUE, current_page);
     free(current_name);
     viewed_pages--; // Откатываем назад счётчик страниц - после открытия-закрытия меню он не должен изменяться
   }
