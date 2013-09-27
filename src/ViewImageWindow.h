@@ -10,20 +10,22 @@
 #define PAGE_LEFT 1
 #define PAGE_RIGHT 2
 
+#define FRAMES_MAX 128 // Для веб-манги (длиннющая простыня из нескольких тысяч пикселей высоты и одного экрана ширины)
 typedef struct {
   char name[PATHSIZE+1];
-  GdkPixbuf *pixbuf;
-  GdkPixbuf *left_page_subpixbuf;
-  GdkPixbuf *right_page_subpixbuf;
-  int width, height; /* Размеры картинки */
-  int frames;   /*количество найденых кадров */
-  double aspect_rate; /*aspect rate */
+  GdkPixbuf *pixbuf[3]; // 3 - количество пиксбуфов - 0 для всей картинки, 1 - левая страница, 2 - правая
+  int width[3], height[3]; /* Размеры картинки */
+  int frames[3];     /* Количество найденых кадров */
+  int frame_map[3][2][FRAMES_MAX]; // Карта размещения кадров
+  double aspect_rate[3]; /*aspect rate */
   int keepaspect;
   int crop;
   int rotate;
   int frame;
+  int split_spreads;
   int HD_scaling;
   int boost_contrast;
+  int pages_count;
   gboolean valid;
 } image;
 extern image current, preloaded, cached, screensaver;

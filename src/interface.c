@@ -16,7 +16,7 @@
 
 static GtkWidget *create, *copy, *moving, *del, *options, *exit_button; // Кнопки в главном меню
 static GtkWidget *fmanager, *move_chk, *clock_panel, *ink_speed, *show_hidden_files_chk, *LED_notify_checkbox, *reset_configuration, *backlight_scale, *sleep_timeout_scale, *about_program; // Пункты в настройках ФМ
-static GtkWidget *crop_image, *rotate_image, *manga_mode, *frame_image, *keepaspect_image, *double_refresh_image, *viewed, *preload_enabled_button, *caching_enabled_button, *suppress_panel_button, *HD_scaling_button, *boost_contrast_button, *power_information_button; // Чекбоксы в настройках вьювера
+static GtkWidget *crop_image, *split_spreads_button, *manga_mode, *rotate_image, *frame_image, *overlap_scale, *overlap_frame, *keepaspect_image, *double_refresh_image, *viewed, *preload_enabled_button, *caching_enabled_button, *suppress_panel_button, *HD_scaling_button, *boost_contrast_button, *power_information_button; // Чекбоксы в настройках вьювера
 static GtkWidget *loop_dir_none, *loop_dir_loop, *loop_dir_next, *loop_dir_exit, *loop_dir_frame, *loop_dir_vbox; // Радиобаттон в настройках вьювера
 static GtkWidget *picture_menu, *main_menu, *options_menu;
 int need_refresh=FALSE;
@@ -102,72 +102,76 @@ void crop_image_toggler () // Callback для галки обрезки поле
   need_refresh=TRUE;
   wait_for_draw();
   if (QT) usleep (QT_REFRESH_DELAY);
-  e_ink_refresh_part ();
+  e_ink_refresh_local ();
 }
 
-void rotate_image_toggler () // Callback для галки поворота
+void split_spreads_toggler () // Callback для галки поворота
 {
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rotate_image))) { // Если галка активируется
-    rotate = TRUE; // Включаем поворот
-    gtk_widget_set_sensitive(frame_image, TRUE); // И включаем галку умного листания
-    gtk_widget_set_sensitive(manga_mode, TRUE); // И включаем галку режима манги
-  } else { // Если галка снимается
-    rotate = FALSE; // Отключаем поворот
-
-    write_config_int("frame", frame=FALSE);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(frame_image), FALSE); // Отключаем с ним умное листание
-    gtk_widget_set_sensitive(frame_image, FALSE); // И блокируем его
-
-    write_config_int("manga", manga=FALSE); // Отключаем режим манги
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(manga_mode), FALSE); // Отключаем с ним режим манги
-    gtk_widget_set_sensitive(manga_mode, FALSE); // И блокируем его
-  }
-  write_config_int("rotate", rotate); // Сохраняем конфиги
+  write_config_int("split_spreads", split_spreads=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(split_spreads_button)));
+  if (split_spreads) 
+    gtk_widget_set_sensitive(manga_mode, TRUE);
+  else
+    gtk_widget_set_sensitive(manga_mode, FALSE);
   need_refresh=TRUE;
   wait_for_draw();
   if (QT) usleep (QT_REFRESH_DELAY);
-  e_ink_refresh_part ();
+  e_ink_refresh_local ();
+}
+
+void rotate_image_toggler() // Callback для галки поворота
+{
+  write_config_int("rotate", rotate=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rotate_image)));
+  if (rotate) 
+  {
+    gtk_widget_set_sensitive(frame_image, TRUE);
+    gtk_widget_set_sensitive(overlap_frame, TRUE);
+    gtk_widget_set_sensitive(overlap_scale, TRUE);
+  }
+  else
+  {
+    gtk_widget_set_sensitive(frame_image, FALSE);
+    gtk_widget_set_sensitive(overlap_frame, FALSE);
+    gtk_widget_set_sensitive(overlap_scale, FALSE);
+  }
+  need_refresh=TRUE;
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
+  e_ink_refresh_local ();
 }
 
 void frame_image_toggler () // Callback для галки умного листания
 {
-  enable_refresh=FALSE;
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(frame_image))) { // Если галка активируется
-    frame = TRUE; // Включаем умное листание
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(crop_image), TRUE); // Принудительно активируем галку обрезки полей на экране (для красоты)
-    gtk_widget_set_sensitive(crop_image, FALSE); // А затем отключаем выключатели обрезки полей
-    gtk_widget_set_sensitive(rotate_image, FALSE); // Поворота
-    gtk_widget_set_sensitive(manga_mode, FALSE); // И режима манги
-  } else { // Если галка снимается
-    frame = FALSE; // Отключаем умное листание
-    gtk_widget_set_sensitive(crop_image, TRUE); // А затем включаем выключатели обрезки полей
-    gtk_widget_set_sensitive(rotate_image, TRUE); // Поворота
-    gtk_widget_set_sensitive(manga_mode, TRUE); // И режима манги
-  }
-  write_config_int("frame", frame); // Сохраняем конфиги
-  enable_refresh=need_refresh=TRUE;
+  write_config_int("frame", frame=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(frame_image)));
+  if (frame)
+    gtk_widget_set_sensitive(rotate_image, FALSE);
+  else
+    gtk_widget_set_sensitive(rotate_image, TRUE);
+  need_refresh=TRUE;
   wait_for_draw();
   if (QT) usleep (QT_REFRESH_DELAY);
-  e_ink_refresh_part ();
+  e_ink_refresh_local ();
+}
+
+void overlap_changed(GtkWidget *scalebutton)
+{
+  write_config_int("overlap", overlap = gtk_range_get_value(GTK_RANGE(scalebutton)));
+  #ifdef debug_printf
+  printf("Overlap set to %d\n", overlap);
+  #endif
+  e_ink_refresh_default();
 }
 
 void manga_mode_toggler () // Callback для галки просмотра как манги
 {
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(manga_mode))) { // Если галка активируется
-    manga = TRUE; // Включаем режим манги
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(crop_image), TRUE); // Принудительно активируем галку обрезки полей на экране (для красоты)
-    gtk_widget_set_sensitive(rotate_image, FALSE); // А затем отключаем выключатели поворота
-    gtk_widget_set_sensitive(frame_image, FALSE); // И умного просмотра
-  } else { // Если галка снимается
-    manga = FALSE; // Отключаем листание манги
-    gtk_widget_set_sensitive(rotate_image, TRUE); // А затем включаем выключатели поворота
-    gtk_widget_set_sensitive(frame_image, TRUE); // И умного просмотра
-  }
-  write_config_int("manga", manga); // Сохраняем конфиги
+  write_config_int("manga", manga=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(manga_mode))); 
+  if (manga)
+    gtk_widget_set_sensitive(split_spreads_button, FALSE);
+  else
+    gtk_widget_set_sensitive(split_spreads_button, TRUE);
   need_refresh=TRUE;
   wait_for_draw();
   if (QT) usleep (QT_REFRESH_DELAY);
-  e_ink_refresh_part ();
+  e_ink_refresh_local ();
 }
 
 void keepaspect_image_toggler () // Callback для галки сохранения пропорций
@@ -176,7 +180,7 @@ void keepaspect_image_toggler () // Callback для галки сохранен�
   need_refresh=TRUE;
   wait_for_draw();
   if (QT) usleep (QT_REFRESH_DELAY);
-  e_ink_refresh_part ();
+  e_ink_refresh_local ();
 }
 
 void double_refresh_toggler () // Callback для галки двойного обновления
@@ -184,7 +188,7 @@ void double_refresh_toggler () // Callback для галки двойного о
   write_config_int("double_refresh", double_refresh=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(double_refresh_image)));
   wait_for_draw();
   if (QT) usleep (QT_REFRESH_DELAY);
-  e_ink_refresh_part ();
+  e_ink_refresh_local ();
 }
 
 void preload_toggler () // Callback для галки включения предзагрузки
@@ -193,49 +197,42 @@ void preload_toggler () // Callback для галки включения пре�
   if (preload_enable == FALSE) reset_image(&preloaded);
   wait_for_draw();
   if (QT) usleep (QT_REFRESH_DELAY);
-  e_ink_refresh_part ();
+  e_ink_refresh_local ();
 }
 
 void caching_toggler () // Callback для галки включения кэширования
 {
   write_config_int("caching_enable", caching_enable=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(caching_enabled_button)));
-  if (caching_enable  == FALSE) reset_image(&cached);
+  if (caching_enable == FALSE) reset_image(&cached);
   wait_for_draw();
   if (QT) usleep (QT_REFRESH_DELAY);
-  e_ink_refresh_part ();
+  e_ink_refresh_local ();
 }
 
 void suppress_panel_callback () // Callback для галки подавления панели
 {
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(suppress_panel_button))) { // Если галка активируется
-    suppress_panel = TRUE; // Включаем подавление
+  write_config_int("suppress_panel", suppress_panel=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(suppress_panel_button)));
+  if (suppress_panel)
     kill_panel();
-  } else { // Если галка снимается
-    suppress_panel = FALSE; // Отключаем подавление
+  else
     start_panel();
-  }
-  write_config_int("suppress_panel", suppress_panel); // Сохраняем конфиги
   wait_for_draw();
   if (QT) usleep (QT_REFRESH_DELAY);
-  e_ink_refresh_part ();
+  e_ink_refresh_local ();
 }
 
 void HD_scaling_callback () // Callback для галки качественного скалирования
 {
   write_config_int("HD_scaling", HD_scaling=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(HD_scaling_button)));
   need_refresh=TRUE;
-  wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
-  e_ink_refresh_part ();
+  e_ink_refresh_local ();
 }
 
 void boost_contrast_callback () // Callback для галки качественного скалирования
 {
   write_config_int("boost_contrast", boost_contrast=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(boost_contrast_button)));
   need_refresh=TRUE;
-  wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
-  e_ink_refresh_part ();
+  e_ink_refresh_local ();
 }
 
 void reset_statistics() // Callback для кнопки статистики (сбросс)
@@ -331,6 +328,19 @@ gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *
         e_ink_refresh_local ();
         return TRUE;
       }
+      else if (gtk_widget_is_focus (preload_enabled_button))
+      {
+        gtk_widget_grab_focus (loop_dir_exit);
+        e_ink_refresh_local ();
+        return TRUE;
+      }
+      else if (gtk_widget_is_focus (overlap_scale))
+      {
+        gtk_widget_grab_focus (frame_image);
+        e_ink_refresh_local ();
+        return TRUE;
+      }
+      
       e_ink_refresh_local ();
       return FALSE;
       
@@ -359,6 +369,19 @@ gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *
         e_ink_refresh_local ();
         return TRUE;
       }
+      else if (gtk_widget_is_focus (overlap_scale))
+      {
+        gtk_widget_grab_focus (keepaspect_image);
+        e_ink_refresh_local ();
+        return TRUE;
+      }
+      else if (gtk_widget_is_focus (double_refresh_image))
+      {
+        gtk_widget_grab_focus (loop_dir_none);
+        e_ink_refresh_local ();
+        return TRUE;
+      }
+      
       e_ink_refresh_local ();
       return FALSE;
 
@@ -390,14 +413,25 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
   crop_image = gtk_check_button_new_with_label (CROP_IMAGE);
   add_toggle_button_to_menu(crop_image, menu_vbox, crop_image_toggler, keys_in_picture_menu, crop, panel);
   
+  split_spreads_button = gtk_check_button_new_with_label(SPLIT_DOUBLE_PAGES);
+  add_toggle_button_to_menu(split_spreads_button, menu_vbox, split_spreads_toggler, keys_in_picture_menu, split_spreads, panel);
+  
+  manga_mode = gtk_check_button_new_with_label(MANGA_MODE);
+  add_toggle_button_to_menu(manga_mode, menu_vbox, manga_mode_toggler, keys_in_picture_menu, manga, panel);
+  
   rotate_image = gtk_check_button_new_with_label(ROTATE_IMAGE);
   add_toggle_button_to_menu(rotate_image, menu_vbox, rotate_image_toggler, keys_in_picture_menu, rotate, panel);
   
   frame_image = gtk_check_button_new_with_label(FRAME_IMAGE);
   add_toggle_button_to_menu(frame_image, menu_vbox, frame_image_toggler, keys_in_picture_menu, frame, panel);
   
-  manga_mode = gtk_check_button_new_with_label(MANGA_MODE);
-  add_toggle_button_to_menu(manga_mode, menu_vbox, manga_mode_toggler, keys_in_picture_menu, manga, panel);
+  overlap_frame = gtk_frame_new (OVERLAP_VALUE);
+  gtk_box_pack_start (GTK_BOX (menu_vbox), overlap_frame, FALSE, TRUE, 0);
+  overlap_scale = gtk_hscale_new_with_range (0, 50, 1);
+  gtk_range_set_value (GTK_RANGE(overlap_scale), (gdouble) overlap);
+  g_signal_connect(overlap_scale, "value-changed", G_CALLBACK(overlap_changed), NULL);
+  g_signal_connect(overlap_scale, "key_press_event", G_CALLBACK(keys_in_picture_menu), NULL);
+  gtk_container_add (GTK_CONTAINER (overlap_frame), overlap_scale);
   
   keepaspect_image = gtk_check_button_new_with_label(KEEP_ASPECT);
   add_toggle_button_to_menu(keepaspect_image, menu_vbox, keepaspect_image_toggler, keys_in_picture_menu, keepaspect, panel);
@@ -463,30 +497,29 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
   free(viewed_count);
   free(viewed_text);
 
-  if (rotate == FALSE) { // Если поворот отключен
-    frame = FALSE; // Отключаем умное листание
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(frame_image), FALSE); // Выключаем галку умного листания
-    gtk_widget_set_sensitive(frame_image, FALSE); // И блокируем её
-    write_config_int("frame", frame=FALSE); // Сохраняем конфиги
+  if (split_spreads == FALSE) 
+  { // Если деление разворотов отключено
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(manga_mode), FALSE); // Выключаем галку режима манги
     gtk_widget_set_sensitive(manga_mode, FALSE); // И блокируем её
-    write_config_int("manga", manga=FALSE); // Сохраняем конфиги
   }
 
-  if (frame) { // Если включено умное листание
-    gtk_widget_set_sensitive(crop_image, FALSE); // Блокируем галки обрезки полей
-    gtk_widget_set_sensitive(rotate_image, FALSE); // Поворота
-    gtk_widget_set_sensitive(manga_mode, FALSE); // И режима манги
+  if (rotate == FALSE) 
+  {
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(frame_image), FALSE); // Выключаем галку режима покадрового просмотра
+    gtk_widget_set_sensitive(frame_image, FALSE); // И блокируем её
+    gtk_widget_set_sensitive(overlap_frame, FALSE);
+    gtk_widget_set_sensitive(overlap_scale, FALSE);
   }
+  
+  if (frame) 
+    gtk_widget_set_sensitive(rotate_image, FALSE);
+  
+  if (manga) // Если включен режим манги - блокируем деление разворотов
+    gtk_widget_set_sensitive(split_spreads_button, FALSE);
 
-  if (manga) { // Если включен режим манги
-    gtk_widget_set_sensitive(rotate_image, FALSE); // Поворота
-    gtk_widget_set_sensitive(frame_image, FALSE); // И умного просмотра
-  }
-  picture_menu = gtk_dialog_new_with_buttons (SETTINGS,
-                                        GTK_WINDOW(win),
-                                        GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT|GTK_DIALOG_NO_SEPARATOR,
-                                        NULL);
+  picture_menu = gtk_dialog_new_with_buttons (SETTINGS, GTK_WINDOW(win),
+                                              GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT|GTK_DIALOG_NO_SEPARATOR,
+                                              NULL);
   gtk_container_add (GTK_CONTAINER (GTK_DIALOG(picture_menu)->vbox), menu_vbox);
   gtk_window_set_position (GTK_WINDOW(picture_menu), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_widget_show_all (picture_menu);

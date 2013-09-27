@@ -44,8 +44,10 @@
 
 #define SETTINGS      "Настройки"
 #define CROP_IMAGE    "Обрезать поля"
-#define ROTATE_IMAGE  "Повернуть картинку"
+#define SPLIT_DOUBLE_PAGES "Делить развороты пополам"
+#define ROTATE_IMAGE  "Повернуть изображение"
 #define FRAME_IMAGE   "Умное листание"
+#define OVERLAP_VALUE "Наложение страниц (%)"
 #define MANGA_MODE    "Листать как мангу"
 #define KEEP_ASPECT   "Сохранять пропорции"
 #define DOUBLE_REFRESH "Двойное обновление"
@@ -118,8 +120,10 @@
 
 #define SETTINGS "Settings"
 #define CROP_IMAGE    "Crop margins"
+#define SPLIT_DOUBLE_PAGES "Split double-page spreads"
 #define ROTATE_IMAGE  "Rotate image"
 #define FRAME_IMAGE   "Smart scrolling"
+#define OVERLAP_VALUE "Pages overlap (%)"
 #define MANGA_MODE    "Manga pages order"
 #define KEEP_ASPECT   "Keep aspect rate"
 #define DOUBLE_REFRESH "Double refresh"

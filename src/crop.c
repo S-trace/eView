@@ -15,26 +15,26 @@ static int coord_crop[4];
 static int rowstride, n_channels;
 static guchar *pixels, *p;
 
-void find_crop_image_coords(const image *target)
+void find_crop_image_coords(const image *target, int page)
 {
   x_crop = 0;
   y_crop = 0;
-  width_crop = target->width;
-  height_crop = target->height;
+  width_crop = target->width[page];
+  height_crop = target->height[page];
 
-  n_channels = gdk_pixbuf_get_n_channels (target->pixbuf);
-  rowstride = gdk_pixbuf_get_rowstride (target->pixbuf);
-  pixels = gdk_pixbuf_get_pixels (target->pixbuf);
+  n_channels = gdk_pixbuf_get_n_channels (target->pixbuf[page]);
+  rowstride = gdk_pixbuf_get_rowstride (target->pixbuf[page]);
+  pixels = gdk_pixbuf_get_pixels (target->pixbuf[page]);
 
-  find_x_crop (target->height);                                 /*поиск координат левого бордюра */
-  find_y_crop (target->width);  		                /*верхнего */
-  find_width_crop (target->width, target->height);		/*правого */
-  find_height_crop (target->width, target->height);		/*нижнего */
+  find_x_crop (target->height[page]);                                 /*поиск координат левого бордюра */
+  find_y_crop (target->width[page]);  		                /*верхнего */
+  find_width_crop (target->width[page], target->height[page]);		/*правого */
+  find_height_crop (target->width[page], target->height[page]);		/*нижнего */
   coord_crop[0] = x_crop;
   coord_crop[1] = y_crop;
   coord_crop[2] = width_crop - x_crop;
   coord_crop[3] = height_crop - y_crop;
-  if (x_crop==0 && y_crop==0 && width_crop==target->width && height_crop==target->height){
+  if (x_crop==0 && y_crop==0 && width_crop==target->width[page] && height_crop==target->height[page]){
     coord_crop[0] = -1;
     /*          g_print ("возврат без изменений\n"); */
   }

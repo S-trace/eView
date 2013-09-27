@@ -22,6 +22,7 @@
 #define MAXFILES 4096 /* Максимальное количество файлов в каталоге */
 
 extern int files_num;
+void calculate_scaling_dimensions(int *new_width, int *new_height, const int image_height, const int image_width, const int display_height, const int display_width);
 void get_screensavers_list(void);
 void set_system_sleep_timeout(const char *timeout);
 void get_system_sleep_timeout(void);

@@ -529,10 +529,13 @@ void init (void)
   preloaded.name[0]='\0';
   cached.name[0]='\0';
   screensaver.name[0]='\0';
-  current.pixbuf=NULL;
-  preloaded.pixbuf=NULL;
-  cached.pixbuf=NULL;
-  screensaver.pixbuf=NULL;
+  for (int page_number=0; page_number <= PAGE_RIGHT; page_number++)
+  {
+    current.pixbuf[page_number]=NULL;
+    preloaded.pixbuf[page_number]=NULL;
+    cached.pixbuf[page_number]=NULL;
+    screensaver.pixbuf[page_number]=NULL;
+  }
 }
 
 void shutdown(int exit_code) __attribute__((noreturn));

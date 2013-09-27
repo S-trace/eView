@@ -1,1 +1,1 @@
-void adjust_contrast(image *target, int contrast);
+void adjust_contrast(image *target, int contrast, int page);

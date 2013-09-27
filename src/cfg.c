@@ -10,7 +10,7 @@
 #include "digma_hw.h"
 
 static char *cfg_directory; /*путь к файлу с настройками */
-int crop, rotate, frame, keepaspect, fm_toggle, move_toggle, speed_toggle, show_clock, top_panel_active, loop_dir, double_refresh, viewed_pages, preload_enable, caching_enable, suppress_panel, show_hidden_files, manga, HD_scaling, boost_contrast, refresh_type, LED_notify=TRUE;
+int crop, split_spreads, rotate, frame, overlap, keepaspect, fm_toggle, move_toggle, speed_toggle, show_clock, top_panel_active, loop_dir, double_refresh, viewed_pages, preload_enable, caching_enable, suppress_panel, show_hidden_files, manga, HD_scaling, boost_contrast, refresh_type, LED_notify=TRUE;
 int backlight, sleep_timeout;
 char *system_sleep_timeout;
 
@@ -215,8 +215,10 @@ void create_cfg (void)  /*создание файлов настроек по у
   }
   current_dir = get_current_dir_name();
   write_config_int("crop", crop=TRUE);
+  write_config_int("split_spreads", split_spreads=FALSE);
   write_config_int("rotate", rotate=FALSE);
   write_config_int("frame", frame=FALSE);
+  write_config_int("overlap", overlap=10);
   write_config_int("manga", manga=FALSE);
   write_config_int("keepaspect", keepaspect=TRUE);
   write_config_int("fm_toggle", fm_toggle=FALSE);
@@ -296,10 +298,12 @@ void read_configuration (void)
   cfg_directory = xconcat_path_file(current_dir, ".eView");
 
   crop=read_config_int("crop");
+  split_spreads=read_config_int("split_spreads");
   rotate=read_config_int("rotate");
   frame=read_config_int("frame");
   keepaspect=read_config_int("keepaspect");
   manga=read_config_int("manga");
+  overlap=read_config_int("overlap");
   fm_toggle=read_config_int("fm_toggle");
   move_toggle=read_config_int("move_toggle");
   speed_toggle=read_config_int("speed_toggle");

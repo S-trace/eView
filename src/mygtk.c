@@ -191,20 +191,22 @@ int MessageDie (GtkWidget *Window)
 {
   char *iter;
   gtk_idle_remove (MessageDie_idle_call_handler); /* Удаляем вызов этой функции из очереди вызовов (иначе она будет вызываться вечно) */
-  iter=iter_from_filename(active_panel->selected_name, active_panel);
-  #ifdef debug_printf
-  printf ("Destroying message window\n");
-  #endif
-  gtk_widget_destroy(Window);
-  move_selection(iter, active_panel);
-  free(iter);
-  wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
-  if (interface_is_locked)
-    interface_is_locked=FALSE;
-  else
-    e_ink_refresh_full();
-//   interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
+  if (GTK_IS_WINDOW(Window))
+  {
+    iter=iter_from_filename(active_panel->selected_name, active_panel);
+    #ifdef debug_printf
+    printf ("Destroying message window\n");
+    #endif
+    gtk_widget_destroy(Window);
+    move_selection(iter, active_panel);
+    free(iter);
+    wait_for_draw();
+    if (QT) usleep (QT_REFRESH_DELAY);
+    if (interface_is_locked)
+      interface_is_locked=FALSE;
+    else
+      e_ink_refresh_full();
+  }
   return TRUE;
 }
 
@@ -832,6 +834,7 @@ void enter_suspend(struct_panel *panel)
 {
   int saved_crop=crop;
   int saved_rotate=rotate;
+  int saved_split_spreads=split_spreads;
   int saved_frame=frame;
   int saved_preload_enable=preload_enable;
   int saved_keepaspect=keepaspect;
@@ -848,7 +851,7 @@ void enter_suspend(struct_panel *panel)
     printf("DBUS sent\n");
     #endif
 
-    boost_contrast=crop=rotate=frame=preload_enable=FALSE; /* Грязно перенастраиваем смотрелку */
+    boost_contrast=crop=rotate=split_spreads=frame=preload_enable=FALSE; /* Грязно перенастраиваем смотрелку */
     suspended=keepaspect=TRUE;
     if (in_picture_viewer)
     {
@@ -861,6 +864,7 @@ void enter_suspend(struct_panel *panel)
     /* Восстанавливаем предыдущие настройки */
     crop=saved_crop;
     rotate=saved_rotate;
+    split_spreads=saved_split_spreads;
     frame=saved_frame;
     preload_enable=saved_preload_enable;
     keepaspect=saved_keepaspect;

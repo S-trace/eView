@@ -10,8 +10,10 @@ void reset_config(void);
 extern char *archive_name, *archive_cwd;
 extern char archive_stack[16][PATHSIZE+1];/*Стек имён архивов */
 extern gboolean crop;   /* автообрезка бордюра вокруг картинки */
-extern gboolean rotate; /* удвоение размера с поворотом */
-extern gboolean frame;  /* режим сдвига с учетом кадров на картинке */
+extern gboolean split_spreads; /* разрезать странички с отсканированными разворотами вместо того чтобы поворачивать их и показывать целиком */
+extern gboolean rotate; /* режим просмотра с поворотом картинки */
+extern gboolean frame;  /* режим сдвига с учетом кадров на картинке (требует rotate)*/
+extern int overlap;     /* Значение (в процентах), на которое будет накладываться изображение при прокрутке в режиме поворота */
 extern gboolean manga;  /* режим просмотра как манги */
 extern gboolean keepaspect;/* растянуть ли картинку на весь экран */
 extern gboolean fm_toggle;    /*чекбокс файлменеджер */

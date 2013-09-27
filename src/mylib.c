@@ -23,6 +23,35 @@
 /* Various error message routines.*/
 const char msg_memory_exhausted[] = "memory exhausted";
 
+void calculate_scaling_dimensions(int *new_width, int *new_height, const int image_height, const int image_width, const int display_height, const int display_width)
+{
+  #ifdef debug_printf
+  printf("calculate_scaling_dimensions called (image %dx%d, display %dx%d)\n", image_height, image_width, display_height, display_width);
+  #endif
+  double scale_width, scale_height, scale;
+  if (display_height > 0 && display_width > 0)
+  {
+    scale_width = (double)display_width / image_width;
+    scale_height = (double)display_height  / image_height;  
+    scale = scale_height < scale_width ? scale_height : scale_width;
+  }
+  else if (display_height > 0)
+    scale = (double)display_height / image_height;  
+  else if (display_width > 0)
+    scale = (double)display_width / image_width;
+  else 
+    scale=1;
+  #ifdef debug_printf
+  printf("scale_width=%f, scale_height=%f, scale=%f\n", scale_width, scale_height, scale);
+  #endif
+  
+  *new_width = scale * image_width;
+  *new_height = scale * image_height;
+  #ifdef debug_printf
+  printf("new_width=%d, new_height=%d\n", *new_width, *new_height);
+  #endif  
+}
+
 void get_system_sleep_timeout(void)
 {
   #ifdef __amd64
