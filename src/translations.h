@@ -93,6 +93,11 @@
 #define FAILED_TO_START_XFBDEV "eView error: \nXfbdev startup failed. Please contact eView developer (S-trace@list.ru) to try to fix it"
 #define FAILED_TO_OPEN_DEV_FB0 "eView error: \nUnable to open /dev/fb0 - display won't refresh! Please contact eView developer (S-trace@list.ru) to try to fix it"
 #define XFBDEV_STARTUP_TIMEOUT "eView error: \nXfbdev startup failed - wait for server timeout exceeded. Please contact eView developer (S-trace@list.ru) to try to fix it"
+#define PIXBUF_LOADING_FROM_FILE_FAILED "Image loading failed: %s"
+#define PIXBUF_CROPPING_FAILED "Image margins cropping failed!"
+#define PIXBUF_SCALING_FAILED  "Image scaling failed!"
+#define PIXBUF_ROTATING_FAILED "Image rotating failed!"
+#define SUBPIXBUF_CREATING_FAILED "Unable to create subimages!"
 
 #define DELETE_CONFIRM "Please confirm deletion"
 #define MOVE_CONFIRM "Please confirm moving"

@@ -563,10 +563,9 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
             {
               if (current.pages_count > 1 && current_page == PAGE_LEFT)
               {
-                int position;
-                if (web_manga_mode) position=current.height[PAGE_RIGHT]-height_display;
-                else if (rotate) position=current.width[PAGE_RIGHT]-width_display;
-                (void)show_image (&current, panel, TRUE, PAGE_RIGHT, position);
+                if (web_manga_mode) current_position=current.height[PAGE_RIGHT]-height_display;
+                else if (rotate) current_position=current.width[PAGE_RIGHT]-width_display;
+                (void)show_image (&current, panel, TRUE, PAGE_RIGHT, current_position);
                 if (double_refresh) e_ink_refresh_local();
                 e_ink_refresh_full ();
                 interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
@@ -577,10 +576,9 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
             {
               if (current.pages_count > 1 && current_page == PAGE_LEFT)
               {
-                int position;
-                if (web_manga_mode) position=current.height[PAGE_LEFT]-height_display;
-                else if (rotate) position=current.width[PAGE_LEFT]-width_display;
-                (void)show_image (&current, panel, TRUE, PAGE_LEFT, position);
+                if (web_manga_mode) current_position=current.height[PAGE_LEFT]-height_display;
+                else if (rotate) current_position=current.width[PAGE_LEFT]-width_display;
+                (void)show_image (&current, panel, TRUE, PAGE_LEFT, current_position);
                 if (double_refresh) e_ink_refresh_local();
                 e_ink_refresh_full ();
                 interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
