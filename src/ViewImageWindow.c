@@ -5,6 +5,7 @@
 #include <libgen.h> /*basename() */
 #include <gtk/gtk.h>
 #include <stdlib.h>
+#include <glib.h> // GError
 
 #include "gtk_file_manager.h"
 #include "digma_hw.h"
@@ -22,12 +23,11 @@
 #include "interface.h"
 
 image current, preloaded, cached, screensaver;
-GtkObject *adjust;
 GtkWidget *ImageWindow, *scrolled_window, *gimage;
 int shift_val; /*на сколько сдвигать картинку */
 int value;     /*текущая позиция сдвига */
 int in_picture_viewer=FALSE; /* Индикатор, что открыто окно картинки (для корректной работы скринсейвера) */
-int current_page, current_frame;
+int current_page, current_position;
 
 /* void print_adjust(GtkAdjustment *adjust, gpointer data) */
 /* { // это только для отладки */
@@ -58,6 +58,31 @@ void pixbuf_unref(GdkPixbuf *pixbuf)
   #endif
   if (G_IS_OBJECT(pixbuf)) g_object_unref(pixbuf);
 }
+
+int pixbuf_check(GdkPixbuf *pixbuf, const char *error_message)
+{
+  if (GDK_IS_PIXBUF(pixbuf) == FALSE || pixbuf == NULL)
+  {
+    Message(ERROR, error_message);
+    return FALSE;
+  }
+  return TRUE;
+}
+
+int pixbuf_check_error(GdkPixbuf *pixbuf, const char *error_message, GError **error)
+{
+  if (GDK_IS_PIXBUF(pixbuf) == FALSE || pixbuf == NULL || *error != NULL)
+  {
+    char *message;
+    asprintf(&message, error_message, (*error)->message);
+    Message(ERROR, message);
+    free (message);
+    g_clear_error(error);
+    return FALSE;
+  }
+  return TRUE;
+}
+
 
 void die_viewer_window (void)
 {
@@ -93,6 +118,7 @@ int check_image_settings(const image *const target)
     if (target->crop  != crop)   return FALSE;
     if (target->frame != frame)  return FALSE;
     if (target->rotate != rotate) return FALSE;
+    if (target->web_manga_mode != web_manga_mode) return FALSE;
     if (target->keepaspect != keepaspect) return FALSE;
     if (target->HD_scaling != HD_scaling) return FALSE;
     if (target->boost_contrast != boost_contrast) return FALSE;
@@ -122,6 +148,8 @@ void copy_image_settings(image *target, image *source)
   target->boost_contrast=source->boost_contrast;
   target->pages_count=source->pages_count;
   target->split_spreads=source->split_spreads;
+  target->web_manga_mode=source->web_manga_mode;
+  
   for (int page_number = 0; page_number <= PAGE_RIGHT ; page_number++)
   {
     target->height[page_number]=source->height[page_number];
@@ -156,6 +184,7 @@ void set_image_settings(image *target)
   target->frame=frame;
   target->split_spreads=split_spreads;
   target->rotate=rotate;
+  target->web_manga_mode=web_manga_mode;
   target->keepaspect=keepaspect;
   target->HD_scaling=HD_scaling;
   target->boost_contrast=boost_contrast;
@@ -228,9 +257,7 @@ gboolean load_image(const char *const filename, const struct_panel *const panel,
     }
   }
   else
-  {
     printf("CACHED IMAGE SETTINGS WRONG\n");
-  }
 
   if (strcmp(preloaded.name, filename) != 0)
   {
@@ -273,12 +300,12 @@ gboolean load_image(const char *const filename, const struct_panel *const panel,
     swap_images(&cached, target);
 
   reset_image(target); // Сбрасываем прошлое содержимое цели
-
   name=strdup(filename);
 
   strncpy(target->name,basename(name),PATHSIZE); // basename() - free() не требует
   target->name[PATHSIZE]='\0';
   free(name);
+  GError *error=NULL;
   if (panel->archive_depth > 0 && (suspended == FALSE))
   {
     char *archive_file_name;
@@ -286,10 +313,13 @@ gboolean load_image(const char *const filename, const struct_panel *const panel,
     archive_extract_file(panel->archive_stack[panel->archive_depth], archive_file_name, "/tmp/");
     extracted_file_name=xconcat("/tmp/", archive_file_name);
     free (archive_file_name);
-    target->pixbuf[PAGE_FULL]=gdk_pixbuf_new_from_file (extracted_file_name, NULL);
+    target->pixbuf[PAGE_FULL]=gdk_pixbuf_new_from_file (extracted_file_name, &error);
   }
   else
-    target->pixbuf[PAGE_FULL]=gdk_pixbuf_new_from_file (filename, NULL);
+    target->pixbuf[PAGE_FULL]=gdk_pixbuf_new_from_file (filename, &error);
+  
+  if (! pixbuf_check_error(target->pixbuf[PAGE_FULL], PIXBUF_LOADING_FROM_FILE_FAILED, &error)) return FALSE;
+  
   #ifdef debug_printf
   printf("pixbuf %p loaded from file\n",target->pixbuf[PAGE_FULL]);
   #endif
@@ -323,7 +353,7 @@ gboolean load_image(const char *const filename, const struct_panel *const panel,
   return TRUE;
 }
 
-gboolean show_image(image *target, struct_panel *panel, int enable_actions, int page) /* Показываем картинку */
+gboolean show_image(image *target, struct_panel *panel, int enable_actions, int page, int position) /* Показываем картинку */
 {
   #ifdef debug_printf
   printf("Going to show '%s' (enable_actions=%d)\n", target->name, enable_actions);
@@ -338,7 +368,7 @@ gboolean show_image(image *target, struct_panel *panel, int enable_actions, int 
     gtk_image_set_from_pixbuf (GTK_IMAGE(gimage), target->pixbuf[PAGE_FULL]);
     current_page=PAGE_FULL;
   }
-  if (rotate) gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), 0);
+  
   #ifdef debug_printf
   printf("showed '%s' (enable_actions=%d)\n", target->name, enable_actions);
   #endif
@@ -357,7 +387,16 @@ gboolean show_image(image *target, struct_panel *panel, int enable_actions, int 
     free(iter);
   }
   gtk_window_set_title(GTK_WINDOW(ImageWindow), target->name);
+  
   wait_for_draw(); /* Ожидаем отрисовки всего */
+  if (QT) // Задержка нужна чтобы gtk_image_set_from_pixbuf() успело отработать, иначе не восстанавливается значение положения экрана
+    usleep(QT_REFRESH_DELAY);
+  else 
+    usleep(GTK_REFRESH_DELAY);
+  wait_for_draw();  
+  if (rotate) gtk_adjustment_set_value(gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW(scrolled_window)), position);
+  if (web_manga_mode) gtk_adjustment_set_value(gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW(scrolled_window)), position);
+  wait_for_draw(); /* Ожидаем отрисовки всего */  
   return TRUE;
 }
 
@@ -372,22 +411,38 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
     case KEY_PGDOWN:/*GDK_Right */
     case KEY_RIGHT:/*GDK_Right */ {
       interface_is_locked=TRUE; /* Блокируем интерфейс на время длительной операции по показу картинки */
-      if (rotate) /* Действия при просмотре с поворотом */
+      if (rotate || web_manga_mode) /* Действия при просмотре с превышением размера экрана */
       {
+        int display_size, image_size;
+        GtkAdjustment *adjust;
+        if (rotate)
+        {
+          adjust=gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW(scrolled_window));
+          display_size=width_display;
+          image_size=current.width[current_page];
+        }
+        else if (web_manga_mode)
+        {
+          adjust=gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW(scrolled_window));
+          display_size=height_display;
+          image_size=current.height[current_page];  
+        }
+        
         value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
         #ifdef debug_printf
         printf ("value=%d\n", value);
         #endif
-        if (value + width_display < current.width[current_page]) // Если ниже ещё есть что показать за пределами текущего экрана
+        if (value + display_size < image_size) // Если ниже ещё есть что показать за пределами текущего экрана
         {
-          shift_val = shift (value, current.frames[current_page], current.frame_map[current_page], width_display);
-          if (current.width[current_page] - (shift_val + value) < width_display) // Если shift вернула значение, приводящее к тому, что нижний край картинки окажется выше нижнего края экрана
-            shift_val = current.width[current_page] - (value + width_display);
+          shift_val = shift (value, current.frames[current_page], current.frame_map[current_page], display_size);
+          if (image_size - (shift_val + value) < display_size) // Если shift вернула значение, приводящее к тому, что нижний край картинки окажется выше нижнего края экрана
+            shift_val = image_size - (value + display_size);
 
           #ifdef debug_printf
-          printf ("shift_val=%d, new value=%d, offscreen=%d\n", shift_val, shift_val+value, current.width[current_page]-(shift_val+value));
+          printf ("shift_val=%d, new value=%d, offscreen=%d\n", shift_val, shift_val+value, image_size-(shift_val+value));
           #endif
           gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), value + shift_val);
+          current_position=gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
           if (double_refresh) e_ink_refresh_local ();
           e_ink_refresh_full ();
           interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
@@ -401,7 +456,7 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
         {
           if (current.pages_count > 1 && current_page == PAGE_RIGHT) /* Если показана правая страница */
           {
-            (void)show_image (&current, panel, TRUE, PAGE_LEFT);
+            (void)show_image (&current, panel, TRUE, PAGE_LEFT, 0);
             wait_for_draw();
             if (double_refresh) e_ink_refresh_local();
             e_ink_refresh_full ();
@@ -411,7 +466,7 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
         }
         else if (current.pages_count > 1 && current_page == PAGE_LEFT)
         {
-          (void)show_image (&current, panel, TRUE, PAGE_RIGHT);
+          (void)show_image (&current, panel, TRUE, PAGE_RIGHT, 0);
           if (double_refresh) e_ink_refresh_local();
           e_ink_refresh_full ();
           interface_is_locked=FALSE;
@@ -445,11 +500,11 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
       /*g_print ("загрузка новой картинки\n"); */
       (void)load_image (next_file, panel, TRUE, &current);
       if (!split_spreads)
-        (void)show_image (&current, panel, TRUE, PAGE_FULL);
+        (void)show_image (&current, panel, TRUE, PAGE_FULL, 0);
       else if (manga)
-        (void)show_image (&current, panel, TRUE, PAGE_RIGHT);
+        (void)show_image (&current, panel, TRUE, PAGE_RIGHT, 0);
       else
-        (void)show_image (&current, panel, TRUE, PAGE_LEFT);
+        (void)show_image (&current, panel, TRUE, PAGE_LEFT, 0);
       free(next_file);
       wait_for_draw(); /* Ожидаем отрисовки всего */
       if (panel == &top_panel)
@@ -470,17 +525,31 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
     case KEY_PGUP:/*GDK_Left: */
     case KEY_LEFT:/*GDK_Left: */ {
       interface_is_locked=TRUE; /* Блокируем интерфейс на время длительной операции по показу картинки */
-      if (rotate)
+      if (rotate || web_manga_mode) /* Действия при просмотре с превышением размера экрана */
       {
+        int display_size;
+        GtkAdjustment *adjust;
+        if (rotate)
+        {
+          adjust=gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW(scrolled_window));
+          display_size=width_display;
+        }
+        else if (web_manga_mode)
+        {
+          adjust=gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW(scrolled_window));
+          display_size=height_display;
+        }
+        
         value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
         if (value > 0)
         {
-          shift_val = shift_back (value, current.frames[current_page], current.frame_map[current_page], width_display) * -1;
+          shift_val = shift_back (value, current.frames[current_page], current.frame_map[current_page], display_size) * -1;
           // Если прокрутка на значение которое вернула shift_back приведёт к тому что верх экрана окажется выше верха изображения - прокручиваем к верху изображения
           if (value + shift_val < 0)
             shift_val = -1 * value;
 
           gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), value + shift_val);
+          current_position=gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
           if (double_refresh) e_ink_refresh_local ();
           e_ink_refresh_full ();
           interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
@@ -494,7 +563,10 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
             {
               if (current.pages_count > 1 && current_page == PAGE_LEFT)
               {
-                (void)show_image (&current, panel, TRUE, PAGE_RIGHT);
+                int position;
+                if (web_manga_mode) position=current.height[PAGE_RIGHT]-height_display;
+                else if (rotate) position=current.width[PAGE_RIGHT]-width_display;
+                (void)show_image (&current, panel, TRUE, PAGE_RIGHT, position);
                 if (double_refresh) e_ink_refresh_local();
                 e_ink_refresh_full ();
                 interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
@@ -503,9 +575,12 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
             }
             else
             {
-              if (current.pages_count > 1 && current_page == PAGE_RIGHT)
+              if (current.pages_count > 1 && current_page == PAGE_LEFT)
               {
-                (void)show_image (&current, panel, TRUE, PAGE_LEFT);
+                int position;
+                if (web_manga_mode) position=current.height[PAGE_LEFT]-height_display;
+                else if (rotate) position=current.width[PAGE_LEFT]-width_display;
+                (void)show_image (&current, panel, TRUE, PAGE_LEFT, position);
                 if (double_refresh) e_ink_refresh_local();
                 e_ink_refresh_full ();
                 interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
@@ -530,11 +605,23 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
       }
       (void)load_image (panel->selected_name, panel, TRUE, &current);
       if (!split_spreads)
-        (void)show_image (&current, panel, TRUE, PAGE_FULL);
+      {
+        if (web_manga_mode) current_position=current.height[PAGE_FULL]-height_display;
+        else if (rotate) current_position=current.width[PAGE_FULL]-width_display;        
+        (void)show_image (&current, panel, TRUE, PAGE_FULL, current_position);
+      }
       else if (manga)
-        (void)show_image (&current, panel, TRUE, PAGE_LEFT);
+      {
+        if (web_manga_mode) current_position=current.height[PAGE_LEFT]-height_display;
+        else if (rotate) current_position=current.width[PAGE_LEFT]-width_display;        
+        (void)show_image (&current, panel, TRUE, PAGE_LEFT, current_position);
+      }
       else
-        (void)show_image (&current, panel, TRUE, PAGE_RIGHT);
+      {
+        if (web_manga_mode) current_position=current.height[PAGE_RIGHT]-height_display;
+        else if (rotate) current_position=current.width[PAGE_RIGHT]-width_display;        
+        (void)show_image (&current, panel, TRUE, PAGE_RIGHT, current_position);
+      }
       free(next_file);
 
       if (double_refresh) e_ink_refresh_local ();
@@ -572,7 +659,7 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
       if (boost_contrast) write_config_int("boost_contrast", boost_contrast=FALSE);
       else write_config_int("boost_contrast", boost_contrast=TRUE);
       load_image(panel->last_name, panel, TRUE, &current);
-      show_image(&current, panel, TRUE, current_page);
+      show_image(&current, panel, TRUE, current_page, current_position);
       e_ink_refresh_full();
       return FALSE;
 
@@ -590,6 +677,8 @@ void create_page_subpixbufs(image *target)
   {
     target->pixbuf[PAGE_LEFT]=gdk_pixbuf_new_subpixbuf(target->pixbuf[PAGE_FULL], 0, 0, target->width[PAGE_FULL]/2, target->height[PAGE_FULL]);
     target->pixbuf[PAGE_RIGHT]=gdk_pixbuf_new_subpixbuf(target->pixbuf[PAGE_FULL], target->width[PAGE_FULL]/2, 0, target->width[PAGE_FULL]-target->width[PAGE_FULL]/2, target->height[PAGE_FULL]);
+    if (! pixbuf_check(target->pixbuf[PAGE_LEFT],  SUBPIXBUF_CREATING_FAILED)) return;
+    if (! pixbuf_check(target->pixbuf[PAGE_RIGHT], SUBPIXBUF_CREATING_FAILED)) return;
   }
   else
     target->pixbuf[PAGE_LEFT]=target->pixbuf[PAGE_RIGHT]=NULL;
@@ -616,6 +705,7 @@ void image_resize (image *target) /* изменение разрешения и 
       int h = return_crop_coord(3);
 
       pixbuf_key = gdk_pixbuf_new_subpixbuf(target->pixbuf[PAGE_FULL], x, y, w, h);
+      if (! pixbuf_check(pixbuf_key, PIXBUF_CROPPING_FAILED)) return;
       #ifdef debug_printf
       printf("pixbuf %p created by gdk_pixbuf_new_subpixbuf() (crop margins), width=%d, height=%d\n",pixbuf_key, gdk_pixbuf_get_width(pixbuf_key), gdk_pixbuf_get_height(pixbuf_key));
       #endif
@@ -628,11 +718,13 @@ void image_resize (image *target) /* изменение разрешения и 
   if (split_spreads) /*удвоение размера с поворотом */
   {
     target->frames[PAGE_FULL] = target->frames[PAGE_LEFT] = target->frames[PAGE_RIGHT] = 0;
+    int new_width, new_height;
+    
     if (rotate)
     {
-      int new_width, new_height;
       calculate_scaling_dimensions(&new_width, &new_height, target->height[PAGE_FULL], target->width[PAGE_FULL], 0, height_display * target->pages_count);
       pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf[PAGE_FULL], new_width, new_height, scaling_quality);
+      if (! pixbuf_check(pixbuf_key, PIXBUF_SCALING_FAILED)) return;
       pixbuf_unref(target->pixbuf[PAGE_FULL]);
       target->pixbuf[PAGE_FULL]=pixbuf_key;
       update_image_dimentions(target);
@@ -657,13 +749,13 @@ void image_resize (image *target) /* изменение разрешения и 
         printf("Found %d frames on page %d\n", target->frames[PAGE_FULL], PAGE_FULL);
         #endif
       }
-
+      
       pixbuf_key = gdk_pixbuf_rotate_simple (target->pixbuf[PAGE_FULL], GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
+      if (! pixbuf_check(pixbuf_key, PIXBUF_ROTATING_FAILED)) return;
       pixbuf_unref(target->pixbuf[PAGE_FULL]);
       target->pixbuf[PAGE_FULL]=pixbuf_key;
       update_image_dimentions(target);
-
-
+      
       if (target->pages_count > 1) // Переделываем субпиксбуфы c учётом поворота
       {
         pixbuf_unref(target->pixbuf[PAGE_LEFT]);
@@ -671,18 +763,21 @@ void image_resize (image *target) /* изменение разрешения и 
         target->pixbuf[PAGE_LEFT]=gdk_pixbuf_new_subpixbuf(target->pixbuf[PAGE_FULL], 0, target->height[PAGE_FULL]/2, target->width[PAGE_FULL], target->height[PAGE_FULL]-target->height[PAGE_FULL]/2);
         target->pixbuf[PAGE_RIGHT]=gdk_pixbuf_new_subpixbuf(target->pixbuf[PAGE_FULL], 0, 0, target->width[PAGE_FULL], target->height[PAGE_FULL]/2);
         update_image_dimentions(target);
-      }
+        if (! pixbuf_check(target->pixbuf[PAGE_LEFT], SUBPIXBUF_CREATING_FAILED)) return;
+        if (! pixbuf_check(target->pixbuf[PAGE_RIGHT], SUBPIXBUF_CREATING_FAILED)) return;
+        
+      }      
       return;
     }
     else if (keepaspect)
     {
-      int new_width, new_height;
       calculate_scaling_dimensions(&new_width, &new_height, target->height[PAGE_FULL], target->width[PAGE_FULL], height_display, width_display * target->pages_count);
       pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf[PAGE_FULL], new_width, new_height, scaling_quality);
     }
     else // Скалируем с удвоением размера экрана (не сохраняем аспект)
       pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf[PAGE_FULL], width_display * target->pages_count, height_display, scaling_quality);
 
+    if (! pixbuf_check(pixbuf_key, PIXBUF_SCALING_FAILED)) return;
     pixbuf_unref(target->pixbuf[PAGE_FULL]);
     target->pixbuf[PAGE_FULL]=pixbuf_key;
     update_image_dimentions(target);
@@ -691,11 +786,16 @@ void image_resize (image *target) /* изменение разрешения и 
     return;
   }
 
-  if (rotate)
+  if (rotate || web_manga_mode)
   {
     int new_width, new_height;
-    calculate_scaling_dimensions(&new_width, &new_height, target->height[PAGE_FULL], target->width[PAGE_FULL], 0, height_display * target->pages_count);
+    if (rotate)
+      calculate_scaling_dimensions(&new_width, &new_height, target->height[PAGE_FULL], target->width[PAGE_FULL], 0, height_display * target->pages_count);
+    else if (web_manga_mode)
+      calculate_scaling_dimensions(&new_width, &new_height, target->height[PAGE_FULL], target->width[PAGE_FULL], 0, width_display);
+
     pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf[PAGE_FULL], new_width, new_height, scaling_quality);
+    if (! pixbuf_check(pixbuf_key, PIXBUF_SCALING_FAILED)) return;
     pixbuf_unref(target->pixbuf[PAGE_FULL]);
     target->pixbuf[PAGE_FULL]=pixbuf_key;
     update_image_dimentions(target);
@@ -703,10 +803,14 @@ void image_resize (image *target) /* изменение разрешения и 
     #ifdef debug_printf
     printf("Found %d frames on page %d\n", target->frames[PAGE_FULL], PAGE_FULL);
     #endif
-    pixbuf_key = gdk_pixbuf_rotate_simple (target->pixbuf[PAGE_FULL], GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
-    pixbuf_unref(target->pixbuf[PAGE_FULL]);
-    target->pixbuf[PAGE_FULL]=pixbuf_key;
-    update_image_dimentions(target);
+    if (rotate)
+    {
+      pixbuf_key = gdk_pixbuf_rotate_simple (target->pixbuf[PAGE_FULL], GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
+      if (! pixbuf_check(pixbuf_key, PIXBUF_ROTATING_FAILED)) return;
+      pixbuf_unref(target->pixbuf[PAGE_FULL]);
+      target->pixbuf[PAGE_FULL]=pixbuf_key;
+      update_image_dimentions(target);
+    }
     return;
   }
 
@@ -714,6 +818,7 @@ void image_resize (image *target) /* изменение разрешения и 
   if (target->width[PAGE_FULL] > target->height[PAGE_FULL])
   {
     pixbuf_key = gdk_pixbuf_rotate_simple (target->pixbuf[PAGE_FULL], GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
+    if (! pixbuf_check(pixbuf_key, PIXBUF_ROTATING_FAILED)) return;
     pixbuf_unref(target->pixbuf[PAGE_FULL]);
     target->pixbuf[PAGE_FULL] = pixbuf_key;
     update_image_dimentions(target);
@@ -736,6 +841,7 @@ void image_resize (image *target) /* изменение разрешения и 
     #endif
     pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf[PAGE_FULL], width_display, height_display, scaling_quality);
   }
+  if (! pixbuf_check(pixbuf_key, PIXBUF_SCALING_FAILED)) return;
   pixbuf_unref(target->pixbuf[PAGE_FULL]);
   target->pixbuf[PAGE_FULL] = pixbuf_key;
   update_image_dimentions(target);
@@ -755,6 +861,7 @@ void ViewImageWindow(const char *file, struct_panel *panel, int enable_actions) 
     #endif
     return;
   }
+  
   if (suppress_panel && (QT == FALSE))
     kill_panel();
   if (preloaded.name == NULL)
@@ -776,21 +883,18 @@ void ViewImageWindow(const char *file, struct_panel *panel, int enable_actions) 
   /*GTK_POLICY_ALWAYS для отображения на пк так же как на книжке */
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
   gimage = gtk_image_new ();
-  adjust = gtk_adjustment_new (0.0, 0.0, 200.0, 0.1, 1.0, 1.0);
   /*сигнал для проверки работы горизонтального сдвига рисунка */
   //   g_signal_connect (G_OBJECT (adjust), "value_changed", G_CALLBACK (print_adjust), NULL);
 
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW(scrolled_window), GTK_WIDGET(gimage));
-  gtk_scrolled_window_set_hadjustment (GTK_SCROLLED_WINDOW(scrolled_window), GTK_ADJUSTMENT(adjust));
-  /*сигнал для проверки работы горизонтального сдвига рисунка */
-  /* g_signal_connect (G_OBJECT (adjust), "value_changed", G_CALLBACK (print_adjust), NULL); */
+  
   (void)load_image(file, panel, enable_actions, &current);
   if (!split_spreads)
-    (void)show_image (&current, panel, TRUE, PAGE_FULL);
+    (void)show_image (&current, panel, TRUE, PAGE_FULL, 0); // FIXME: Тут вместо нулей надо сделать сохранение страницы и позиции на ней!
   else if (manga)
-    (void)show_image (&current, panel, TRUE, PAGE_RIGHT);
+    (void)show_image (&current, panel, TRUE, PAGE_RIGHT, 0);
   else
-    (void)show_image (&current, panel, TRUE, PAGE_LEFT);
+    (void)show_image (&current, panel, TRUE, PAGE_LEFT, 0);
   gtk_widget_show_all(ImageWindow);
   gtk_widget_grab_focus(ImageWindow);
 

@@ -10,7 +10,7 @@
 #include "digma_hw.h"
 
 static char *cfg_directory; /*путь к файлу с настройками */
-int crop, split_spreads, rotate, frame, overlap, keepaspect, fm_toggle, move_toggle, speed_toggle, show_clock, top_panel_active, loop_dir, double_refresh, viewed_pages, preload_enable, caching_enable, suppress_panel, show_hidden_files, manga, HD_scaling, boost_contrast, refresh_type, LED_notify=TRUE;
+int crop, split_spreads, rotate, frame, web_manga_mode, overlap, keepaspect, fm_toggle, move_toggle, speed_toggle, show_clock, top_panel_active, loop_dir, double_refresh, viewed_pages, preload_enable, caching_enable, suppress_panel, show_hidden_files, manga, HD_scaling, boost_contrast, refresh_type, LED_notify=TRUE;
 int backlight, sleep_timeout;
 char *system_sleep_timeout;
 
@@ -217,6 +217,7 @@ void create_cfg (void)  /*создание файлов настроек по у
   write_config_int("crop", crop=TRUE);
   write_config_int("split_spreads", split_spreads=FALSE);
   write_config_int("rotate", rotate=FALSE);
+  write_config_int("web_manga_mode", web_manga_mode=FALSE);
   write_config_int("frame", frame=FALSE);
   write_config_int("overlap", overlap=10);
   write_config_int("manga", manga=FALSE);
@@ -235,7 +236,7 @@ void create_cfg (void)  /*создание файлов настроек по у
   write_config_int("show_hidden_files", show_hidden_files=FALSE);
   write_config_int("LED_notify", LED_notify=TRUE);
   write_config_int("backlight", backlight=FALSE);
-  write_config_int("sleep_timeout", sleep_timeout=60);
+  write_config_int("sleep_timeout", sleep_timeout=180);
   write_config_int("HD_scaling", HD_scaling=FALSE);
   write_config_int("boost_contrast", boost_contrast=FALSE);
   write_config_int("refresh_type", refresh_type=detect_refresh_type());
@@ -303,6 +304,7 @@ void read_configuration (void)
   frame=read_config_int("frame");
   keepaspect=read_config_int("keepaspect");
   manga=read_config_int("manga");
+  web_manga_mode=read_config_int("web_manga_mode");
   overlap=read_config_int("overlap");
   fm_toggle=read_config_int("fm_toggle");
   move_toggle=read_config_int("move_toggle");

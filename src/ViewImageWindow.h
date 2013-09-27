@@ -16,6 +16,7 @@ typedef struct {
   int keepaspect;
   int crop;
   int rotate;
+  int web_manga_mode;
   int frame;
   int split_spreads;
   int HD_scaling;
@@ -23,9 +24,12 @@ typedef struct {
   int pages_count;
   gboolean valid;
 } image;
+
+extern GtkWidget *scrolled_window; // Для переключения adjust в interface.c
 extern image current, preloaded, cached, screensaver;
 extern int in_picture_viewer;
 extern int current_page; // Текущая страница при просмотре в режиме поворота
+extern int current_position; // Текущее положение на странице (в режиме поворота/веб-манги)
 gint which_key_press (GtkWidget *, GdkEventKey *, struct_panel *panel);
 void image_resize (image *target);
 void image_zoom_rotate (image *target);
@@ -35,6 +39,6 @@ void die_viewer_window (void);
 /************** Create a Image Viewer Window  *************************/
 void ViewImageWindow(const char *filename, struct_panel *panel, int enable_actions);
 gboolean load_image(const char *const filename, const  struct_panel *const panel, const int enable_actions, image *const target);
-gboolean show_image(image *image, struct_panel *panel, int enable_actions, int page); /* Показываем картинку */
+gboolean show_image(image *image, struct_panel *panel, int enable_actions, int page, int position); /* Показываем картинку */
 extern GtkWidget *ImageWindow;
 #endif

@@ -16,7 +16,7 @@
 
 static GtkWidget *create, *copy, *moving, *del, *options, *exit_button; // Кнопки в главном меню
 static GtkWidget *fmanager, *move_chk, *clock_panel, *ink_speed, *show_hidden_files_chk, *LED_notify_checkbox, *reset_configuration, *backlight_scale, *sleep_timeout_scale, *about_program; // Пункты в настройках ФМ
-static GtkWidget *crop_image, *split_spreads_button, *manga_mode, *rotate_image, *frame_image, *overlap_scale, *overlap_frame, *keepaspect_image, *double_refresh_image, *viewed, *preload_enabled_button, *caching_enabled_button, *suppress_panel_button, *HD_scaling_button, *boost_contrast_button, *power_information_button; // Чекбоксы в настройках вьювера
+static GtkWidget *crop_image, *split_spreads_button, *manga_mode, *rotate_image, *web_manga_mode_checkbox, *frame_image, *overlap_scale, *overlap_frame, *keepaspect_image, *double_refresh_image, *viewed, *preload_enabled_button, *caching_enabled_button, *suppress_panel_button, *HD_scaling_button, *boost_contrast_button, *power_information_button; // Чекбоксы в настройках вьювера
 static GtkWidget *loop_dir_none, *loop_dir_loop, *loop_dir_next, *loop_dir_exit, *loop_dir_frame, *loop_dir_vbox; // Радиобаттон в настройках вьювера
 static GtkWidget *picture_menu, *main_menu, *options_menu;
 int need_refresh=FALSE;
@@ -123,12 +123,14 @@ void rotate_image_toggler() // Callback для галки поворота
   write_config_int("rotate", rotate=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rotate_image)));
   if (rotate)
   {
+    gtk_widget_set_sensitive(web_manga_mode_checkbox, FALSE);
     gtk_widget_set_sensitive(frame_image, TRUE);
     gtk_widget_set_sensitive(overlap_frame, TRUE);
     gtk_widget_set_sensitive(overlap_scale, TRUE);
   }
   else
   {
+    gtk_widget_set_sensitive(web_manga_mode_checkbox, TRUE);
     gtk_widget_set_sensitive(frame_image, FALSE);
     gtk_widget_set_sensitive(overlap_frame, FALSE);
     gtk_widget_set_sensitive(overlap_scale, FALSE);
@@ -139,13 +141,49 @@ void rotate_image_toggler() // Callback для галки поворота
   e_ink_refresh_local ();
 }
 
+void web_manga_mode_toggler() // Callback для галки режима веб-манги
+{
+  write_config_int("web_manga_mode", web_manga_mode=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(web_manga_mode_checkbox)));
+  enable_refresh=FALSE;  
+  if (web_manga_mode)
+  {
+    gtk_widget_set_sensitive(rotate_image, FALSE);
+    gtk_widget_set_sensitive(frame_image, TRUE);
+    gtk_widget_set_sensitive(overlap_frame, TRUE);
+    gtk_widget_set_sensitive(overlap_scale, TRUE);
+    gtk_widget_set_sensitive(split_spreads_button, FALSE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(split_spreads_button), FALSE);
+    gtk_widget_set_sensitive(split_spreads_button, FALSE);
+  }
+  else
+  {
+    gtk_widget_set_sensitive(rotate_image, TRUE);
+    gtk_widget_set_sensitive(frame_image, FALSE);
+    gtk_widget_set_sensitive(overlap_frame, FALSE);
+    gtk_widget_set_sensitive(overlap_scale, FALSE);
+    gtk_widget_set_sensitive(split_spreads_button, TRUE);
+  }
+  wait_for_draw();
+  if (QT) usleep (QT_REFRESH_DELAY);
+  enable_refresh=TRUE;
+  need_refresh=TRUE;
+  e_ink_refresh_local ();
+}
+
+
 void frame_image_toggler () // Callback для галки умного листания
 {
   write_config_int("frame", frame=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(frame_image)));
   if (frame)
+  {
     gtk_widget_set_sensitive(rotate_image, FALSE);
-  else
-    gtk_widget_set_sensitive(rotate_image, TRUE);
+    gtk_widget_set_sensitive(web_manga_mode_checkbox, FALSE);
+  }
+  else 
+  {
+    if (rotate) gtk_widget_set_sensitive(rotate_image, TRUE);
+    if (web_manga_mode) gtk_widget_set_sensitive(web_manga_mode_checkbox, TRUE);
+  }
   need_refresh=TRUE;
   wait_for_draw();
   if (QT) usleep (QT_REFRESH_DELAY);
@@ -259,7 +297,7 @@ void picture_menu_destroy (struct_panel *panel) // Уничтожаем меню
   {
     char *current_name=strdup(current.name);
     (void)load_image(current_name, panel, TRUE, &current); // Повторно загружаем и показываем картинку для учёта изменений
-    (void)show_image(&current, panel, TRUE, current_page);
+    (void)show_image(&current, panel, TRUE, current_page, 0); // Ноль потому, что мы не знаем, что именно изменилось в настройках. FIXME: сделать дополнительную переменную чтобы знали!
     free(current_name);
     viewed_pages--; // Откатываем назад счётчик страниц - после открытия-закрытия меню он не должен изменяться
   }
@@ -422,6 +460,9 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
   rotate_image = gtk_check_button_new_with_label(ROTATE_IMAGE);
   add_toggle_button_to_menu(rotate_image, menu_vbox, rotate_image_toggler, keys_in_picture_menu, rotate, panel);
 
+  web_manga_mode_checkbox = gtk_check_button_new_with_label(WEB_MANGA_MODE);
+  add_toggle_button_to_menu(web_manga_mode_checkbox, menu_vbox, web_manga_mode_toggler, keys_in_picture_menu, web_manga_mode, panel);
+  
   frame_image = gtk_check_button_new_with_label(FRAME_IMAGE);
   add_toggle_button_to_menu(frame_image, menu_vbox, frame_image_toggler, keys_in_picture_menu, frame, panel);
 
@@ -503,16 +544,31 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
     gtk_widget_set_sensitive(manga_mode, FALSE); // И блокируем её
   }
 
-  if (rotate == FALSE)
+  if (rotate == FALSE && web_manga_mode == FALSE)
   {
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(frame_image), FALSE); // Выключаем галку режима покадрового просмотра
     gtk_widget_set_sensitive(frame_image, FALSE); // И блокируем её
     gtk_widget_set_sensitive(overlap_frame, FALSE);
     gtk_widget_set_sensitive(overlap_scale, FALSE);
   }
-
+  
   if (frame)
+  {
     gtk_widget_set_sensitive(rotate_image, FALSE);
+    gtk_widget_set_sensitive(web_manga_mode_checkbox, FALSE);
+  }
+  else
+  {
+    if (web_manga_mode)
+    {    
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(split_spreads_button), FALSE);
+      gtk_widget_set_sensitive(split_spreads_button, FALSE);
+      gtk_widget_set_sensitive(rotate_image, FALSE);
+    }
+    
+    if (rotate)
+      gtk_widget_set_sensitive(web_manga_mode_checkbox, FALSE);
+  }
 
   if (manga) // Если включен режим манги - блокируем деление разворотов
     gtk_widget_set_sensitive(split_spreads_button, FALSE);
