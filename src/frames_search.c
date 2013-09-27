@@ -26,7 +26,7 @@ void mark_frames(image *target, int page, int frame_map[][FRAMES_MAX]) // Пом
 {
   guchar *imageData = gdk_pixbuf_get_pixels (target->pixbuf[page]); // free() не требует!
   int dataSize = gdk_pixbuf_get_rowstride (target->pixbuf[page])*(target->height[page]-1) + target->width[page] *((gdk_pixbuf_get_n_channels (target->pixbuf[page]) * gdk_pixbuf_get_bits_per_sample(target->pixbuf[page]) + 7) / 8) - 2;
-  
+
   int i, ii, pixel_y;
   for (i=0; i < 2; i++)
     for (ii=0; ii < FRAMES_MAX; ii++)
@@ -55,13 +55,13 @@ int frames_search (image *target, int page, int frame_map[][FRAMES_MAX])
   f = 0; /*флаг разрыва цикла */
   f_count = 0;
   s_count = 0;
-  
+
   n_channels = gdk_pixbuf_get_n_channels (target->pixbuf[page]);
   rowstride = gdk_pixbuf_get_rowstride (target->pixbuf[page]);
   pixels = gdk_pixbuf_get_pixels (target->pixbuf[page]);
-  
+
   frame_map_clear(frame_map);
-  
+
   if (frame == FALSE) // Если покадровое листание не разрешено - возвращаем всего один кадр на всё изображение размером
   {
     frame_map[FRAME_START][0] = 0;

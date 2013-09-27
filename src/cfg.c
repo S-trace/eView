@@ -239,7 +239,7 @@ void create_cfg (void)  /*создание файлов настроек по у
   write_config_int("HD_scaling", HD_scaling=FALSE);
   write_config_int("boost_contrast", boost_contrast=FALSE);
   write_config_int("refresh_type", refresh_type=detect_refresh_type());
-  
+
   write_config_string("top_panel.path", top_panel.path=xgetcwd(NULL));
   write_config_string("top_panel.selected_name", top_panel.selected_name=strdup("../"));
   write_config_string("top_panel.archive_cwd", top_panel.archive_cwd=strdup(""));
@@ -248,7 +248,7 @@ void create_cfg (void)  /*создание файлов настроек по у
   strcpy(top_panel.archive_stack[0],"filesystem");
   strcpy(top_panel.archive_stack[1],"");
   write_archive_stack("top_panel.archive_stack", &top_panel);
-  
+
   write_config_string("bottom_panel.path", bottom_panel.path=xgetcwd(NULL));
   write_config_string("bottom_panel.selected_name", bottom_panel.selected_name=strdup("../"));
   write_config_string("bottom_panel.archive_cwd", bottom_panel.archive_cwd=strdup(""));
@@ -322,9 +322,9 @@ void read_configuration (void)
   HD_scaling=read_config_int("HD_scaling");
   boost_contrast=read_config_int("boost_contrast");
   refresh_type=read_config_int("refresh_type");
-  if (refresh_type == REFRESH_UNKNOWN) // Для корректного обновления с прошлых версий 
+  if (refresh_type == REFRESH_UNKNOWN) // Для корректного обновления с прошлых версий
     write_config_int("refresh_type", refresh_type=detect_refresh_type());
-  
+
   read_panel_configuration(&top_panel);
   read_panel_configuration(&bottom_panel);
 

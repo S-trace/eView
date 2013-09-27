@@ -309,7 +309,7 @@ void detect_hardware(void) /* Обнаружение оборудования и
       printf ("Found sysfs sleep trigger at file %s\n", sysfs_sleep_path);
       #endif
     }
-  }  
+  }
 
   #ifdef debug_printf
   if (! hardware_has_LED)

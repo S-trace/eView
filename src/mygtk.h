@@ -243,8 +243,8 @@ void e_ink_refresh_part(void);
 void e_ink_refresh_local(void);
 void e_ink_refresh_full(void);
 void e_ink_refresh_default(void);
-#define COLUMN_W (width_display * 83 / 100) /* Первая колонка в файлменеджере (для имён). 80 - ширина в процентах */
-#define COLUMN_W2 (width_display * 17 / 100)/* Вторая колонка в файлменеджере (для размеров). 20 - ширина в процентах */
+#define COLUMN_W (width_display * 83 / 100) /* Первая колонка в файлменеджере (для имён). 83 - ширина в процентах */
+#define COLUMN_W2 (width_display * 17 / 100)/* Вторая колонка в файлменеджере (для размеров). 17 - ширина в процентах */
 void *MessageDieDelayed (void *arg);
 int MessageDie (GtkWidget *Window);
 GtkWidget *Message (const char *const title, const char *const message);

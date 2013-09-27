@@ -19,7 +19,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #include "cfg.h"
-#define MAXFILES 4096 /* Максимальное количество файлов в каталоге */
 
 extern int files_num;
 void calculate_scaling_dimensions(int *new_width, int *new_height, const int image_height, const int image_width, const int display_height, const int display_width);

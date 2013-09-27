@@ -1,11 +1,6 @@
 #ifndef __have_view_image_window
 #define __have_view_image_window
-#define L_SHIFT 0   /*смещение левой части изображения к левому краю экрана */
-#ifdef __amd64
-#define R_SHIFT (width_display + 2) /*смещение правой части изображения к правому краю */
-#else
-#define R_SHIFT (width_display) /*смещение правой части изображения к правому краю // ЯХЕЗ какого гхыра, но на ARM возвращается ширина экрана полностью! =_=" */
-#endif
+
 #define PAGE_FULL 0
 #define PAGE_LEFT 1
 #define PAGE_RIGHT 2

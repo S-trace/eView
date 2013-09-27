@@ -87,7 +87,7 @@ void /*@null@*/  *sleep_thread(__attribute__((unused)) /*@unused@*/ void* arg)
 //   enable_refresh=FALSE;
 //   update(active_panel);
 //   gtk_widget_show_all(window);
-//   
+//
 //   gtk_widget_queue_draw(GTK_WIDGET(active_panel->list)); /* Заставляем GTK перерисовать список каталогов */
 //   /*   g_signal_connect (G_OBJECT (window), "focus_in_event", */
 //   /*                     G_CALLBACK (focus_in_callback), NULL); */
@@ -219,7 +219,7 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
           printf("stat() for '%s' failed (%s)\n",namelist[i]->d_name, strerror(errno));
           #endif
         }
-        
+
         xfree(&namelist[i]);
       }
     }
@@ -457,12 +457,12 @@ void init (void)
   #ifdef debug_printf
   set_led_state (LED_state[LED_ON]);
   xsystem("uname -a"); // Проверка машины:
-  // GTK Ritmix RBK700HD: 
+  // GTK Ritmix RBK700HD:
   // Linux sibrary 2.6.24.2-Boeye #26 PREEMPT Sat Oct 22 11:30:10 CST 2011 armv5tejl unknown
   // Qt GMini M6HD:
   // Linux boeye 2.6.24.2-Boeye #346 PREEMPT Tue Jul 17 13:50:49 CST 2012 armv5tejl GNU/Linux
-  
-  
+
+
   #endif
   if (XOpenDisplay(NULL))
   {
@@ -625,7 +625,7 @@ int main (int argc, char **argv)
   printf ("Starting eView in directory '%s'\n",directory);
   free (directory);
   #endif
-  
+
   if (access(".eView/", F_OK) != 0) /* Действия когда каталог не существует:  */
   {
     create_cfg ();
@@ -671,7 +671,7 @@ int main (int argc, char **argv)
     active_panel=&top_panel;
     inactive_panel=NULL;
   }
-  
+
   errno=0;
   if (chdir (active_panel->path) == -1) /* переход в последний рабочий каталог */
   {
@@ -679,22 +679,22 @@ int main (int argc, char **argv)
     printf ("Chdir to '%s' failed because %s!\n", active_panel->path, strerror(errno));
     #endif
   }
-  
+
   #ifndef __amd64
   if (show_clock == FALSE) /* Скрываем часики */
     gtk_window_fullscreen (GTK_WINDOW(main_window));
   #endif
   panel_selector (active_panel); /* Переключаемся в активную панель! */
   gtk_widget_show_all(main_window); /* Рисуем интерфейс */
-  
+
   // Строим списки файлов в панелях
   if (active_panel->archive_depth > 0)
     enter_archive(active_panel->archive_stack[active_panel->archive_depth], active_panel, FALSE);
   else
     update(active_panel);
-  
+
   select_file_by_name(active_panel->selected_name, active_panel);
-  
+
   if (inactive_panel != NULL)
   {
     if (inactive_panel->archive_depth > 0 )
@@ -703,17 +703,16 @@ int main (int argc, char **argv)
       update(inactive_panel);
     select_file_by_name(inactive_panel->selected_name, inactive_panel);
   }
-  else
-  
+
   gtk_widget_destroy(starting_message);
   wait_for_draw();/* Ожидаем отрисовки всего */
-  
+
   enable_refresh=TRUE;
   if (is_picture(active_panel->last_name)) /* Открываем последнюю отображённую картинку */
     ViewImageWindow (active_panel->last_name, active_panel, TRUE);
   else
     e_ink_refresh_full();
-  if (QT) 
+  if (QT)
   {
     preload_next_screensaver(); // Загружаем первую заставку в память для мгновенного отображения
     start_sleep_timer();

@@ -439,8 +439,8 @@ int find_next_archive_directory(struct_panel *panel)
 
         /*Очищаем оставшийся список каталогов*/
         do free(directories_list[i++]);
-          while (directories_list[i] != NULL);
-          free(directories_list);
+        while (directories_list[i] != NULL);
+        free(directories_list);
 
         return TRUE;  /* Иначе возвращаем успех */
       }
@@ -477,7 +477,7 @@ void archive_go_upper(struct_panel *panel) /* Переходим на урове
       panel->archive_cwd[0]='\0';
     else /* А иначе просто обрезаем путь в архиве на один уровень */
       *(slash+1)='\0';
-    
+
     if (panel == &top_panel)
     {
       write_config_string("top_panel.archive_cwd", panel->archive_cwd);

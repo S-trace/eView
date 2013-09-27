@@ -32,24 +32,24 @@ void calculate_scaling_dimensions(int *new_width, int *new_height, const int ima
   if (display_height > 0 && display_width > 0)
   {
     scale_width = (double)display_width / image_width;
-    scale_height = (double)display_height  / image_height;  
+    scale_height = (double)display_height  / image_height;
     scale = scale_height < scale_width ? scale_height : scale_width;
   }
   else if (display_height > 0)
-    scale = (double)display_height / image_height;  
+    scale = (double)display_height / image_height;
   else if (display_width > 0)
     scale = (double)display_width / image_width;
-  else 
+  else
     scale=1;
   #ifdef debug_printf
   printf("scale_width=%f, scale_height=%f, scale=%f\n", scale_width, scale_height, scale);
   #endif
-  
+
   *new_width = scale * image_width;
   *new_height = scale * image_height;
   #ifdef debug_printf
   printf("new_width=%d, new_height=%d\n", *new_width, *new_height);
-  #endif  
+  #endif
 }
 
 void get_system_sleep_timeout(void)
@@ -709,7 +709,7 @@ int is_picture(char *name) __attribute__((pure));
 int is_picture(char *name) /* Является ли изображением */
 {
   if (strlen(name)<4) return FALSE; // Если имя файла слишком короткое
-  
+
   size_t n = strlen(name) - 4; /* Позиция начала расширения */
   if(strcasecmp((name+n), ".jpg") != 0 &&
     strcasecmp((name+n), "jpeg") != 0 &&
@@ -727,7 +727,7 @@ int is_archive(char *name) __attribute__((pure));
 int is_archive(char *name) /* Является ли архивом */
 {
   if (strlen(name)<4) return FALSE; // Если имя файла слишком короткое
-  
+
   size_t n = strlen(name) - 4; /* Позиция начала расширения */
   if(strcasecmp((name+n), ".rar") != 0 &&
     strcasecmp((name+n), ".cbr") != 0 &&
@@ -742,7 +742,7 @@ int is_text(char *name) __attribute__((pure));
 int is_text(char *name) /* Является ли текстом */
 {
   if (strlen(name)<4) return FALSE; // Если имя файла слишком короткое
-  
+
   size_t n = strlen(name) - 4; /* Позиция начала расширения */
   if(strcasecmp((name+n), ".txt") != 0)
     return FALSE;

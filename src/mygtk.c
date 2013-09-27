@@ -82,7 +82,7 @@ int keys_in_confitm_request(__attribute__((unused)) GtkWidget *dialog, GdkEventK
   {
     case   KEY_OK:
       return FALSE;
-      
+
     default:
       e_ink_refresh_default();
       return FALSE;
@@ -115,32 +115,32 @@ gboolean confirm_request(const char *title, const char *confirm_button, const ch
   return answer;
 }
 
-/* char focus_in_processed; // Количество обработанных сигналов 
- gint focus_in_callback () // Обработка события получения фокуса окном. Теоретически должна выстреливать только при реальной потере-получении фокуса окном (извне)! 
- { 
-   #ifdef debug_printf 
-   printf ("GOT FOCUS_IN\n"); 
-   #endif 
-   if (focus_in_processed == 1) 
-   { 
-     e_ink_refresh_local(); 
-     focus_in_processed = -1; 
-   } 
-   else 
-   { 
-     focus_in_processed++; 
-   } 
-   return TRUE; 
- } 
-  
- gint focus_out_callback (void) // реакция на потерю фокуса 
- { 
-   #ifdef debug_printf 
-   printf ("GOT FOCUS_OUT\n"); 
-   #endif 
-   focus_in_processed = 0; // Чтобы не выстреливать focus_in_callback когда попало 
-   return FALSE; 
- } */
+/* char focus_in_processed; // Количество обработанных сигналов
+ * gint focus_in_callback () // Обработка события получения фокуса окном. Теоретически должна выстреливать только при реальной потере-получении фокуса окном (извне)!
+ * {
+ *   #ifdef debug_printf
+ *   printf ("GOT FOCUS_IN\n");
+ *   #endif
+ *   if (focus_in_processed == 1)
+ *   {
+ *     e_ink_refresh_local();
+ *     focus_in_processed = -1;
+ * }
+ * else
+ * {
+ *   focus_in_processed++;
+ * }
+ * return TRUE;
+ * }
+ *
+ * gint focus_out_callback (void) // реакция на потерю фокуса
+ * {
+ *   #ifdef debug_printf
+ *   printf ("GOT FOCUS_OUT\n");
+ *   #endif
+ *   focus_in_processed = 0; // Чтобы не выстреливать focus_in_callback когда попало
+ *   return FALSE;
+ * } */
 /*           asprintf(&command, "dbus-send  --type=method_call --dest=com.test.reader /reader/registry com.test.reader.registry.input string:\"%s%s\"",panel->path, panel->selected_name);  */
 /* signal sender=:1.1 -> dest=(null destination) serial=131 path=/PowerManager; interface=com.sibrary.Service.PowerManager; member=requestSuspend */
 
@@ -217,7 +217,7 @@ void *MessageDieDelayed (void *window)
   return NULL;
 }
 
-GtkWidget *Message (const char *const title, const char *const message) 
+GtkWidget *Message (const char *const title, const char *const message)
 {
   GtkWidget *MessageWindow, *label;
   /*   interface_is_locked=TRUE; //Блокируем остальной интерфейс программы */
@@ -349,7 +349,7 @@ void dirlist_select(__attribute__((unused)) GtkWidget *const widget, struct_pane
     xfree(&tmp);
     free(panel->selected_iter);
     panel->selected_iter = gtk_tree_model_get_string_from_iter (model, &iter);
-    
+
     /*поведение прокрутки при подходах к краю окна */
     selection_row = iter_from_filename (panel->selected_name, panel);
     path = gtk_tree_path_new_from_string (selection_row);
@@ -383,7 +383,7 @@ void after_dirlist_select(__attribute__((unused)) GtkWidget *const widget, struc
 {
   if (interface_is_locked) /* Чтобы не дёргалось при просмотре изображений (каждый раз, приводя к двойному обновлению) */
     return;
-  
+
   if (need_full_refresh)
   {
     wait_for_draw();
@@ -635,7 +635,7 @@ gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
     case KEY_PGUP:
       need_full_refresh=TRUE;
       return FALSE;
-      
+
     case KEY_OK:
       return FALSE;
 
@@ -654,7 +654,7 @@ gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
 //     case KEY_PGDOWN:
 //     case KEY_PGUP:
 //       wait_for_draw();
-//     
+//
 //     default:
 //       return FALSE;
 //   }
@@ -690,7 +690,7 @@ void create_panel (struct_panel *panel)
   (void)g_signal_connect_after (GTK_TREE_SELECTION(gtk_tree_view_get_selection (panel->list)), "changed", G_CALLBACK (after_dirlist_select), panel); /*обновление экрана после перемещения курсора */
   (void)g_signal_connect_swapped (panel->list, "row-activated", G_CALLBACK (actions), panel); /*реакция на клик по выбору */
   (void)g_signal_connect (G_OBJECT (panel->list), "key_press_event", G_CALLBACK (which_keys_main), panel); /* Обработка назначенных кнопок */
-//   (void)g_signal_connect_after (G_OBJECT (panel->list), "key_press_event", G_CALLBACK (which_keys_main_after), panel); /* Обработка назначенных кнопок */
+  //   (void)g_signal_connect_after (G_OBJECT (panel->list), "key_press_event", G_CALLBACK (which_keys_main_after), panel); /* Обработка назначенных кнопок */
   (void)g_signal_connect_swapped (G_OBJECT (panel->list), "focus_in_event", G_CALLBACK (panel_focussed), panel);
 }
 
@@ -840,7 +840,7 @@ void enter_suspend(struct_panel *panel)
   int saved_keepaspect=keepaspect;
   int saved_boost_contrast=boost_contrast;
 
-  gtk_idle_remove (idle_call_handler); /* Удаляем вызов этой функции из очереди вызовов (иначе на ARM она будет вызываться вечно) */
+  gtk_idle_remove (idle_call_handler); /* Удаляем вызов этой функции из очереди вызовов (иначе она будет вызываться вечно) */
   if (suspended == FALSE)
   {
     #ifdef debug_printf
