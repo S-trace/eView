@@ -388,14 +388,17 @@ gboolean show_image(image *target, struct_panel *panel, int enable_actions, int 
   }
   gtk_window_set_title(GTK_WINDOW(ImageWindow), target->name);
   
-  wait_for_draw(); /* Ожидаем отрисовки всего */
-  if (QT) // Задержка нужна чтобы gtk_image_set_from_pixbuf() успело отработать, иначе не восстанавливается значение положения экрана
-    usleep(QT_REFRESH_DELAY);
-  else 
-    usleep(GTK_REFRESH_DELAY);
-  wait_for_draw();  
-  if (rotate) gtk_adjustment_set_value(gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW(scrolled_window)), position);
-  if (web_manga_mode) gtk_adjustment_set_value(gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW(scrolled_window)), position);
+  if (position != 0)
+  {
+    wait_for_draw(); /* Ожидаем отрисовки всего */
+    if (QT) // Задержка нужна чтобы gtk_image_set_from_pixbuf() успело отработать, иначе не восстанавливается значение положения экрана
+      usleep(QT_REFRESH_DELAY);
+    else 
+      usleep(GTK_REFRESH_DELAY);
+    wait_for_draw();  
+    if (rotate) gtk_adjustment_set_value(gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW(scrolled_window)), position);
+        if (web_manga_mode) gtk_adjustment_set_value(gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW(scrolled_window)), position);
+  }
   wait_for_draw(); /* Ожидаем отрисовки всего */  
   return TRUE;
 }
@@ -656,8 +659,13 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
     case   KEY_OK:
       if (boost_contrast) write_config_int("boost_contrast", boost_contrast=FALSE);
       else write_config_int("boost_contrast", boost_contrast=TRUE);
-      load_image(panel->last_name, panel, TRUE, &current);
-      show_image(&current, panel, TRUE, current_page, current_position);
+      if (boost_contrast == FALSE)
+      {
+        load_image(panel->last_name, panel, TRUE, &current);
+        show_image(&current, panel, TRUE, current_page, current_position);
+      }
+      else
+        adjust_contrast (&current, 512, PAGE_FULL);
       e_ink_refresh_full();
       return FALSE;
 

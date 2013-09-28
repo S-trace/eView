@@ -269,7 +269,10 @@ void HD_scaling_callback () // Callback для галки качественно
 void boost_contrast_callback () // Callback для галки качественного скалирования
 {
   write_config_int("boost_contrast", boost_contrast=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(boost_contrast_button)));
-  need_refresh=TRUE;
+  if (boost_contrast == FALSE)
+    need_refresh=TRUE;
+  else
+    adjust_contrast (&current, 512, PAGE_FULL);
   e_ink_refresh_local ();
 }
 
