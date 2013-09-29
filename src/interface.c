@@ -12,6 +12,7 @@
 #include "digma_hw.h"
 #include "translations.h"
 #include "ViewImageWindow.h"/*reset_preloaded_image*/
+#include "contrast.h"
 #include "os-specific.h"
 
 static GtkWidget *create, *copy, *moving, *del, *options, *exit_button; // Кнопки в главном меню
@@ -96,7 +97,7 @@ void power_information(void)
   xfree(&battery_voltage);
 }
 
-void crop_image_toggler () // Callback для галки обрезки полей
+void crop_image_toggler (void) // Callback для галки обрезки полей
 {
   write_config_int("crop", crop=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(crop_image)));
   need_refresh=TRUE;
@@ -105,7 +106,7 @@ void crop_image_toggler () // Callback для галки обрезки поле
   e_ink_refresh_local ();
 }
 
-void split_spreads_toggler () // Callback для галки поворота
+void split_spreads_toggler (void) // Callback для галки поворота
 {
   write_config_int("split_spreads", split_spreads=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(split_spreads_button)));
   if (split_spreads)
@@ -118,7 +119,7 @@ void split_spreads_toggler () // Callback для галки поворота
   e_ink_refresh_local ();
 }
 
-void rotate_image_toggler() // Callback для галки поворота
+void rotate_image_toggler(void) // Callback для галки поворота
 {
   write_config_int("rotate", rotate=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rotate_image)));
   if (rotate)
@@ -141,7 +142,7 @@ void rotate_image_toggler() // Callback для галки поворота
   e_ink_refresh_local ();
 }
 
-void web_manga_mode_toggler() // Callback для галки режима веб-манги
+void web_manga_mode_toggler(void) // Callback для галки режима веб-манги
 {
   write_config_int("web_manga_mode", web_manga_mode=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(web_manga_mode_checkbox)));
   enable_refresh=FALSE;  
@@ -171,7 +172,7 @@ void web_manga_mode_toggler() // Callback для галки режима веб-
 }
 
 
-void frame_image_toggler () // Callback для галки умного листания
+void frame_image_toggler (void) // Callback для галки умного листания
 {
   write_config_int("frame", frame=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(frame_image)));
   if (frame)
@@ -199,7 +200,7 @@ void overlap_changed(GtkWidget *scalebutton)
   e_ink_refresh_default();
 }
 
-void manga_mode_toggler () // Callback для галки просмотра как манги
+void manga_mode_toggler (void) // Callback для галки просмотра как манги
 {
   write_config_int("manga", manga=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(manga_mode)));
   if (manga)
@@ -212,7 +213,7 @@ void manga_mode_toggler () // Callback для галки просмотра ка
   e_ink_refresh_local ();
 }
 
-void keepaspect_image_toggler () // Callback для галки сохранения пропорций
+void keepaspect_image_toggler (void) // Callback для галки сохранения пропорций
 {
   write_config_int("keepaspect", keepaspect = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(keepaspect_image)));
   need_refresh=TRUE;
@@ -221,7 +222,7 @@ void keepaspect_image_toggler () // Callback для галки сохранен�
   e_ink_refresh_local ();
 }
 
-void double_refresh_toggler () // Callback для галки двойного обновления
+void double_refresh_toggler (void) // Callback для галки двойного обновления
 {
   write_config_int("double_refresh", double_refresh=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(double_refresh_image)));
   wait_for_draw();
@@ -229,7 +230,7 @@ void double_refresh_toggler () // Callback для галки двойного о
   e_ink_refresh_local ();
 }
 
-void preload_toggler () // Callback для галки включения предзагрузки
+void preload_toggler (void) // Callback для галки включения предзагрузки
 {
   write_config_int("preload_enable", preload_enable=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(preload_enabled_button)));
   if (preload_enable == FALSE) reset_image(&preloaded);
@@ -238,7 +239,7 @@ void preload_toggler () // Callback для галки включения пре�
   e_ink_refresh_local ();
 }
 
-void caching_toggler () // Callback для галки включения кэширования
+void caching_toggler (void) // Callback для галки включения кэширования
 {
   write_config_int("caching_enable", caching_enable=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(caching_enabled_button)));
   if (caching_enable == FALSE) reset_image(&cached);
@@ -247,7 +248,7 @@ void caching_toggler () // Callback для галки включения кэш�
   e_ink_refresh_local ();
 }
 
-void suppress_panel_callback () // Callback для галки подавления панели
+void suppress_panel_callback (void) // Callback для галки подавления панели
 {
   write_config_int("suppress_panel", suppress_panel=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(suppress_panel_button)));
   if (suppress_panel)
@@ -259,14 +260,14 @@ void suppress_panel_callback () // Callback для галки подавлени
   e_ink_refresh_local ();
 }
 
-void HD_scaling_callback () // Callback для галки качественного скалирования
+void HD_scaling_callback (void) // Callback для галки качественного скалирования
 {
   write_config_int("HD_scaling", HD_scaling=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(HD_scaling_button)));
   need_refresh=TRUE;
   e_ink_refresh_local ();
 }
 
-void boost_contrast_callback () // Callback для галки качественного скалирования
+void boost_contrast_callback (void) // Callback для галки качественного скалирования
 {
   write_config_int("boost_contrast", boost_contrast=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(boost_contrast_button)));
   if (boost_contrast == FALSE)
@@ -433,7 +434,7 @@ gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *
   }
 }
 
-void loop_dir_toggler () // Callback для радиобаттона по действию при окончании каталога
+void loop_dir_toggler (void) // Callback для радиобаттона по действию при окончании каталога
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_none))) loop_dir = LOOP_NONE;
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_loop))) loop_dir = LOOP_LOOP;
@@ -588,7 +589,7 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
 
 // **************************************************  Options menu  ***********************************************************
 
-void fm_start () // Callback для галки включения ФМ в настройках
+void fm_start (void) // Callback для галки включения ФМ в настройках
 {
   if ((fm_toggle = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(fmanager)))) {
     second_panel_show();
@@ -614,13 +615,13 @@ void fm_start () // Callback для галки включения ФМ в нас
   write_config_int ("fm_toggle", fm_toggle);
 }
 
-void move_confirm ()
+void move_confirm (void)
 {
   write_config_int("move_toggle", move_toggle=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(move_chk)));
   e_ink_refresh_part ();
 }
 
-void clock_panel_toggler ()
+void clock_panel_toggler (void)
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(clock_panel))) {
     show_clock = TRUE;
@@ -633,13 +634,13 @@ void clock_panel_toggler ()
   e_ink_refresh_part ();
 }
 
-void type_refresh ()
+void type_refresh (void)
 {
   write_config_int("speed_toggle", speed_toggle=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ink_speed)));
   e_ink_refresh_part ();
 }
 
-void show_hidden_files_callback ()
+void show_hidden_files_callback (void)
 {
   enable_refresh=FALSE;
   interface_is_locked=TRUE;
@@ -652,13 +653,13 @@ void show_hidden_files_callback ()
   e_ink_refresh_default();
 }
 
-void LED_notify_callback ()
+void LED_notify_callback (void)
 {
   write_config_int("LED_notify", LED_notify = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(LED_notify_checkbox)));
   e_ink_refresh_part ();
 }
 
-void reset_configuration_callback() // Callback для кнопки сброса конфигов
+void reset_configuration_callback(void) // Callback для кнопки сброса конфигов
 {
   if(confirm_request(RESET_CONFIGURATION"?", GTK_STOCK_OK, GTK_STOCK_CANCEL))
   {
@@ -704,7 +705,7 @@ static void led_changed(GtkWidget *scalebutton)
 }
 #endif
 
-void about_program_callback() // Callback для кнопки информации о программе
+void about_program_callback(void) // Callback для кнопки информации о программе
 {
   Message(ABOUT_PROGRAM, ABOUT_PROGRAM_TEXT);
 }
