@@ -273,21 +273,23 @@ char *find_next_picture_name(struct_panel *panel)
   printf("entering find_next_picture_name\n");
   #endif
   model = gtk_tree_view_get_model (panel->list);
-  (void)gtk_tree_model_get_iter_from_string (model, &iter, panel->selected_iter);
-  gtk_tree_model_get (model, &iter, FILE_COLUMN , &tmp, -1);
-  valid = gtk_tree_model_iter_next (model, &iter);
-  while (valid)
+  if (gtk_tree_model_get_iter_from_string (model, &iter, panel->selected_iter))
   {
-    char *current_position_name;
-    gtk_tree_model_get (model, &iter, FILE_COLUMN, &tmp, -1);
-    current_position_name = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
-    xfree(&tmp);
-    if (is_picture(current_position_name))
-    {
-      //       free(model); // Не надо - карается abort()ом
-      return current_position_name;
-    }
+    gtk_tree_model_get (model, &iter, FILE_COLUMN , &tmp, -1);
     valid = gtk_tree_model_iter_next (model, &iter);
+    while (valid)
+    {
+      char *current_position_name;
+      gtk_tree_model_get (model, &iter, FILE_COLUMN, &tmp, -1);
+      current_position_name = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
+      xfree(&tmp);
+      if (is_picture(current_position_name))
+      {
+        //       free(model); // Не надо - карается abort()ом
+        return current_position_name;
+      }
+      valid = gtk_tree_model_iter_next (model, &iter);
+    }
   }
   //   free(model); // Не надо - карается abort()ом
   return NULL;
@@ -351,95 +353,81 @@ char *find_last_picture_name(struct_panel *panel)
   return last_found_image;
 }
 
-char *find_next_directory(struct_panel *panel) /* Поиск следующей директории в списке TODO: Переписать с обработкой не через system() а через список */
+char *find_next_node(struct_panel *panel, int reset_position) /* Поиск следующей директории или архива в списке */
 {
-  FILE *fp; /* Указатель на файл */
-  char next_directory[PATHSIZE+1];
-  char *command;
-  asprintf(&command, "find \"$(dirname \"`pwd`\")\" -type d|sed 's-$-/-g'|%s > dirlist", SORT_COMMAND);
-  xsystem(command);  /* Получаем список каталогов */
-  free (command);
-  fp = fopen("dirlist", "r"); /* Открываем его */
-  (void)remove ("dirlist"); /* И тут же удаляем, открытый он останется висеть как дескриптор */
-  while(! feof(fp)) { /* Пока не конец файла */
-    if (fgets ( next_directory, PATHSIZE+1, fp) == 0) /* Читаем строку из файла */
-    {
-      #ifdef debug_printf
-      printf("Reading next directory failed (we in last directory?)\n");
-      #endif
-      (void)fclose(fp);/* Закрываем файл при неудачном чтении */
-      return strdup(panel->path); /* И возвращаем значение текущего каталога */
-    }
-    trim_line(next_directory); /* Удаляем \n с конца строки */
-    if ((strcmp (next_directory, panel->path) == 0)) /* Сравниваем строку с текущим каталогом */
-    {
-      if (fgets (next_directory, PATHSIZE+1, fp) == 0) /* При совпадении читаем ещё одну строку из файла */
-      {
-        #ifdef debug_printf
-        printf("Reading next directory failed (we in last directory?)\n");
-        #endif
-        (void)fclose(fp);/* Закрываем файл при неудачном чтении */
-        return strdup(panel->path); /* И возвращаем значение текущего каталога */
-      }
-
-      (void)fclose(fp);/* Закрываем файл */
-      trim_line(next_directory); /* Удаляем \n с конца строки */
-      #ifdef debug_printf
-      printf ("Matched filename '%s'\n", next_directory);
-      #endif
-      return (strdup (next_directory));  /* И возвращаем значение очередной строки */
-    }
+  #ifdef DEBUG_PRINTF
+  printf("entering find_first_picture_name\n");
+  #endif
+  char *tmp;
+  gboolean valid;
+  GtkTreeIter iter;
+  GtkTreeModel *model = gtk_tree_view_get_model (panel->list);
+  if (reset_position == TRUE) // Получаем итератор первого объекта в списке
+    gtk_tree_model_get_iter_first (model, &iter);
+  else // Получаем итератор текущего выбранного объекта
+    gtk_tree_model_get_iter_from_string (model, &iter, panel->selected_iter);
+  valid = gtk_tree_model_iter_next (model, &iter); // И начинаем поиск со следующей
+  while (valid)
+  {
+    gtk_tree_model_get (model, &iter, FILE_COLUMN, &tmp, -1);
+    char *current_position_name = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
+    xfree(&tmp);
+    if (is_directory(current_position_name, panel)) // Если под курсором оказалась строка с каталогом - выдаём её
+      return (xconcat_path_file(panel->path, current_position_name));
+    else if (is_archive(current_position_name)) // Если под курсором оказалась строка с архивом - выдаём её
+      return (strdup(current_position_name));
+    else
+      free(current_position_name);
+    valid = gtk_tree_model_iter_next (model, &iter);
   }
-  (void)fclose(fp);/* Закрываем файл при неудачном поиске */
-  return strdup(panel->path); /* И возвращаем значение текущего каталога */
+  if (strcmp(panel->path, "/") == 0) // Если мы достигли верха в структуре каталогов, и ниже нет ничего
+    return NULL; 
+  
+  // Если управление всё ещё в функции (мы не встретили ни каталогов, ни архивов) - поднимаемся на уровень вверх
+  go_upper(panel);
+  wait_for_draw();
+  // А затем - рекурсивно вызываем себя же не сбрасывая позицию курсора, пока не найдём подходящий каталог
+  return(find_next_node(panel, FALSE));
 }
 
-char *find_prev_directory(struct_panel *panel) /* Поиск предыдущей директории в списке TODO: Переписать с обработкой не через system() а через список */
+char *find_prev_node(struct_panel *panel, int reset_position) /* Поиск следующей директории или архива в списке */
 {
-  FILE *fp; /* Указатель на файл */
-  char next_line[PATHSIZE+1]={'\0'}; /* Строка для следующего каталога */
-  char *command;
-  char prev_directory[PATHSIZE+1];
-  asprintf(&command, "find \"$(dirname \"`pwd`\")\" -type d|sed 's-$-/-g'|%s > dirlist", SORT_COMMAND);
-  xsystem(command);  /* Получаем список каталогов */
-  free (command);
-  fp = fopen("dirlist", "r"); /* Открываем его */
-  (void)remove ("dirlist"); /* И тут же удаляем, открытый он останется висеть как дескриптор */
-  while(! feof(fp)) { /* Пока не конец файла */
-    strcpy(prev_directory, next_line); /* Копируем считанную ранее строку в выходную */
-
-    if (fgets (next_line, PATHSIZE+1, fp) == 0) /* Читаем ещё одну строку из файла */
-    {
-      #ifdef debug_printf
-      printf("Reading next directory failed (we in last directory?)\n");
-      #endif
-      (void)fclose(fp);/* Закрываем файл при неудачном чтении */
-      return strdup(panel->path); /* И возвращаем значение текущего каталога */
-    }
-    trim_line(next_line); /* Удаляем \n с конца строки */
-    #ifdef debug_printf
-    printf ("Filename '%s'\n", next_line);
-    #endif
-    if (strcmp (next_line, panel->path) == 0) /* Сравниваем строку с текущим каталогом */
-    {
-      (void)fclose(fp);/* Закрываем файл */
-      #ifdef debug_printf
-      printf ("Matched filename %s\n", prev_directory);
-      #endif
-      return strdup(prev_directory);  /* И возвращаем значение предыдущей строки */
-    }
-    else
-    {
-      #ifdef debug_printf
-      printf ("Filename '%s' not matched!\n", next_line);
-      #endif
-    }
-  }
-  (void)fclose(fp); /* Закрываем файл при неудачном поиске */
-  #ifdef debug_printf
-  printf ("Filename not matched!\n");
+  #ifdef DEBUG_PRINTF
+  printf("entering find_first_picture_name\n");
   #endif
-  return strdup(panel->path); /* И возвращаем значение текущего каталога */
+  char *tmp;
+  int current_row;
+  gboolean valid;
+  GtkTreeIter iter;
+  GtkTreeModel *model = gtk_tree_view_get_model (panel->list);
+  if (reset_position == TRUE) // Получаем итератор последнего объекта в списке
+    current_row = panel->files_num + panel->dirs_num;
+  else // Получаем итератор текущего выбранного объекта и начинаем поиск с предыдущего
+    current_row = atoi(panel->selected_iter) - 1;
+
+  valid = gtk_tree_model_get_iter_from_string (model, &iter, itoa(current_row));
+  
+  while (valid && current_row > 0)
+  {
+    gtk_tree_model_get (model, &iter, FILE_COLUMN, &tmp, -1);
+    char *current_position_name = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
+    xfree(&tmp);
+    if (is_directory(current_position_name, panel)) // Если под курсором оказалась строка с каталогом - выдаём её
+      return (xconcat_path_file(panel->path, current_position_name));
+    else if (is_archive(current_position_name)) // Если под курсором оказалась строка с архивом - выдаём её
+      return (strdup(current_position_name));
+    else
+      free(current_position_name);
+    valid = gtk_tree_model_get_iter_from_string (model, &iter, itoa(current_row--));
+  }
+  if (strcmp(panel->path, "/") == 0) // Если мы достигли верха в структуре каталогов, и выше нет ничего
+    return NULL; 
+  
+  // Если управление всё ещё в функции (мы не встретили ни каталогов, ни архивов) - поднимаемся на уровень вверх
+  go_upper(panel);
+  wait_for_draw();
+  // А затем - рекурсивно вызываем себя же не сбрасывая позицию курсора, пока не найдём подходящий каталог
+  return(find_prev_node(panel, FALSE));
 }
 
 char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*выбор следующей картинки. allow_actions - разрешить ли действовать (закрывать окно) - для предзагрузки */
@@ -502,44 +490,48 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
         #ifdef debug_printf
         printf("Finding next directory\n");
         #endif
-        if (panel->archive_depth > 0)
+        char *next_node=find_next_node(panel, TRUE); /* Получаем следующий каталог */
+        if (next_node == NULL)
         {
-          if(find_next_archive_directory(panel)) /* Получаем следующий каталог */
-          {
-            #ifdef debug_printf
-            printf("JUMP FORWARD DONE!\n");
-            #endif
-            update(active_panel);
-            free(next_name);
-            return find_first_picture_name(panel);
-          }
-          else
-          {
-            #ifdef debug_printf
-            printf("JUMP FORWARD FAILED!\n");
-            #endif
-            Message (ERROR, UNABLE_TO_ENTER_NEXT_DIRECTORY);
-            update(active_panel);
-            free(next_name);
-            return find_next_picture_name(panel);
-          }
+          #ifdef debug_printf
+          printf("JUMP FORWARD FAILED!\n");
+          #endif
+          Message (ERROR, UNABLE_TO_ENTER_NEXT_DIRECTORY);
+          update(active_panel);
+          free(next_name);
+          return find_next_picture_name(panel);
         }
         else
         {
-          char *next_dir=find_next_directory(panel); /* Получаем следующий каталог */
           #ifdef debug_printf
-          printf("NEXT_DIR=%s\n",next_dir);
+          printf("NEXT_NODE=%s\n",next_node);
           #endif
-          strcpy(panel->path, next_dir);
-          free(next_dir);
-          if (panel == &top_panel)
-            write_config_string("top_panel.path", top_panel.path);
+          if (is_archive(next_node)) // Если find_next_node() вернула имя архива - входим в него
+          {
+            if (panel->archive_depth == 0)
+              enter_archive(next_node, panel, TRUE);
+            else
+            {
+              char *subarchive=xconcat(panel->archive_cwd, next_node);
+              enter_subarchive(subarchive, panel);
+              free(subarchive);
+            }
+          }
           else
-            write_config_string("bottom_panel.path", bottom_panel.path);
-          #ifdef debug_printf
-          printf("CHDIR to %s\n", panel->path);
-          #endif
-          (void)chdir (panel->path); /* Переходим в него */
+          {
+            strcpy(panel->path, next_node);
+            if (panel == &top_panel)
+              write_config_string("top_panel.path", top_panel.path);
+            else
+              write_config_string("bottom_panel.path", bottom_panel.path);
+            #ifdef debug_printf
+            printf("CHDIR to %s\n", panel->path);
+            #endif
+            (void)chdir (panel->path); /* Переходим в него */
+            update(active_panel);
+          }
+          free(next_node);
+          return find_first_picture_name(panel);
         }
         update(active_panel);
         free(next_name);
@@ -632,56 +624,73 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
     }
     if (loop_dir == LOOP_NEXT)
     {
-      #ifdef debug_printf
-      printf("Finding previous directory\n");
-      #endif
-      if (panel->archive_depth > 0)
+      if (allow_actions) /* Предзагрузка не будет срабатывать на границе директорий - ну и гхыр с ней! */
       {
-        if(find_prev_archive_directory(panel)) /* Получаем предыдущий каталог */
-        {
-          #ifdef debug_printf
-          printf("JUMP BACKWARD DONE!\n");
-          #endif
-          update(active_panel);
-          free(prev_name);
-          return find_last_picture_name(panel);
-        }
-        else
+        #ifdef debug_printf
+        printf("Finding previous directory\n");
+        #endif
+        char *prev_node=find_prev_node(panel, TRUE); /* Получаем следующий каталог */
+        if (prev_node == NULL)
         {
           #ifdef debug_printf
           printf("JUMP BACKWARD FAILED!\n");
           #endif
-          if (allow_actions)
-          {
-            interface_is_locked=FALSE;
-            Message (ERROR, UNABLE_TO_ENTER_PREVIOUS_DIRECTORY);
-          }
+          Message (ERROR, UNABLE_TO_ENTER_PREVIOUS_DIRECTORY);
           update(active_panel);
           free(prev_name);
           return find_first_picture_name(panel);
         }
+        else
+        {
+          #ifdef debug_printf
+          printf("PREV_NODE=%s\n", prev_node);
+          #endif
+          if (is_archive(prev_node)) // Если find_prev_node() вернула имя архива - входим в него
+          {
+            if (panel->archive_depth == 0)
+              enter_archive(prev_node, panel, TRUE);
+            else
+            {
+              char *subarchive=xconcat(panel->archive_cwd, prev_node);
+              enter_subarchive(subarchive, panel);
+              free(subarchive);
+            }
+          }
+          else
+          {
+            strcpy(panel->path, prev_node);
+            if (panel == &top_panel)
+              write_config_string("top_panel.path", top_panel.path);
+            else
+              write_config_string("bottom_panel.path", bottom_panel.path);
+            #ifdef debug_printf
+            printf("CHDIR to %s\n", panel->path);
+            #endif
+            (void)chdir (panel->path); /* Переходим в него */
+            update(active_panel);
+          }
+          free(prev_node);
+          if (panel->files_num==0)
+            return find_first_picture_name(panel);
+          else
+            return find_last_picture_name(panel);
+        }
+        update(active_panel);
+        free(prev_name);
+        if (panel->files_num==0)
+          return find_first_picture_name(panel);
+        else
+          return find_last_picture_name(panel);
       }
       else
       {
-        char *prev_directory=find_prev_directory(panel); /* Получаем следующий каталог */
-        strcpy(panel->path, prev_directory);
-        free(prev_directory);
-        if (panel == &top_panel)
-          write_config_string("top_panel.path", top_panel.path);
-        else
-          write_config_string("bottom_panel.path", bottom_panel.path);
         #ifdef debug_printf
-        printf("CHDIR to %s\n", panel->path);
+        printf("Got end of directory!\n");
         #endif
-        (void)chdir (panel->path); /* Переходим в него */
+        free(prev_name);
+        return NULL;
       }
-      update(panel);
-      free(prev_name);
-      if (panel->files_num==0)
-        return find_first_picture_name(panel);
-      else
-        return find_last_picture_name(panel);
-    }
+    }    
     if (loop_dir == LOOP_EXIT)
     {
       #ifdef debug_printf
@@ -748,6 +757,30 @@ int is_text(char *name) /* Является ли текстом */
     return FALSE;
   else
     return TRUE;
+}
+
+int is_directory(char *name, struct_panel *panel) /* Является ли каталогом */
+{
+  GtkTreeIter iter;
+  char *tmp, *file_size, *iter_string=iter_from_filename(name, panel);
+  GtkTreeModel *model = gtk_tree_view_get_model (panel->list);
+  if (gtk_tree_model_get_iter_from_string (model, &iter, iter_string))
+  {
+    free (iter_string);
+    gtk_tree_model_get (model, &iter, SIZE_COLUMN , &tmp, -1);
+    file_size = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
+    xfree(&tmp);
+    
+    if (strcmp(file_size, "dir ") == 0) /* каталог */
+      return TRUE;
+    else
+      return FALSE;
+  }    
+  else 
+  {
+    free (iter_string);
+    return FALSE;
+  }
 }
 
 void err_msg_and_die(const char *fmt, ...)
@@ -830,6 +863,13 @@ char *xconcat(const char *path,const char *filename)/* просто слияни
 
 char *xconcat_path_file(const char *path,const char *filename)
 {
+  if (path < (char *)2)
+  {
+    #ifdef debug_printf
+    printf("Path passed to xconcat_path_file() is NULL!\n");
+    #endif
+    return (strdup(filename));
+  }
   /*
    *      Concatenate path and file name to new allocated buffer,
    *      not adding '/' if path name already have it.

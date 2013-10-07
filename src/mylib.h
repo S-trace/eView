@@ -48,3 +48,4 @@ char *itoa(long i);
 char *get_natural_time(int time); /* Возвращает строку в формате HH:MM:ss */
 void read_string(const char *name, char **destination);
 void preload_next_screensaver(void);
+int is_directory(char *name, struct_panel *panel); /* Является ли каталогом */
