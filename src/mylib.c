@@ -372,9 +372,9 @@ char *find_next_node(struct_panel *panel, int reset_position) /* Поиск сл
     gtk_tree_model_get (model, &iter, FILE_COLUMN, &tmp, -1);
     char *current_position_name = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
     xfree(&tmp);
-    if (is_directory(current_position_name, panel)) // Если под курсором оказалась строка с каталогом - выдаём её
-      return (xconcat_path_file(panel->path, current_position_name));
-    else if (is_archive(current_position_name)) // Если под курсором оказалась строка с архивом - выдаём её
+    
+    // Если под курсором оказалась строка с каталогом или архивом - выдаём её
+    if (is_directory(current_position_name, panel) || is_archive(current_position_name))
       return (strdup(current_position_name));
     else
       free(current_position_name);
@@ -412,9 +412,9 @@ char *find_prev_node(struct_panel *panel, int reset_position) /* Поиск сл
     gtk_tree_model_get (model, &iter, FILE_COLUMN, &tmp, -1);
     char *current_position_name = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
     xfree(&tmp);
-    if (is_directory(current_position_name, panel)) // Если под курсором оказалась строка с каталогом - выдаём её
-      return (xconcat_path_file(panel->path, current_position_name));
-    else if (is_archive(current_position_name)) // Если под курсором оказалась строка с архивом - выдаём её
+    
+    // Если под курсором оказалась строка с каталогом или архивом - выдаём её
+    if (is_directory(current_position_name, panel) || is_archive(current_position_name))
       return (strdup(current_position_name));
     else
       free(current_position_name);
@@ -518,18 +518,7 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
             }
           }
           else
-          {
-            strcpy(panel->path, next_node);
-            if (panel == &top_panel)
-              write_config_string("top_panel.path", top_panel.path);
-            else
-              write_config_string("bottom_panel.path", bottom_panel.path);
-            #ifdef debug_printf
-            printf("CHDIR to %s\n", panel->path);
-            #endif
-            (void)chdir (panel->path); /* Переходим в него */
-            update(active_panel);
-          }
+            enter_subdir(next_node, panel);
           free(next_node);
           return find_first_picture_name(panel);
         }
@@ -657,18 +646,7 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
             }
           }
           else
-          {
-            strcpy(panel->path, prev_node);
-            if (panel == &top_panel)
-              write_config_string("top_panel.path", top_panel.path);
-            else
-              write_config_string("bottom_panel.path", bottom_panel.path);
-            #ifdef debug_printf
-            printf("CHDIR to %s\n", panel->path);
-            #endif
-            (void)chdir (panel->path); /* Переходим в него */
-            update(active_panel);
-          }
+            enter_subdir(prev_node, panel);
           free(prev_node);
           if (panel->files_num==0)
             return find_first_picture_name(panel);

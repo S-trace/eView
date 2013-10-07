@@ -71,3 +71,4 @@ int check_key_press(guint keyval, struct_panel *panel); /* Проработка 
 void select_file_by_name(const char * const name, const struct_panel * const panel);
 extern int suspend_count;
 void go_upper(struct_panel *panel); /* Переход на уровень вверх в дереве */
+void enter_subdir(char *name, struct_panel *panel);/* Переход на уровень вниз в дереве panel->list */
