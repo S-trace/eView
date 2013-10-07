@@ -92,7 +92,7 @@
 #define UNABLE_TO_ENTER_PREVIOUS_DIRECTORY "Unable to enter\nprevious directory!"
 #define UNABLE_TO_SHOW "Unable to show: \n"
 #define UNABLE_TO_CHANGE_DIRECTORY_TO "Unable to enter directory '%s' - %s"
-#define UNABLE_TO_CHANGE_DIRECTORY_TO "Unable to access '%s' - %s"
+#define UNABLE_TO_ACCESS_FILE "Unable to access '%s' - %s"
 #define GTK_PARTS_IS_OUTDATED "eView error: \nFound GTK_parts version %s, needed version is %d or upper. \nPlease, download from https://dl.dropboxusercontent.com/u/100376233/eView/GTK_parts.sh and upgrade Your GTK_parts."
 #define FAILED_TO_START_XFBDEV "eView error: \nXfbdev startup failed. Please contact eView developer (S-trace@list.ru) to try to fix it"
 #define FAILED_TO_OPEN_DEV_FB0 "eView error: \nUnable to open /dev/fb0 - display won't refresh! Please contact eView developer (S-trace@list.ru) to try to fix it"
