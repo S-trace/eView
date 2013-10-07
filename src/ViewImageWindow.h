@@ -26,6 +26,8 @@ typedef struct {
 } image;
 
 extern GtkWidget *scrolled_window; // Для переключения adjust в interface.c
+extern GtkWidget *gimage; // Для перерисовки изображения в boost_contrast_callback()
+
 extern image current, preloaded, cached, screensaver;
 extern int in_picture_viewer;
 extern int current_page; // Текущая страница при просмотре в режиме поворота

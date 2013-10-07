@@ -665,7 +665,10 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
         show_image(&current, panel, TRUE, current_page, current_position);
       }
       else
+      {
         adjust_contrast (&current, 512, PAGE_FULL);
+        gtk_widget_queue_draw(GTK_WIDGET(gimage)); /* Заставляем GTK перерисовать картинку */
+      }
       e_ink_refresh_full();
       return FALSE;
 

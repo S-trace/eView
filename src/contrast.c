@@ -29,4 +29,6 @@ void adjust_contrast(image *target, int contrast, int page) // contrast (256 - n
 
   for (i = 0; i < dataSize; i++)
     imageData[i] = buf[imageData[i]];
+  
+  target->boost_contrast=TRUE;
 }
