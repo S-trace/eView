@@ -440,8 +440,11 @@ void go_upper(struct_panel *panel) /* Переход на уровень вве�
     printf("saved_path=%s\n", saved_path);
     #endif
     (void)chdir("..");
-    new_path=strrchr(panel->path, '/')+1; // Находим начало имени покинутого каталога
-    new_path[0]='\0'; // Обрезаем строку panel->path на уровень выше
+    new_path=strrchr(panel->path, '/'); // Находим начало имени покинутого каталога
+    if (new_path != NULL) // Обрезаем строку panel->path на уровень выше
+      new_path[1]='\0';
+    else // Если в строке panel->path ни единого слэша не оказалось - то что-то пошло не так, делаем там слэш в начале
+      panel->path[0]='/';
     update(panel);
     select_file_by_name(saved_path, panel);
     if (panel == &top_panel)
@@ -663,6 +666,13 @@ gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
 
 void select_file_by_name(const char * const name, const struct_panel * const panel)
 {
+  if (name == NULL)
+  {
+    #ifdef debug_printf
+    printf("Filename passed to select_file_by_name() is NULL!\n");
+    #endif
+    return;
+  }
   #ifdef debug_printf
   printf("Selecting file '%s'\n", name);
   #endif

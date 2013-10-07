@@ -70,3 +70,4 @@ void enter_suspend(struct_panel *panel); /* Показывает скринсе�
 int check_key_press(guint keyval, struct_panel *panel); /* Проработка нажатия кнопки питания при сне */
 void select_file_by_name(const char * const name, const struct_panel * const panel);
 extern int suspend_count;
+void go_upper(struct_panel *panel); /* Переход на уровень вверх в дереве */

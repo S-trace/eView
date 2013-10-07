@@ -235,6 +235,13 @@ char *iter_from_filename (const char *const fname, const struct_panel *const pan
   GtkTreeModel *model;
   gboolean valid = TRUE;
   char *tmp;
+  if (fname == NULL)
+  {
+    #ifdef debug_printf
+    printf("Filename passed to iter_from_filename() is NULL!\n");
+    #endif
+    return NULL;
+  }
   #ifdef debug_printf
   printf("Trying to find iter for name '%s'\n", fname);
   #endif
@@ -275,6 +282,13 @@ void update_window_title(struct_panel *panel)
 
 void update(struct_panel *panel) /*обновление списка */
 {
+  if (access(panel->path, R_OK))
+  {
+    #ifdef debug_printf
+    printf ("Unable to access path %s\n", panel->path);
+    #endif  
+    go_upper(panel);
+  }
   if (LED_notify) set_led_state (LED_state[LED_BLINK_FAST]);
   panel->files_num=0; /* Обнуляем число файлов в просмотрщике */
   clear_list(panel->list);
@@ -338,7 +352,7 @@ void delete_dir_or_file (void)
     xsystem(src);
     xfree (&src);
     after_delete_update (active_panel);
-    if ((inactive_panel != NULL) && (strcmp (active_panel->path, inactive_panel->path) == 0))
+    if ((inactive_panel != NULL) && (strstr(inactive_panel->path, active_panel->path) != NULL))
     {
       after_delete_update (inactive_panel);
       (void)chdir(active_panel->path);
@@ -688,18 +702,42 @@ int main (int argc, char **argv)
   gtk_widget_show_all(main_window); /* Рисуем интерфейс */
 
   // Строим списки файлов в панелях
-  if (active_panel->archive_depth > 0)
-    enter_archive(active_panel->archive_stack[active_panel->archive_depth], active_panel, FALSE);
-  else
+  while (active_panel->archive_depth > 0)
+  {
+    if (enter_archive(active_panel->archive_stack[active_panel->archive_depth], active_panel, FALSE)) 
+      break;
+    else
+    {
+      active_panel->archive_stack[active_panel->archive_depth][0] = '\0';
+      active_panel->archive_depth--;
+      if ( active_panel == &top_panel )
+        write_archive_stack("top_panel.archive_stack", &top_panel);
+      else
+        write_archive_stack("bottom_panel.archive_stack", &bottom_panel);
+    }
+  }
+  if (active_panel->archive_depth == 0)
     update(active_panel);
 
   select_file_by_name(active_panel->selected_name, active_panel);
 
   if (inactive_panel != NULL)
   {
-    if (inactive_panel->archive_depth > 0 )
-      enter_archive(inactive_panel->archive_stack[inactive_panel->archive_depth], inactive_panel, FALSE);
-    else
+    while (inactive_panel->archive_depth > 0)
+    {
+      if (enter_archive(inactive_panel->archive_stack[inactive_panel->archive_depth], inactive_panel, FALSE)) 
+        break;
+      else
+      {
+        inactive_panel->archive_stack[inactive_panel->archive_depth][0] = '\0';
+        inactive_panel->archive_depth--;
+        if ( inactive_panel == &top_panel )
+          write_archive_stack("top_panel.archive_stack", &top_panel);
+        else
+          write_archive_stack("bottom_panel.archive_stack", &bottom_panel);
+      }
+    }
+    if (inactive_panel->archive_depth == 0)
       update(inactive_panel);
     select_file_by_name(inactive_panel->selected_name, inactive_panel);
   }
