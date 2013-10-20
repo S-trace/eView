@@ -1,7 +1,7 @@
 name ?= eView
 version ?= 064t1
 lang ?= russian
-CFLAGS+=-std=c99 -D_GNU_SOURCE -Winit-self -Wformat=2 -Wmissing-include-dirs -Wswitch-default -fipa-pure-const -Wfloat-equal -Wundef -Wshadow -Wcast-qual -Wwrite-strings -Wlogical-op -Wall -Werror -Wno-error=format-nonliteral -Wno-format-nonliteral -Wbad-function-cast -Winline -Wnested-externs -Wpointer-arith -DVERSION="\"eView $(version) $(shell LANG=en_US date '+%d.%b.%Y')\""
+CFLAGS+=-std=c99 -D_GNU_SOURCE -Winit-self -Wformat=2 -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wcast-qual -Wwrite-strings -Wall -Werror -Wno-error=format-nonliteral -Wno-format-nonliteral -Wbad-function-cast -Winline -Wnested-externs -Wpointer-arith -DVERSION="\"eView $(version) $(shell LANG=en_US date '+%d.%b.%Y')\""
 # -Wredundant-decls -Wmissing-prototypes -Wstrict-prototypes -Wcast-align 
 LDFLAGS+=-lX11 -ldl -lpthread
 DFLAGS = -MD
@@ -14,11 +14,12 @@ include libro.mk
 T_ARCH=ARM
 CFLAGS += -Ddebug_printf 
 LDFLAGS += -rdynamic -funwind-tables -g -O0
-else
-include desktop.mk
-CFLAGS+=-Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn
+else ifeq ($(MAKECMDGOALS), clang)
 T_ARCH=x86
-
+include desktop_clang.mk
+else
+T_ARCH=x86
+include desktop_gcc.mk
 endif
 
 CFLAGS += -Wextra  -Dlanguage_$(lang)
@@ -33,7 +34,7 @@ EXE = $(name)$(version)_$(lang).app
 .PHONY: all	arm
 
 
-arm debug all: cleanup $(OBJ)
+clang arm debug all: cleanup $(OBJ)
 	$(LD) -o $(EXE) $(OBJ) $(LDFLAGS)
 	$(STRIP)
 

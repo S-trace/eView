@@ -11,5 +11,6 @@ PKGCONFIG_LDFLAGS := $(shell eval $(PKGCONFIG) --libs gtk+-2.0)
 
 CFLAGS += $(PKGCONFIG_CFLAGS) $(DFLAGS)
 LDFLAGS += $(PKGCONFIG_LDFLAGS)
+CFLAGS += $(DFLAGS) -g -Ddebug_printf -fipa-pure-const -Wlogical-op #-Wcast-align -Wconversion -Wsign-conversion -Wunreachable-code -Wstrict-overflow=5
 
 CFLAGS += -Wall
