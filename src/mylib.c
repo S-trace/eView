@@ -28,7 +28,7 @@ void calculate_scaling_dimensions(int *new_width, int *new_height, const int ima
   #ifdef debug_printf
   printf("calculate_scaling_dimensions called (image %dx%d, display %dx%d)\n", image_height, image_width, display_height, display_width);
   #endif
-  double scale_width, scale_height, scale;
+  double scale_width=0, scale_height=0, scale;
   if (display_height > 0 && display_width > 0)
   {
     scale_width = (double)display_width / image_width;
@@ -390,44 +390,52 @@ char *find_next_node(struct_panel *panel, int reset_position) /* Поиск сл
   return(find_next_node(panel, FALSE));
 }
 
-char *find_prev_node(struct_panel *panel, int reset_position) /* Поиск следующей директории или архива в списке */
+char *find_prev_node(struct_panel *panel) /* Поиск следующей директории или архива в списке */
 {
   #ifdef DEBUG_PRINTF
-  printf("entering find_first_picture_name\n");
+  printf("entering find_prev_node\n");
   #endif
   char *tmp;
   int current_row;
   gboolean valid;
   GtkTreeIter iter;
   GtkTreeModel *model = gtk_tree_view_get_model (panel->list);
-  if (reset_position == TRUE) // Получаем итератор последнего объекта в списке
-    current_row = panel->files_num + panel->dirs_num;
-  else // Получаем итератор текущего выбранного объекта и начинаем поиск с предыдущего
-    current_row = atoi(panel->selected_iter) - 1;
-
+  go_upper(panel);
+  wait_for_draw();
+  current_row = atoi(panel->selected_iter) - 1; // Получаем текущий выбор
   valid = gtk_tree_model_get_iter_from_string (model, &iter, itoa(current_row));
-  
   while (valid && current_row > 0)
   {
     gtk_tree_model_get (model, &iter, FILE_COLUMN, &tmp, -1);
     char *current_position_name = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
     xfree(&tmp);
-    
-    // Если под курсором оказалась строка с каталогом или архивом - выдаём её
-    if (is_directory(current_position_name, panel) || is_archive(current_position_name))
-      return (strdup(current_position_name));
+    if (is_archive(current_position_name))
+    {
+      if (panel->archive_depth == 0)
+      {
+        enter_archive(current_position_name, panel, TRUE);
+        current_row = panel->dirs_num + panel->files_num - 1; // Сбрасываем номер текущей строки
+      }
+      else
+      {
+        char *subarchive=xconcat(panel->archive_cwd, current_position_name);
+        enter_subarchive(subarchive, panel);
+        free(subarchive);
+        current_row = panel->dirs_num + panel->files_num - 1; // Сбрасываем номер текущей строки
+      }
+    }
+    else if (is_directory(current_position_name, panel))
+    {
+      enter_subdir(current_position_name, panel);
+      current_row = panel->dirs_num + panel->files_num - 1; // Сбрасываем номер текущей строки
+    }
     else
       free(current_position_name);
     valid = gtk_tree_model_get_iter_from_string (model, &iter, itoa(current_row--));
   }
   if (strcmp(panel->path, "/") == 0) // Если мы достигли верха в структуре каталогов, и выше нет ничего
-    return NULL; 
-  
-  // Если управление всё ещё в функции (мы не встретили ни каталогов, ни архивов) - поднимаемся на уровень вверх
-  go_upper(panel);
-  wait_for_draw();
-  // А затем - рекурсивно вызываем себя же не сбрасывая позицию курсора, пока не найдём подходящий каталог
-  return(find_prev_node(panel, FALSE));
+    return NULL;
+  return (char *) -1;
 }
 
 char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*выбор следующей картинки. allow_actions - разрешить ли действовать (закрывать окно) - для предзагрузки */
@@ -520,11 +528,11 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
           else
             enter_subdir(next_node, panel);
           free(next_node);
+          char *next=find_first_picture_name(panel);
+          if ( next == NULL)
+            Message(ERROR, NO_IMAGES_IN_CURRENT_DIRECTORY);
           return find_first_picture_name(panel);
         }
-        update(active_panel);
-        free(next_name);
-        return find_first_picture_name(panel);
       }
       else
       {
@@ -618,7 +626,7 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
         #ifdef debug_printf
         printf("Finding previous directory\n");
         #endif
-        char *prev_node=find_prev_node(panel, TRUE); /* Получаем следующий каталог */
+        char *prev_node=find_prev_node(panel); /* Получаем следующий каталог */
         if (prev_node == NULL)
         {
           #ifdef debug_printf
@@ -631,34 +639,31 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
         }
         else
         {
-          #ifdef debug_printf
-          printf("PREV_NODE=%s\n", prev_node);
-          #endif
-          if (is_archive(prev_node)) // Если find_prev_node() вернула имя архива - входим в него
+          if (prev_node != (char *) -1) // Сюда мы никогда не попадём, но пусть будет
           {
-            if (panel->archive_depth == 0)
-              enter_archive(prev_node, panel, TRUE);
-            else
+            #ifdef debug_printf
+            printf("PREV_NODE=%s\n", prev_node);
+            #endif
+            if (is_archive(prev_node)) // Если find_prev_node() вернула имя архива - входим в него
             {
-              char *subarchive=xconcat(panel->archive_cwd, prev_node);
-              enter_subarchive(subarchive, panel);
-              free(subarchive);
+              if (panel->archive_depth == 0)
+                enter_archive(prev_node, panel, TRUE);
+              else
+              {
+                char *subarchive=xconcat(panel->archive_cwd, prev_node);
+                enter_subarchive(subarchive, panel);
+                free(subarchive);
+              }
             }
+            else
+              enter_subdir(prev_node, panel);
+            free(prev_node);
           }
-          else
-            enter_subdir(prev_node, panel);
-          free(prev_node);
           if (panel->files_num==0)
             return find_first_picture_name(panel);
           else
             return find_last_picture_name(panel);
         }
-        update(active_panel);
-        free(prev_name);
-        if (panel->files_num==0)
-          return find_first_picture_name(panel);
-        else
-          return find_last_picture_name(panel);
       }
       else
       {
