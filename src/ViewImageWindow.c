@@ -24,10 +24,10 @@
 
 image current, preloaded, cached, screensaver;
 GtkWidget *ImageWindow, *scrolled_window, *gimage;
-int shift_val; /*на сколько сдвигать картинку */
-int value;     /*текущая позиция сдвига */
+gdouble shift_val; /*на сколько сдвигать картинку */
+gdouble  current_position; // Текущее положение на странице
 int in_picture_viewer=FALSE; /* Индикатор, что открыто окно картинки (для корректной работы скринсейвера) */
-int current_page, current_position;
+int current_page;
 
 /* void print_adjust(GtkAdjustment *adjust, gpointer data) */
 /* { // это только для отладки */
@@ -416,8 +416,8 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
       interface_is_locked=TRUE; /* Блокируем интерфейс на время длительной операции по показу картинки */
       if (rotate || web_manga_mode) /* Действия при просмотре с превышением размера экрана */
       {
-        int display_size, image_size;
-        GtkAdjustment *adjust;
+        int display_size=0, image_size=0;
+        GtkAdjustment *adjust=NULL;
         if (rotate)
         {
           adjust=gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW(scrolled_window));
@@ -431,9 +431,9 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
           image_size=current.height[current_page];  
         }
         
-        value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
+        gdouble value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
         #ifdef debug_printf
-        printf ("value=%d\n", value);
+        printf ("value=%f\n", value);
         #endif
         if (value + display_size < image_size) // Если ниже ещё есть что показать за пределами текущего экрана
         {
@@ -442,7 +442,7 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
             shift_val = image_size - (value + display_size);
 
           #ifdef debug_printf
-          printf ("shift_val=%d, new value=%d, offscreen=%d\n", shift_val, shift_val+value, image_size-(shift_val+value));
+          printf ("shift_val=%f, new value=%f, offscreen=%f\n", shift_val, shift_val+value, image_size-(shift_val+value));
           #endif
           gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), value + shift_val);
           current_position=gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
@@ -530,12 +530,12 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
       interface_is_locked=TRUE; /* Блокируем интерфейс на время длительной операции по показу картинки */
       if (rotate || web_manga_mode) /* Действия при просмотре с превышением размера экрана */
       {
-        int display_size;
+        int display_size=0;
         GtkAdjustment *adjust;
         if (rotate)
         {
-          adjust=gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW(scrolled_window));
           display_size=width_display;
+          adjust=gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW(scrolled_window));
         }
         else if (web_manga_mode)
         {
@@ -543,7 +543,7 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
           display_size=height_display;
         }
         
-        value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
+        gdouble value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
         if (value > 0)
         {
           shift_val = shift_back (value, current.frames[current_page], current.frame_map[current_page], display_size) * -1;
@@ -697,7 +697,7 @@ void create_page_subpixbufs(image *target)
 void image_resize (image *target) /* изменение разрешения и подрезка полей */
 {
   GdkPixbuf *pixbuf_key;
-  int scaling_quality = HD_scaling ? GDK_INTERP_HYPER : GDK_INTERP_BILINEAR;
+  GdkInterpType scaling_quality = HD_scaling ? GDK_INTERP_HYPER : GDK_INTERP_BILINEAR;
 
   #ifdef debug_printf
   printf("image_resize called\n");
@@ -797,7 +797,7 @@ void image_resize (image *target) /* изменение разрешения и 
 
   if (rotate || web_manga_mode)
   {
-    int new_width, new_height;
+    int new_width=0, new_height=0;
     if (rotate)
       calculate_scaling_dimensions(&new_width, &new_height, target->height[PAGE_FULL], target->width[PAGE_FULL], 0, height_display * target->pages_count);
     else if (web_manga_mode)
@@ -873,8 +873,6 @@ void ViewImageWindow(const char *file, struct_panel *panel, int enable_actions) 
   
   if (suppress_panel && (QT == FALSE))
     kill_panel();
-  if (preloaded.name == NULL)
-    preloaded.name[0]='\0';
   #ifdef debug_printf
   printf("Opening viewer for '%s'\n", file);
   #endif

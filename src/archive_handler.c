@@ -321,7 +321,7 @@ void leave_archive(struct_panel *panel)
   printf("move_selection call '%s'\n",panel->archive_stack[panel->archive_depth+1]);
   #endif
   iter=iter_from_filename (panel->archive_stack[panel->archive_depth+1], panel);
-  move_selection(iter, panel); /* И выбираем файл архива курсором FIXME: Сработает только если покинутый вложенный архив в корне родительского архива, или же при покидании архива в реальную ФС. FIXME: породит глюки при автоматическом переходе в следующий каталог! */
+  move_selection(iter, panel); /* И выбираем файл архива курсором FIXME: Сработает только если покинутый вложенный архив в корне родительского архива, или же при покидании архива в реальную ФС. FIXME: этот прискорбный баг породит глюки при автоматическом переходе в следующий каталог! */
   free(iter);
   panel->archive_stack[panel->archive_depth+1][0]='\0'; /*Затираем имя покидаемого архива в стеке */
   if (panel == &top_panel)

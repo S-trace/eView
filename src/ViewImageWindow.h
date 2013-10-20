@@ -31,7 +31,7 @@ extern GtkWidget *gimage; // Для перерисовки изображени�
 extern image current, preloaded, cached, screensaver;
 extern int in_picture_viewer;
 extern int current_page; // Текущая страница при просмотре в режиме поворота
-extern int current_position; // Текущее положение на странице (в режиме поворота/веб-манги)
+extern gdouble current_position; // Текущее положение на странице (в режиме поворота/веб-манги)
 gint which_key_press (GtkWidget *, GdkEventKey *, struct_panel *panel);
 void image_resize (image *target);
 void image_zoom_rotate (image *target);
