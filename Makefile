@@ -54,7 +54,7 @@ clean:
 installer:
 	cp installer.head.sh $(name)$(version)_$(lang)-installer.sh
 	cp $(EXE) $(name)
-	tar -czf ./$(EXE).tar.gz ./$(name) ./desktop_$(name).png desktop_picture.png
+	tar -czf ./$(EXE).tar.gz ./$(name) ./desktop_$(name)-QbiX_edit.png
 	cat ./$(EXE).tar.gz >> $(name)$(version)_$(lang)-installer.sh
 	chmod +x $(name)$(version)_$(lang)-installer.sh
 
@@ -78,7 +78,6 @@ release:
 	mv $(name)$(version)_english-installer.sh $(name)$(version)/
 	make clean
 	cp $(name)_remover.sh $(name)$(version)/
-	cp $(name)_reset_configuration.sh $(name)$(version)/
 	cp readme.txt $(name)$(version)/
 	cp S-trace-changelog.txt $(name)$(version)/
 	cp hardware_support.txt $(name)$(version)/

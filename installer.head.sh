@@ -35,7 +35,7 @@ Name[ru]=eView
 Comment=Enhached manga viewer and filemanager
 Comment[ru]=Усовершенствованный просмотрщик манги и файл-менеджер
 Exec=eView
-Icon=desktop_eView.png
+Icon=desktop_eView-QbiX_edit.png
 Type=Application
 Categories=Root
 StartupNotify=false
@@ -50,12 +50,12 @@ Name=eView
 GenericName=eView
 Exec=eView
 Type=Application
-Icon=eView
+Icon=eView-QbiX_edit
 Name[ru_RU]=eView
 '
 echo "$desktop_Qt" > /usr/local/share/applications/manual.desktop
 cp *.png /usr/share/filemanager/pixmaps/
-cp desktop_${PRGNAME}.png /usr/local/share/desktop/icons/${PRGNAME}.png
+cp desktop_${PRGNAME}-QbiX_edit.png /usr/local/share/desktop/icons/${PRGNAME}-QbiX_edit.png
 # if ! grep eView /usr/local/share/applications/entry.order; then
 #   new_list=`grep list /usr/local/share/applications/entry.order`_eView 
 #   echo '[Entry Order]'> /usr/local/share/applications/entry.order
