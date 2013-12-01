@@ -29,9 +29,7 @@ int check_key_press(guint keyval, struct_panel *panel) /* Возвращает T
 {
   if (interface_is_locked)
   {
-    #ifdef debug_printf
-    printf("Interface was locked, keypress ignored!\n");
-    #endif
+    TRACE("Interface was locked, keypress ignored!\n");
     return TRUE;
   }
   if (suspended)
@@ -53,9 +51,7 @@ int check_key_press(guint keyval, struct_panel *panel) /* Возвращает T
     }
     else /* Продолжаем спать */
     {
-      #ifdef debug_printf
-      printf("Program is suspended, keypress ignored!\n");
-      #endif
+      TRACE("Program is suspended, keypress ignored!\n");
       suspend_hardware();
     }
     return TRUE;
@@ -118,9 +114,7 @@ gboolean confirm_request(const char *title, const char *confirm_button, const ch
 /* char focus_in_processed; // Количество обработанных сигналов
  * gint focus_in_callback () // Обработка события получения фокуса окном. Теоретически должна выстреливать только при реальной потере-получении фокуса окном (извне)!
  * {
- *   #ifdef debug_printf
- *   printf ("GOT FOCUS_IN\n");
- *   #endif
+ *   TRACE("GOT FOCUS_IN\n");
  *   if (focus_in_processed == 1)
  *   {
  *     e_ink_refresh_local();
@@ -135,9 +129,7 @@ gboolean confirm_request(const char *title, const char *confirm_button, const ch
  * 
  * gint focus_out_callback (void) // реакция на потерю фокуса
  * {
- *   #ifdef debug_printf
- *   printf ("GOT FOCUS_OUT\n");
- *   #endif
+ *   TRACE("GOT FOCUS_OUT\n");
  *   focus_in_processed = 0; // Чтобы не выстреливать focus_in_callback когда попало
  *   return FALSE;
  * } */
@@ -166,15 +158,11 @@ gboolean confirm_request(const char *title, const char *confirm_button, const ch
 void Qt_error_message(const char *message)
 {
   const char *name="/tmp/eView_error_message.txt";
-  #ifdef debug_printf
-  printf("writing %s to %s\n", message, name);
-  #endif
+  TRACE("writing %s to %s\n", message, name);
   FILE *file_descriptor=fopen(name,"wt");
   if (!file_descriptor)
   {
-    #ifdef debug_printf
-    printf("UNABLE TO OPEN %s FILE FOR WRITING!\n", name);
-    #endif
+    TRACE("UNABLE TO OPEN %s FILE FOR WRITING!\n", name);
     shutdown(EXIT_FAILURE);
     return ;
   }
@@ -194,9 +182,7 @@ int MessageDie (GtkWidget *Window)
   if (GTK_IS_WINDOW(Window))
   {
     iter=iter_from_filename(active_panel->selected_name, active_panel);
-    #ifdef debug_printf
-    printf ("Destroying message window\n");
-    #endif
+    TRACE("Destroying message window\n");
     gtk_widget_destroy(Window);
     move_selection(iter, active_panel);
     free(iter);
@@ -222,9 +208,7 @@ GtkWidget *Message (const char *const title, const char *const message)
   GtkWidget *MessageWindow, *label;
   /*   interface_is_locked=TRUE; //Блокируем остальной интерфейс программы */
   /* Создаём виджеты */
-  #ifdef debug_printf
-  printf ("Show message '%s', data: '%s'\n", title, message);
-  #endif
+  TRACE("Show message '%s', data: '%s'\n", title, message);
   MessageWindow = gtk_dialog_new_with_buttons (title, NULL, GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT |GTK_DIALOG_NO_SEPARATOR, NULL);
   gtk_window_set_position (GTK_WINDOW (MessageWindow), GTK_WIN_POS_CENTER_ALWAYS);
   label = gtk_label_new (message);
@@ -265,7 +249,7 @@ char *get_current_iter (struct_panel *panel) /*возвращает итерат
 void e_ink_refresh_part(void)
 {
   #ifdef __amd64
-  printf("Updating eINK (part)\n");
+  TRACE("Updating eINK (part)\n");
   #endif
   wait_for_draw();
   epaperUpdatePart();
@@ -274,7 +258,7 @@ void e_ink_refresh_part(void)
 void e_ink_refresh_local(void)
 {
   #ifdef __amd64
-  printf("Updating eINK (local)\n");
+  TRACE("Updating eINK (local)\n");
   #endif
   wait_for_draw();
   epaperUpdateLocal();
@@ -283,7 +267,7 @@ void e_ink_refresh_local(void)
 void e_ink_refresh_full(void)
 {
   #ifdef __amd64
-  printf("Updating eINK (full)\n");
+  TRACE("Updating eINK (full)\n");
   #endif
   wait_for_draw();
   epaperUpdateFull();
@@ -401,9 +385,7 @@ void panel_focussed(struct_panel *panel)
 {
   if (interface_is_locked) /* Чтобы игнорировать сигнал о фокуссировке на панели во время закрытия смотрелки */
   {
-    #ifdef debug_printf
-    printf("Interface was locked, panel focus change signal ignored!\n");
-    #endif
+    TRACE("Interface was locked, panel focus change signal ignored!\n");
     return;
   }
   if (panel == &top_panel)
@@ -436,9 +418,7 @@ void go_upper(struct_panel *panel) /* Переход на уровень вве�
       return;
     trim_line(panel->path);
     saved_path=xconcat_path_file(strrchr(panel->path,'/')+1, ""); /* Сохраняем текущий каталог */
-    #ifdef debug_printf
-    printf("saved_path=%s\n", saved_path);
-    #endif
+    TRACE("saved_path=%s\n", saved_path);
     (void)chdir("..");
     new_path=strrchr(panel->path, '/'); // Находим начало имени покинутого каталога
     if (new_path != NULL) // Обрезаем строку panel->path на уровень выше
@@ -472,9 +452,7 @@ void go_upper(struct_panel *panel) /* Переход на уровень вве�
 
 void actions(struct_panel *panel) /*выбор что делать по клику переход или запуск */
 {
-  #ifdef debug_printf
-  printf("CWD=%s\n", panel->path);
-  #endif
+  TRACE("CWD=%s\n", panel->path);
   if (strcmp(panel->selected_size, "dir ") == 0) /* Если кликнули не каталог */
   {
     if (panel == &top_panel) /* Сбрасываем имя последнего просмотренного файла, чтобы при следующем запуске не было ошибки */
@@ -490,16 +468,12 @@ void actions(struct_panel *panel) /*выбор что делать по клик
     
     if (strcmp(panel->selected_name, "../")== 0)  /* Если кликнули '../' */
     {
-      #ifdef debug_printf
-      printf("../ clicked\n");
-      #endif
+      TRACE("../ clicked\n");
       go_upper(panel);
     }
     else  /* Если кликнули что-то иное, не '../' */
     {
-      #ifdef debug_printf
-      printf("'%s' clicked\n", panel->selected_name);
-      #endif
+      TRACE("'%s' clicked\n", panel->selected_name);
       enter_subdir(panel->selected_name, panel);
     }
   }
@@ -542,9 +516,7 @@ void actions(struct_panel *panel) /*выбор что делать по клик
       if (panel->archive_depth > 0)
       {
         char *filename, *file;
-        #ifdef debug_printf
-        printf("Extracting %s\n", panel->selected_name);
-        #endif
+        TRACE("Extracting %s\n", panel->selected_name);
         filename=xconcat(panel->archive_cwd, panel->selected_name);
         file=xconcat("/tmp", filename);
         archive_extract_file(panel->archive_stack[panel->archive_depth], filename, "/tmp/");
@@ -553,9 +525,7 @@ void actions(struct_panel *panel) /*выбор что делать по клик
         free(command);
         e_ink_refresh_full();
         
-        #ifdef debug_printf
-        printf("Removing extracted '%s'\n", file);
-        #endif
+        TRACE("Removing extracted '%s'\n", file);
         (void)remove(file);
         free(filename);
         free(file);
@@ -643,9 +613,7 @@ gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
       return FALSE;
       
     default:
-      #ifdef debug_printf
-      printf("got unknown keycode 0x%x in main\n", event->keyval);
-      #endif
+      TRACE("got unknown keycode 0x%x in main\n", event->keyval);
       return FALSE;
   }
 }
@@ -668,14 +636,10 @@ void select_file_by_name(const char * const name, const struct_panel * const pan
 {
   if (name == NULL)
   {
-    #ifdef debug_printf
-    printf("Filename passed to select_file_by_name() is NULL!\n");
-    #endif
+    TRACE("Filename passed to select_file_by_name() is NULL!\n");
     return;
   }
-  #ifdef debug_printf
-  printf("Selecting file '%s'\n", name);
-  #endif
+  TRACE("Selecting file '%s'\n", name);
   char *iter=iter_from_filename (name, panel);
   move_selection(iter, panel);
   free(iter);
@@ -707,9 +671,7 @@ void create_panel (struct_panel *panel)
 /* ****************** Standard window widget******************************** */
 GtkWidget *window_create(int x, int y, guint border, const char *title, int modal)
 {
-  #ifdef debug_printf
-  printf("constructing window %dx%d\n",x,y);
-  #endif
+  TRACE("constructing window %dx%d\n",x,y);
   GtkWidget *new_window;
   /* get a handle to the screen for its measurements */
   new_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -854,13 +816,9 @@ void enter_suspend(struct_panel *panel)
   gtk_idle_remove (idle_call_handler); /* Удаляем вызов этой функции из очереди вызовов (иначе она будет вызываться вечно) */
   if (suspended == FALSE)
   {
-    #ifdef debug_printf
-    printf("Entering suspend\n");
-    #endif
+    TRACE("Entering suspend\n");
     xsystem("dbus-send /PowerManager com.sibrary.Service.PowerManager.requestSuspend");
-    #ifdef debug_printf
-    printf("DBUS sent\n");
-    #endif
+    TRACE("DBUS sent\n");
     
     enable_refresh=boost_contrast=crop=rotate=split_spreads=frame=preload_enable=web_manga_mode=FALSE; /* Грязно перенастраиваем смотрелку */
     suspended=keepaspect=TRUE;
@@ -886,14 +844,10 @@ void enter_suspend(struct_panel *panel)
     e_ink_refresh_full();
     preload_next_screensaver();
     suspend_hardware();
-    #ifdef debug_printf
-    printf("Suspend done\n");
-    #endif
+    TRACE("Suspend done\n");
   }
   else
   {
-    #ifdef debug_printf
-    printf("eView is already suspended!\n");
-    #endif
+    TRACE("eView is already suspended!\n");
   }
 }

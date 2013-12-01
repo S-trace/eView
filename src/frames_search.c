@@ -21,7 +21,7 @@ static int s_count;	     /*счетчик линий-разделителей */
 static int y;
 static int wh, ht;
 
-#ifdef debug_printf
+#ifdef debug
 void mark_frames(image *target, int page, int frame_map[][FRAMES_MAX]) // Пометка границ найденных кадров на изображении тонкими красными линиями
 {
   guchar *imageData = gdk_pixbuf_get_pixels (target->pixbuf[page]); // free() не требует!
@@ -73,7 +73,7 @@ int frames_search (image *target, int page, int frame_map[][FRAMES_MAX])
     if (f) break;
   }
   if (f_count>1) frame_map[0][0] = 0;
-  #ifdef debug_printf
+  #ifdef debug
   mark_frames(target, page, frame_map);
   #endif
   return f_count;

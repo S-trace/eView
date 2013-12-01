@@ -30,19 +30,17 @@ char *escape(const char *input) /* Экранирование нежелател
   char  *escaped;
   if (input==NULL)
   {
-    #ifdef debug_printf
-    printf("escape() called with NULL string!\n");
-    #endif
+    TRACE("escape() called with NULL string!\n");
     return (strdup(""));
   }
   escaped = (char *)malloc(2*strlen(input) + 1); /* Аллоцируем память */
   if (escaped==NULL)
   {
-    #ifdef debug_printf
+    #ifdef debug
     if (errno==ENOMEM)
-      printf("Failed to allocate memory in escape() - no memory!\n");
+      TRACE("Failed to allocate memory in escape() - no memory!\n");
     else
-      printf("Failed to allocate memory in escape() - something BAD happened!\n");
+      TRACE("Failed to allocate memory in escape() - something BAD happened!\n");
     #endif
     shutdown(FALSE);
   }
@@ -64,9 +62,7 @@ char *escape(const char *input) /* Экранирование нежелател
       escaped[i++] = input[idx]; /* И копируем собственно символ */
     }
     escaped[i] = '\0'; /* Терминируем строку */
-    #ifdef debug_printf
-    printf("ESCAPED = '%s'\n", escaped);
-    #endif
+    TRACE("ESCAPED = '%s'\n", escaped);
     return escaped;
   }
   return strdup("");
@@ -112,15 +108,11 @@ int get_archive_list(const char *archive, const char *list_file) /* Создан
   switch (file_type_of(archive)) /* Архивно-зависимая часть */
   {
     case ZIP_FILE:
-      #ifdef debug_printf
-      printf("File type ZIP: '%s'\n", archive);
-      #endif
+      TRACE("File type ZIP: '%s'\n", archive);
       asprintf_result=asprintf(&command, "zipinfo -1 \"%s\" | %s > /tmp/ziplist; xargs -n1 dirname < /tmp/ziplist | uniq | sed '/^.$/d;s $ / g' > /tmp/list ; grep -v /$ /tmp/ziplist >> /tmp/list ; %s < /tmp/list > %s", archive, SORT_COMMAND, SORT_COMMAND, list_file); /* Злоебучая команда, потому как бывают архивы, которые не содержат каталогов, только файлы (каталоги в каноничном списке необходимы!) */
       if (asprintf_result == -1 || command == NULL)
       {
-        #ifdef debug_printf
-        printf("asprintf() failed in get_archive_list (no memory?)\n");
-        #endif
+        TRACE("asprintf() failed in get_archive_list (no memory?)\n");
         shutdown(FALSE);
       }
       else
@@ -131,15 +123,11 @@ int get_archive_list(const char *archive, const char *list_file) /* Создан
       return TRUE;
 
     case RAR_FILE:
-      #ifdef debug_printf
-      printf("File type RAR: '%s'\n", archive);
-      #endif
+      TRACE("File type RAR: '%s'\n", archive);
       asprintf_result=asprintf(&command, "unrar vt \"%s\" > /tmp/rarlist ; grep -B1 -- 'd[r-][w-][x-][r-][w-][x-][r-][w-][x-]\\|\\.D\\.' /tmp/rarlist | grep -v '^--$\\|d[r-][w-][x-][r-][w-][x-][r-][w-][x-]\\|\\.D\\.'  | cut -c 2- | sed 's $ / g' > /tmp/list ; grep -B1 -- '-[r-][w-][x-][r-][w-][x-][r-][w-][x-]\\|\\.*A\\.' /tmp/rarlist | grep -v '^--$\\|-[r-][w-][x-][r-][w-][x-][r-][w-][x-]\\|\\.*A\\.'  | sed '1d;$d'| cut -c 2- >> /tmp/list; %s < /tmp/list > %s", archive, SORT_COMMAND, list_file); /* Злоебучая команда, ага. Но зато экономим аж три дорогущих вызова system() */
       if (asprintf_result == -1 || command == NULL)
       {
-        #ifdef debug_printf
-        printf("asprintf() failed in get_archive_list (no memory?)\n");
-        #endif
+        TRACE("asprintf() failed in get_archive_list (no memory?)\n");
         shutdown(FALSE);
       }
       else /* Получаем список каталогов и файлов в каноничном формате (каталоги должны завершаться слэшем) */
@@ -150,9 +138,7 @@ int get_archive_list(const char *archive, const char *list_file) /* Создан
       return TRUE;
 
     default:
-      #ifdef debug_printf
-      printf("Unknown file type:%s\n", archive);
-      #endif
+      TRACE("Unknown file type:%s\n", archive);
       return FALSE;
   }
 }
@@ -163,9 +149,7 @@ char **archive_get_files_list(struct_panel *panel, const char *cwd) /* Полу�
   escaped=escape(cwd);
   if ((asprintf(&command, "grep '^%s[^/]\\+$' %s > /tmp/files.list", escaped, panel->archive_list) == -1) || command == NULL)
   {
-    #ifdef debug_printf
-    printf("asprintf() failed in archive_get_files_list (no memory?)\n");
-    #endif
+    TRACE("asprintf() failed in archive_get_files_list (no memory?)\n");
     shutdown(FALSE);
   }
   else /* Получаем список каталогов и файлов в каноничном формате (каталоги должны завершаться слэшем) */
@@ -174,9 +158,7 @@ char **archive_get_files_list(struct_panel *panel, const char *cwd) /* Полу�
   xfree(&command);
   if (g_file_test("/tmp/files.list", G_FILE_TEST_EXISTS) == FALSE) /* Если файл со списком не существует */
   {
-    #ifdef debug_printf
-    printf("Cannot open /tmp/files.list\n");
-    #endif
+    TRACE("Cannot open /tmp/files.list\n");
     xfree(&bff); /* Освобождаем временный буфер для содержимого файла */
     return NULL;
   }
@@ -197,9 +179,7 @@ char **archive_get_directories_list(struct_panel *panel, const char *directory) 
   xfree(&command);
   if (g_file_test("/tmp/dirs.list", G_FILE_TEST_EXISTS) != TRUE) /* Если файл со списком не существует */
   {
-    #ifdef debug_printf
-    printf("Cannot open /tmp/dirs.list\n");
-    #endif
+    TRACE("Cannot open /tmp/dirs.list\n");
     g_free(bff); /* Освобождаем временный буфер для содержимого файла */
     return NULL;
   }
@@ -224,9 +204,7 @@ void archive_extract_file(const char *archive, const char *file, const char *to)
       name=strdup(file);
       break;
     default:
-      #ifdef debug_printf
-      printf("Unknown file type:%s\n", archive);
-      #endif
+      TRACE("Unknown file type:%s\n", archive);
       return;
   }
   asprintf(&command, "%s \"%s\" \"%s\" -d \"%s\"", archiver, archive, name, to);
@@ -238,9 +216,7 @@ void archive_extract_file(const char *archive, const char *file, const char *to)
 int enter_archive(const char *name, struct_panel *panel, int update_config)
 {
   char *saved_work_dir=xgetcwd(NULL);
-  #ifdef debug_printf
-  printf("Entering into '%s'\n", name);
-  #endif
+  TRACE("Entering into '%s'\n", name);
   if (chdir(panel->path) == -1) /* Переходим в каталог где лежит архив */
   {
     char *message;
@@ -292,18 +268,14 @@ void enter_subarchive(const char *name, struct_panel *panel) /* Вход во в
   #endif
   archive_extract_file(panel->archive_stack[panel->archive_depth], name, prefix);
   asprintf(&subarchive, "%s%s/%s", prefix, panel->archive_cwd, name);
-  #ifdef debug_printf
-  printf("Entering into subarchive '%s' of archive '%s'\n", subarchive, panel->archive_stack[panel->archive_depth]);
-  #endif
+  TRACE("Entering into subarchive '%s' of archive '%s'\n", subarchive, panel->archive_stack[panel->archive_depth]);
   enter_archive(subarchive, panel, TRUE);
 }
 
 void leave_archive(struct_panel *panel)
 {
   char *iter;
-  #ifdef debug_printf
-  printf("Leaving archive '%s' to dir '%s'\n",panel->archive_stack[panel->archive_depth], panel->path);
-  #endif
+  TRACE("Leaving archive '%s' to dir '%s'\n",panel->archive_stack[panel->archive_depth], panel->path);
 
   panel->archive_depth=panel->archive_depth-1;
   if (panel->archive_depth > 0) /* Если мы ешё не достигли ФС */
@@ -317,9 +289,7 @@ void leave_archive(struct_panel *panel)
     update(panel); /* Обновляем список файлов */
     gtk_label_set_text (GTK_LABEL(panel->path_label), panel->path); /* Пишем текущий каталог в поле снизу */
   }
-  #ifdef debug_printf
-  printf("move_selection call '%s'\n",panel->archive_stack[panel->archive_depth+1]);
-  #endif
+  TRACE("move_selection call '%s'\n",panel->archive_stack[panel->archive_depth+1]);
   iter=iter_from_filename (panel->archive_stack[panel->archive_depth+1], panel);
   move_selection(iter, panel); /* И выбираем файл архива курсором FIXME: Сработает только если покинутый вложенный архив в корне родительского архива, или же при покидании архива в реальную ФС. FIXME: этот прискорбный баг породит глюки при автоматическом переходе в следующий каталог! */
   free(iter);
@@ -376,9 +346,7 @@ void archive_go_upper(struct_panel *panel) /* Переходим на урове
 void archive_enter_subdir(const char *subdir, struct_panel *panel)
 {
   char *path, *temp;
-  #ifdef debug_printf
-  printf("archive_enter_subdir '%s'\n", subdir);
-  #endif
+  TRACE("archive_enter_subdir '%s'\n", subdir);
   temp=panel->archive_cwd;
   panel->archive_cwd=xconcat(temp, subdir);
   free(temp);

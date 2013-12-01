@@ -12,7 +12,7 @@ T_ARCH=ARM
 else ifeq ($(MAKECMDGOALS), debug)
 include libro.mk
 T_ARCH=ARM
-CFLAGS += -Ddebug_printf 
+CFLAGS += -Ddebug
 LDFLAGS += -rdynamic -funwind-tables -g -O0
 else ifeq ($(MAKECMDGOALS), clang)
 T_ARCH=x86

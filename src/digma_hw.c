@@ -47,13 +47,12 @@ int epaper_update_helper(int fb, unsigned long int ioctl_call, int *mode)
   return TRUE;
 }
 
-void epaperUpdate(unsigned long int ioctl_call, int mode)
+__attribute__((pure)) void epaperUpdate(__attribute__((unused)) unsigned long int ioctl_call, __attribute__((unused)) int mode);
+void epaperUpdate(__attribute__((unused)) unsigned long int ioctl_call, __attribute__((unused)) int mode)
 {
   if (enable_refresh == FALSE)
   {
-    #ifdef debug_printf
-    printf ("Display refresh was locked, IGNORED (ioctl %lud mode %d)!\n", ioctl_call, mode);
-    #endif
+    TRACE("Display refresh was locked, IGNORED (ioctl %lud mode %d)!\n", ioctl_call, mode);
     return;
   }
   #ifndef __amd64
@@ -61,10 +60,10 @@ void epaperUpdate(unsigned long int ioctl_call, int mode)
   /* Иначе запись в видеопамять не успевает завершиться и получаем верхний левый угол новой картинки и нижний правый - прежней. */
   if (QT) (void)usleep(355000);
   ioctl_result=epaper_update_helper(framebuffer_descriptor, ioctl_call, &mode);
-  #ifdef debug_printf
+  #ifdef debug
   if (ioctl_result != TRUE)
   {
-    printf("Display refresh ioctl call FAILED %d (%s)\n", ioctl_result, strerror(ioctl_result));
+    TRACE("Display refresh ioctl call FAILED %d (%s)\n", ioctl_result, strerror(ioctl_result));
     // GTK прошивка, обновление от Qt: 1 (Операция не позволяется)
     // Qt прошивка, обновление от GTK: 22 (Недопустимый аргумент)
   }
@@ -82,22 +81,16 @@ int detect_refresh_type (void)
     if (epaper_update_helper(framebuffer_descriptor, EPAPER_UPDATE_FULL, &mode) == 0)
     {
       refresh_type=REFRESH_LEGACY;
-      #ifdef debug_printf
-      printf ("Display refresh was successed, legacy\n");
-      #endif
+      TRACE("Display refresh was successed, legacy\n");
     }
     else if (epaper_update_helper(framebuffer_descriptor, EPAPER_UPDATE_DISPLAY_QT, &mode) == 0)
     {
       refresh_type=REFRESH_NEW;
-      #ifdef debug_printf
-      printf ("Display refresh was successed, new\n");
-      #endif
+      TRACE("Display refresh was successed, new\n");
     }
     else
     {
-      #ifdef debug_printf
-      printf ("Display refresh was not detected!\n");
-      #endif
+      TRACE("Display refresh was not detected!\n");
     }
   }
   return (refresh_type);
@@ -106,6 +99,7 @@ int detect_refresh_type (void)
 /**
  * Update E-Ink screen fully
  */
+__attribute__((pure)) void epaperUpdateFull(void);
 void epaperUpdateFull(void)
 {
   if (refresh_type == REFRESH_NEW)
@@ -114,15 +108,14 @@ void epaperUpdateFull(void)
     epaperUpdate(EPAPER_UPDATE_FULL, 3);
   else
   {
-    #ifdef debug_printf
-    printf("Unable to refresh display - refresh type is unknown!\n");
-    #endif
+    TRACE("Unable to refresh display - refresh type is unknown!\n");
   }
 }
 
 /**
  * Update only local (???)
  */
+__attribute__((pure)) void epaperUpdateLocal(void);
 void epaperUpdateLocal(void)
 {
   if (refresh_type == REFRESH_NEW)
@@ -131,15 +124,14 @@ void epaperUpdateLocal(void)
     epaperUpdate(EPAPER_UPDATE_LOCAL, 2);
   else
   {
-    #ifdef debug_printf
-    printf("Unable to refresh display - refresh type is unknown!\n");
-    #endif
+    TRACE("Unable to refresh display - refresh type is unknown!\n");
   }
 }
 
 /**
  * Untested E-Ink function
  */
+__attribute__((pure)) void epaperUpdatePart(void);
 void epaperUpdatePart(void)
 {
   if (refresh_type == REFRESH_NEW)
@@ -148,9 +140,7 @@ void epaperUpdatePart(void)
     epaperUpdate(EPAPER_UPDATE_PART, 1);
   else
   {
-    #ifdef debug_printf
-    printf("Unable to refresh display - refresh type is unknown!\n");
-    #endif
+    TRACE("Unable to refresh display - refresh type is unknown!\n");
   }
 }
 
@@ -167,9 +157,7 @@ int read_int_from_file(const char *name) /*Чтение числа из файл
   FILE *file_descriptor=fopen(name,"rt");
   if (!file_descriptor)
   {
-    #ifdef debug_printf
-    printf("UNABLE TO OPEN %s FILE FOR READ!\n", name);
-    #endif
+    TRACE("UNABLE TO OPEN %s FILE FOR READ!\n", name);
     return 0;
   }
   else
@@ -178,24 +166,18 @@ int read_int_from_file(const char *name) /*Чтение числа из файл
     if (fgets(temp, 256, file_descriptor) == 0)
     {
       (void)fclose(file_descriptor);
-      #ifdef debug_printf
-      printf("Reading from %s failed!\n", name);
-      #endif
+      TRACE("Reading from %s failed!\n", name);
       return 0;
     }
     (void)fclose(file_descriptor);
-    #ifdef debug_printf
-    printf("Read '%s' from %s\n", temp, name);
-    #endif
+    TRACE("Read '%s' from %s\n", temp, name);
     return (atoi (temp));
   }
 }
 
 void detect_hardware(void) /* Обнаружение оборудования и его возможностей */
 {
-  #ifdef debug_printf
-  printf("Detecting hardware\n");
-  #endif
+  TRACE("Detecting hardware\n");
 
   if (hardware_has_backlight == FALSE) /* Digma R60G/GMini C6LHD (Qt) */
   {
@@ -203,9 +185,7 @@ void detect_hardware(void) /* Обнаружение оборудования и
     if (hardware_has_backlight)
     {
       backlight_path="/sys/class/backlight/boeye_backlight/brightness";
-      #ifdef debug_printf
-      printf ("Found backlight control at file %s\n", backlight_path);
-      #endif
+      TRACE("Found backlight control at file %s\n", backlight_path);
       previous_backlight_level=read_int_from_file(backlight_path);
     }
   }
@@ -216,9 +196,7 @@ void detect_hardware(void) /* Обнаружение оборудования и
     if (hardware_has_LED)
     {
       LED_path="/sys/class/leds/charger-led/brightness";
-      #ifdef debug_printf
-      printf ("Found LED control at file %s\n", LED_path);
-      #endif
+      TRACE("Found LED control at file %s\n", LED_path);
       LED_state[LED_ON]=2; /* Неверно! */
       LED_state[LED_OFF]=0;
       LED_state[LED_BLINK_SLOW]=1;
@@ -236,9 +214,7 @@ void detect_hardware(void) /* Обнаружение оборудования и
       LED_state[LED_OFF]=4;
       LED_state[LED_BLINK_SLOW]=5;
       LED_state[LED_BLINK_FAST]=6;
-      #ifdef debug_printf
-      printf ("Found LED control at file %s\n", LED_path);
-      #endif
+      TRACE("Found LED control at file %s\n", LED_path);
     }
   }
 
@@ -252,9 +228,7 @@ void detect_hardware(void) /* Обнаружение оборудования и
       LED_state[LED_OFF]=4;
       LED_state[LED_BLINK_SLOW]=5;
       LED_state[LED_BLINK_FAST]=6;
-      #ifdef debug_printf
-      printf ("Found LED control at file %s\n", LED_path);
-      #endif
+      TRACE("Found LED control at file %s\n", LED_path);
     }
   }
 
@@ -270,9 +244,7 @@ void detect_hardware(void) /* Обнаружение оборудования и
       error = dlerror();
       if (error != NULL)
       {
-        #ifdef debug_printf
-        printf("dlopen failed because %s\n", error);
-        #endif
+        TRACE("dlopen failed because %s\n", error);
         //         free(error); // Не надо - карается сегфолтом в GTK гораздо позже!
         hardware_has_APM=FALSE; /* Не можем управлять через APM, хотя существование файла в /dev/ даёт робкую надежду */
       }
@@ -282,17 +254,13 @@ void detect_hardware(void) /* Обнаружение оборудования и
         error = dlerror();
         if (error != NULL)
         {
-          #ifdef debug_printf
-          printf("dlsym failed because %s\n", error);
-          #endif
+          TRACE("dlsym failed because %s\n", error);
           //         free(error); // Не надо - карается сегфолтом в GTK гораздо позже!
           hardware_has_APM=FALSE;
         }
         else
         {
-          #ifdef debug_printf
-          printf("Found APM power control via libapm\n");
-          #endif
+          TRACE("Found APM power control via libapm\n");
         }
         //       free(libapm_handle); // Не надо - карается МОЛЧАЛИВЫМ сегфолтом
       }
@@ -305,37 +273,31 @@ void detect_hardware(void) /* Обнаружение оборудования и
     if (hardware_has_sysfs_sleep)
     {
       sysfs_sleep_path="/sys/power/state";
-      #ifdef debug_printf
-      printf ("Found sysfs sleep trigger at file %s\n", sysfs_sleep_path);
-      #endif
+      TRACE("Found sysfs sleep trigger at file %s\n", sysfs_sleep_path);
     }
   }
 
-  #ifdef debug_printf
+  #ifdef debug
   if (! hardware_has_LED)
-    printf ("LED control not found\n");
+    TRACE("LED control not found\n");
   if (! hardware_has_backlight)
-    printf ("Backlight control not found\n");
+    TRACE("Backlight control not found\n");
   if (! hardware_has_APM)
-    printf ("APM not found\n");
+    TRACE("APM not found\n");
   if (! hardware_has_sysfs_sleep)
-    printf ("Sysfs sleep trigger not found\n");
-  printf("Hardware detect finished\n");
+    TRACE("Sysfs sleep trigger not found\n");
+  TRACE("Hardware detect finished\n");
   #endif
 
 }
 
 void write_int_to_file(const char *file, int value)
 {
-  #ifdef debug_printf
-  printf("writing %d to %s\n", value, file);
-  #endif
+  TRACE("writing %d to %s\n", value, file);
   FILE *file_descriptor=fopen(file,"wt");
   if (!file_descriptor)
   {
-    #ifdef debug_printf
-    printf("UNABLE TO OPEN %s FILE FOR WRITING!\n", file);
-    #endif
+    TRACE("UNABLE TO OPEN %s FILE FOR WRITING!\n", file);
     return;
   }
   else
@@ -347,15 +309,11 @@ void write_int_to_file(const char *file, int value)
 
 void write_string_to_file(const char *file, const char *value)
 {
-  #ifdef debug_printf
-  printf("writing %s to %s\n", value, file);
-  #endif
+  TRACE("writing %s to %s\n", value, file);
   FILE *file_descriptor=fopen(file,"wt");
   if (!file_descriptor)
   {
-    #ifdef debug_printf
-    printf("UNABLE TO OPEN %s FILE FOR WRITING!\n", file);
-    #endif
+    TRACE("UNABLE TO OPEN %s FILE FOR WRITING!\n", file);
     return ;
   }
   else
@@ -381,68 +339,56 @@ void *suspend_hardware_helper(__attribute__((unused)) void* arg)
   int count=0;
   (void)fflush (stdout);
   sync();
-  #ifdef debug_printf
-  printf("Suspending hardware\n");
-  #endif
+  TRACE("Suspending hardware\n");
   do
   {
     time_t endTime;
     double duration;
-    #ifdef debug_printf
+    #ifdef debug
     if (LED_notify)
       set_led_state(LED_ON);
     #endif
     time_t startTime = time(NULL);
     if (hardware_has_APM)
     {
-      #ifdef debug_printf
-      printf("Using APM\n");
-      #endif
+      TRACE("Using APM\n");
       int apm_bios=open("/dev/apm_bios", O_RDWR);
       (void)(*apm_suspend) (apm_bios);
       (void)close(apm_bios);
     }
     else if (hardware_has_sysfs_sleep)
     {
-      #ifdef debug_printf
-      printf("Using sysfs trigger\n");
-      #endif
+      TRACE("Using sysfs trigger\n");
       write_string_to_file (sysfs_sleep_path,"mem");
     }
     else
     {
-      #ifdef debug_printf
-      printf("Unable to suspend hardware - no ways to suspend!\n");
-      #endif
+      TRACE("Unable to suspend hardware - no ways to suspend!\n");
       break;
     }
     endTime = time(NULL);
     duration = difftime(endTime, startTime);
     if ((int) duration <= 1)
     {
-      #ifdef debug_printf
-      printf("failed\n");
-      #endif
+      TRACE("failed\n");
     }
     else
     {
-      #ifdef debug_printf
-      printf("successed after %d attempts (sleeped %4.0f seconds)\n", count, duration);
+      #ifdef debug
+      TRACE("successed after %d attempts (sleeped %4.0f seconds)\n", count, duration);
       if (LED_notify)
         set_led_state(LED_OFF);
       #endif
       break;
     }
-    #ifdef debug_printf
+    #ifdef debug
     if (LED_notify)
       set_led_state(LED_ON);
     #endif
     if (count++>128)
     {
-      #ifdef debug_printf
-      printf("Too many failed attempts, break\n");
+      TRACE("Too many failed attempts, break\n");
       break;
-      #endif
     }
     (void)usleep(100000);
   }
@@ -455,8 +401,6 @@ void suspend_hardware(void)
 {
   if(pthread_create(&suspend_helper_tid, NULL, suspend_hardware_helper, NULL) != 0)
   {
-    #ifdef debug_printf
-    printf("Unable to start hardware sleep helper!\n");
-    #endif
+    TRACE("Unable to start hardware sleep helper!\n");
   }
 }

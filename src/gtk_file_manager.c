@@ -21,7 +21,7 @@
 #include <signal.h> /*signal() */
 #include <pthread.h>
 
-#ifdef debug_printf
+#ifdef debug
 #include <execinfo.h> /*backtrace() */
 #endif
 
@@ -51,9 +51,7 @@ guint idle_call_handler; /* Хэндлер вызова режима ожида�
 
 void /*@null@*/  *sleep_thread(__attribute__((unused)) /*@unused@*/ void* arg)
 {
-  #ifdef debug_printf
-  printf("Sleep timeout thread started (timer=%d)\n", sleep_timer);
-  #endif
+  TRACE("Sleep timeout thread started (timer=%d)\n", sleep_timer);
   for (;;)
   {
     (void)usleep(1000000); /* Спим 1 секунду */
@@ -61,29 +59,21 @@ void /*@null@*/  *sleep_thread(__attribute__((unused)) /*@unused@*/ void* arg)
     {
       if (sleep_timeout == 0)
       {
-        #ifdef debug_printf
-        printf("Sleep timeout disabled, ending thread\n");
-        #endif
+        TRACE("Sleep timeout disabled, ending thread\n");
         break;
       }
-      #ifdef debug_printf
-      printf("Sleep timeout reached, go sleep\n");
-      #endif
+      TRACE("Sleep timeout reached, go sleep\n");
       sleep_timer=999999999; /* не дёргаемся по пустякам, когда надо - таймер сбросят */
       idle_call_handler=g_idle_add ((GSourceFunc) enter_suspend, active_panel);
     }
   }
-  #ifdef debug_printf
-  printf("Sleep thread ended\n");
-  #endif
+  TRACE("Sleep thread ended\n");
   return(NULL);
 }
 
 // void wait_state(GtkWidget *window) /* Возврат после смотрелки */
 // {
-//   #ifdef debug_printf
-//   printf("wait_state called\n");
-//   #endif
+//   TRACE("wait_state called\n");
 //   enable_refresh=FALSE;
 //   update(active_panel);
 //   gtk_widget_show_all(window);
@@ -93,7 +83,7 @@ void /*@null@*/  *sleep_thread(__attribute__((unused)) /*@unused@*/ void* arg)
 //   /*                     G_CALLBACK (focus_in_callback), NULL); */
 //   /*   g_signal_connect (G_OBJECT (window), "focus_out_event", */
 //   /*                     G_CALLBACK (focus_out_callback), NULL); */
-//   /*   printf ("FMAN CONNECTED!\n"); */
+//   /*   TRACE("FMAN CONNECTED!\n"); */
 // }
 
 void list_fd(struct_panel *panel) /*добавление списка имен каталогов, файлов и их размеров в панель struct_panel */
@@ -120,10 +110,7 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
         text_basename=basename(text);
         full_name=xconcat(text_basename,"/");
         free(text);
-        #ifdef debug_printf
-        printf("Adding %d archive file '%s'\n", i, full_name);
-        fflush(stdout);
-        #endif
+        TRACE("Adding %d archive file '%s'\n", i, full_name);
         add_data_to_list(panel->list, full_name, 1, NO_AUTOSCROLL, "dir ");
         xfree(&namelist[i]);
         free(full_name);
@@ -175,19 +162,14 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
             char *text;
             text = xconcat_path_file(namelist[i]->d_name, "");
             panel->dirs_num++;
-            #ifdef debug_printf
-            printf("Adding %d dir '%s'\n", i, text);
-            fflush(stdout);
-            #endif
+            TRACE("Adding %d dir '%s'\n", i, text);
             add_data_to_list(panel->list, text, 1, NO_AUTOSCROLL, "dir ");
             free(text);
           }
         }
         else
         {
-          #ifdef debug_printf
-          printf("stat() for '%s' failed (%s)\n",namelist[i]->d_name, strerror(errno));
-          #endif
+          TRACE("stat() for '%s' failed (%s)\n",namelist[i]->d_name, strerror(errno));
         }
       }
       for( i = 0; i < n && GTK_IS_WIDGET(main_window); i++ )  /* Второй обход списка - файлы */
@@ -205,19 +187,14 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
             text = namelist[i]->d_name;
             panel->files_num++;
             fsize = get_natural_size(stat_p.st_size); /*размер файла */
-            #ifdef debug_printf
-            printf("Adding %d file '%s', size %s\n", i, text, fsize);
-            fflush(stdout);
-            #endif
+            TRACE("Adding %d file '%s', size %s\n", i, text, fsize);
             add_data_to_list(panel->list, text, 1, NO_AUTOSCROLL, fsize);
             free (fsize);
           }
         }
         else
         {
-          #ifdef debug_printf
-          printf("stat() for '%s' failed (%s)\n",namelist[i]->d_name, strerror(errno));
-          #endif
+          TRACE("stat() for '%s' failed (%s)\n",namelist[i]->d_name, strerror(errno));
         }
 
         xfree(&namelist[i]);
@@ -237,14 +214,10 @@ char *iter_from_filename (const char *const fname, const struct_panel *const pan
   char *tmp;
   if (fname == NULL)
   {
-    #ifdef debug_printf
-    printf("Filename passed to iter_from_filename() is NULL!\n");
-    #endif
+    TRACE("Filename passed to iter_from_filename() is NULL!\n");
     return NULL;
   }
-  #ifdef debug_printf
-  printf("Trying to find iter for name '%s'\n", fname);
-  #endif
+  TRACE("Trying to find iter for name '%s'\n", fname);
 
   model = gtk_tree_view_get_model (panel->list);
   (void)gtk_tree_model_get_iter_first (model, &iter);
@@ -266,9 +239,7 @@ char *iter_from_filename (const char *const fname, const struct_panel *const pan
     }
   }
   //   free(model); // Не надо - карается abort()ом
-  #ifdef debug_printf
-  printf("Iter not found!\n");
-  #endif
+  TRACE("Iter not found!\n");
   return (NULL);
 }
 
@@ -284,17 +255,15 @@ void update(struct_panel *panel) /*обновление списка */
 {
   if (access(panel->path, R_OK))
   {
-    #ifdef debug_printf
-    printf ("Unable to access path %s\n", panel->path);
-    #endif  
+    TRACE("Unable to access path %s\n", panel->path);  
     go_upper(panel);
   }
   if (LED_notify) set_led_state (LED_state[LED_BLINK_FAST]);
   panel->files_num=0; /* Обнуляем число файлов в просмотрщике */
   clear_list(panel->list);
-  #ifdef debug_printf
+  #ifdef debug
   if (panel->archive_depth > 0)
-    printf ("We are now IN ARCHIVE!\n");
+    TRACE("We are now IN ARCHIVE!\n");
   #endif
   list_fd(panel);
 
@@ -332,9 +301,7 @@ void move_selection(const char *const move_to, const struct_panel *const panel) 
 void after_delete_update (struct_panel *panel)
 {
   char *str_iter=get_current_iter(active_panel);
-  #ifdef debug_printf
-  printf ("after_delete_update\n");
-  #endif
+  TRACE("after_delete_update\n");
   update(panel);
   move_selection (str_iter, panel);
   free(str_iter);
@@ -419,17 +386,13 @@ void panel_selector (struct_panel *panel) /* Принимает указател
   {
     if (GTK_IS_WIDGET(GTK_WIDGET(top_panel.list)))
     {
-      #ifdef debug_printf
-      printf ("Specified panel is not exist, it's bad - check Your code!\n");
-      #endif
+      TRACE("Specified panel is not exist, it's bad - check Your code!\n");
       gtk_widget_grab_focus(GTK_WIDGET(top_panel.list));
       update_window_title(&top_panel);
     }
     else
     {
-      #ifdef debug_printf
-      printf ("NO TABLES ARE FOUND! SOMETHING REALLY BAD HAPPENED!\n");
-      #endif
+      TRACE("NO TABLES ARE FOUND! SOMETHING REALLY BAD HAPPENED!\n");
     }
   }
   wait_for_draw();
@@ -452,15 +415,15 @@ void second_panel_show(void)
 void init (void)
 {
   #ifndef __amd64
-  #ifdef debug_printf
+  #ifdef debug
   const char *name="/media/mmcblk0p1/eView_debug_log.txt";
-  printf("Trying to open '%s' for writing log\n", name);
+  TRACE("Trying to open '%s' for writing log\n", name);
   int file_descriptor=creat(name,O_CREAT|O_SYNC|O_TRUNC);
   if (file_descriptor < 0)
-    printf("UNABLE TO OPEN %s FILE FOR WRITING!\n", name);
+    TRACE("UNABLE TO OPEN %s FILE FOR WRITING!\n", name);
   else
   {
-    printf("'%s' opened for writing log as %d fd, will now write it into this file!\n", name, file_descriptor);
+    TRACE("'%s' opened for writing log as %d fd, will now write it into this file!\n", name, file_descriptor);
     dup2 (file_descriptor, 1);
     dup2 (file_descriptor, 2);
   }
@@ -468,30 +431,22 @@ void init (void)
   #endif
   /* Ранняя инициализация программы */
   detect_hardware();
-  #ifdef debug_printf
+  #ifdef debug
   set_led_state (LED_state[LED_ON]);
   xsystem("uname -a"); // Проверка машины:
   // GTK Ritmix RBK700HD:
   // Linux sibrary 2.6.24.2-Boeye #26 PREEMPT Sat Oct 22 11:30:10 CST 2011 armv5tejl unknown
   // Qt GMini M6HD:
   // Linux boeye 2.6.24.2-Boeye #346 PREEMPT Tue Jul 17 13:50:49 CST 2012 armv5tejl GNU/Linux
-
-
   #endif
   if (XOpenDisplay(NULL))
-  {
-    #ifdef debug_printf
-    printf ("X is up and running!\n");
-    #endif
-  }
+    TRACE("X is up and running!\n");
   else
   {
     char *string, *message, *ROT;
     int timer=0;
     QT=TRUE;
-    #ifdef debug_printf
-    printf ("X is down! Assuming QT\n");
-    #endif
+    TRACE("X is down! Assuming QT\n");
     read_string("/home/root/.GTK_parts.version", &string);
     if (atoi(string) < NEEDED_GTK_PARTS_VERSION)
     {
@@ -500,9 +455,7 @@ void init (void)
       free(message); // Хотя этого уже никто не увидит...
     }
 
-    #ifdef debug_printf
-    printf ("Trying to start Xfbdev\n");
-    #endif
+    TRACE("Trying to start Xfbdev\n");
     xsystem("Xfbdev :0 -br -pn -hide-cursor -dpi 150 -rgba vrgb & ");
 
     ROT=getenv("ROT"); // Получаем поворот экрана из переменной окружения
@@ -511,22 +464,16 @@ void init (void)
       usleep (1000);
       if (++timer > 5000)
       {
-        #ifdef debug_printf
-        printf ("Failed to start Xfbdev - timed out!\n");
-        #endif
+        TRACE("Failed to start Xfbdev - timed out!\n");
         Qt_error_message(XFBDEV_STARTUP_TIMEOUT);
       }
     }
-    #ifdef debug_printf
-    printf ("Xfbdev started after 0,%d seconds\n", timer);
-    #endif
+    TRACE("Xfbdev started after 0,%d seconds\n", timer);
     if (strcmp (ROT, "0") != 0)
     {
       xsystem("matchbox-window-manager -theme Sato -use_desktop_mode decorated &"); // На GMini C6LHD/Digma R60G вызывает серую рамку вокруг экрана, да и на других книгах тоже мало хорошего. Но нужен для корректного поворота через xrandr (по сути, ему нужен любой клиент, который до него будет подключен к Xfbdev).
       (void)usleep(2000000);
-      #ifdef debug_printf
-      printf ("ROT=%s\n", ROT);
-      #endif
+      TRACE("ROT=%s\n", ROT);
       if (strcmp (ROT, "90" ) == 0) xsystem("xrandr -d :0 -o left");
       if (strcmp (ROT, "180") == 0) xsystem("xrandr -d :0 -o inverted");
       if (strcmp (ROT, "270") == 0) xsystem("xrandr -d :0 -o right");
@@ -555,9 +502,7 @@ void init (void)
 void shutdown(int exit_code) __attribute__((noreturn));
 void shutdown(int exit_code)
 {
-  #ifdef debug_printf
-  printf("Shutting down eView\n");
-  #endif
+  TRACE("Shutting down eView\n");
   if (top_panel.selected_name != NULL) write_config_string("top_panel.selected_name", top_panel.selected_name);
   if (bottom_panel.selected_name != NULL) write_config_string("bottom_panel.selected_name", bottom_panel.selected_name);
   (void)remove(top_panel.archive_list);
@@ -566,15 +511,11 @@ void shutdown(int exit_code)
   gtk_main_quit();
   if (QT)
   {
-    #ifdef debug_printf
-    printf("Shutting down Xfbdev\n");
-    #endif
+    TRACE("Shutting down Xfbdev\n");
     xsystem("killall Xfbdev");
     set_system_sleep_timeout(system_sleep_timeout);
   }
-  #ifdef debug_printf
-  printf("\n\neView shutudown done. Bye! =^_^=/~\n");
-  #endif
+  TRACE("\n\neView shutudown done. Bye! =^_^=/~\n");
   exit (exit_code);
 }
 
@@ -583,20 +524,18 @@ void start_sleep_timer(void)
   sleep_timer=sleep_timeout;
   if(pthread_create(&sleep_timer_tid, NULL, sleep_thread, NULL) != 0)
   {
-    #ifdef debug_printf
-    printf("Unable to start sleep timer thread!\n");
-    #endif
+    TRACE("Unable to start sleep timer thread!\n");
   }
 }
 
 void sigsegv_handler(void) __attribute__((noreturn));
 void sigsegv_handler(void) /* Обработчик для вывода Backtrace сегфолта */
 {
-  #ifdef debug_printf
+  #ifdef debug
   void *backtrace_buffer[1024];
   int depth=backtrace(backtrace_buffer, 1023);
-  printf("got sigsegv_handler\n");
-  printf("got backtrace of %d calls\n\nBacktrace:\n", depth);
+  TRACE("got sigsegv_handler\n");
+  TRACE("got backtrace of %d calls\n\nBacktrace:\n", depth);
   backtrace_symbols_fd(backtrace_buffer, depth, 2);
   #endif
   shutdown(EXIT_FAILURE);
@@ -634,9 +573,9 @@ int main (int argc, char **argv)
       Qt_error_message(FAILED_TO_OPEN_DEV_FB0);
   }
   #endif
-  #ifdef debug_printf
+  #ifdef debug
   char *directory=xgetcwd(NULL);
-  printf ("Starting eView in directory '%s'\n",directory);
+  TRACE("Starting eView in directory '%s'\n",directory);
   free (directory);
   #endif
 
@@ -689,9 +628,7 @@ int main (int argc, char **argv)
   errno=0;
   if (chdir (active_panel->path) == -1) /* переход в последний рабочий каталог */
   {
-    #ifdef debug_printf
-    printf ("Chdir to '%s' failed because %s!\n", active_panel->path, strerror(errno));
-    #endif
+    TRACE("Chdir to '%s' failed because %s!\n", active_panel->path, strerror(errno));
   }
 
   #ifndef __amd64

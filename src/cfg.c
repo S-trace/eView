@@ -20,9 +20,7 @@ int read_config_int(const char *name) /*Чтение числового пара
   FILE *file_descriptor=fopen(config_file_single,"rt");
   if (!file_descriptor)
   {
-    #ifdef debug_printf
-    printf("UNABLE TO OPEN %s SETTING FILE FOR READ! IT'S BAD!\n", config_file_single);
-    #endif
+    TRACE("UNABLE TO OPEN %s SETTING FILE FOR READ! IT'S BAD!\n", config_file_single);
     write_config_int(name, 0);
     free(config_file_single);
     return 0;
@@ -34,9 +32,7 @@ int read_config_int(const char *name) /*Чтение числового пара
     (void)fgets(value_string,32,file_descriptor);
     value=atoi(value_string);
     (void)fclose(file_descriptor);
-    #ifdef debug_printf
-    printf("Reading %s from %s (%d)\n", name, config_file_single, value);
-    #endif
+    TRACE("Reading %s from %s (%d)\n", name, config_file_single, value);
     free(config_file_single);
     return(value);
   }
@@ -48,9 +44,7 @@ void read_config_string(char *name, char **destination) /*Чтение стро�
   FILE *file_descriptor=fopen(config_file_single,"rt");
   if (!file_descriptor)
   {
-    #ifdef debug_printf
-    printf("UNABLE TO OPEN %s SETTING FILE FOR READ! IT'S BAD!\n", config_file_single);
-    #endif
+    TRACE("UNABLE TO OPEN %s SETTING FILE FOR READ! IT'S BAD!\n", config_file_single);
     write_config_string(name, "");
     free(config_file_single);
     return;
@@ -60,16 +54,12 @@ void read_config_string(char *name, char **destination) /*Чтение стро�
     char temp[257];
     if (fgets(temp, PATHSIZE, file_descriptor) == 0)
     {
-      #ifdef debug_printf
-      printf("Reading %s from %s failed\n", name, config_file_single);
-      #endif
+      TRACE("Reading %s from %s failed\n", name, config_file_single);
       temp[0]='\0';
     }
     else
     {
-      #ifdef debug_printf
-      printf("Reading %s from %s (%s) successed\n", name, config_file_single, *destination);
-      #endif
+      TRACE("Reading %s from %s (%s) successed\n", name, config_file_single, *destination);
     }
     *destination=strdup(temp);
     free(config_file_single);
@@ -84,9 +74,7 @@ void read_archive_stack(const char *name, struct_panel *panel) /*Чтение с
   FILE *file_descriptor=fopen(config_file_single,"rt");
   if (!file_descriptor)
   {
-    #ifdef debug_printf
-    printf("UNABLE TO OPEN %s SETTING FILE FOR READ! IT'S BAD!\n", config_file_single);
-    #endif
+    TRACE("UNABLE TO OPEN %s SETTING FILE FOR READ! IT'S BAD!\n", config_file_single);
     write_config_string(name, "filesystem\n");
     free(config_file_single);
     return;
@@ -94,28 +82,20 @@ void read_archive_stack(const char *name, struct_panel *panel) /*Чтение с
   else
   {
     int i=0;
-    #ifdef debug_printf
-    printf("Reading %s from '%s' (archive stack)\n", name, config_file_single);
-    #endif
+    TRACE("Reading %s from '%s' (archive stack)\n", name, config_file_single);
     while((feof(file_descriptor) == FALSE) && i <= MAX_ARCHIVE_DEPTH )
     {
-      #ifdef debug_printf
-      printf("Reading %d element from '%s' (archive stack)\n", i, config_file_single);
-      #endif
+      TRACE("Reading %d element from '%s' (archive stack)\n", i, config_file_single);
       (void)fgets(panel->archive_stack[i], PATHSIZE, file_descriptor);
       if (panel->archive_stack[i][0] == '\0')
       {
-        #ifdef debug_printf
-        printf("Readed empty line, break\n");
-        #endif
+        TRACE("Readed empty line, break\n");
         break; /* Прерывание при обнаружении пустой строки в стеке архивов */
       }
       trim_line(panel->archive_stack[i]);
       i++;
     }
-    #ifdef debug_printf
-    printf("Readed %d elements from '%s' (archive stack)\n", i, config_file_single);
-    #endif
+    TRACE("Readed %d elements from '%s' (archive stack)\n", i, config_file_single);
     free(config_file_single);
     (void)fclose(file_descriptor);
     panel->archive_depth=--i;
@@ -126,15 +106,11 @@ void read_archive_stack(const char *name, struct_panel *panel) /*Чтение с
 void write_config_int(const char *name, int value) /*Запись числового параметра конфига */
 {
   char *config_file_single = xconcat_path_file(cfg_directory, name); /* Имя файла с настройкой */
-  #ifdef debug_printf
-  printf("writing %d to %s\n", value, config_file_single);
-  #endif
+  TRACE("writing %d to %s\n", value, config_file_single);
   FILE *file_descriptor=fopen(config_file_single,"wt");
   if (!file_descriptor)
   {
-    #ifdef debug_printf
-    printf("UNABLE TO OPEN %s SETTING FILE FOR WRITING! IT'S BAD!\n", config_file_single);
-    #endif
+    TRACE("UNABLE TO OPEN %s SETTING FILE FOR WRITING! IT'S BAD!\n", config_file_single);
     free(config_file_single);
     return;
   }
@@ -151,15 +127,11 @@ void write_config_int(const char *name, int value) /*Запись числово
 void write_config_string(const char *name, const char *value) /*Запись строкового параметра конфига */
 {
   char *config_file_single = xconcat_path_file(cfg_directory, name); /* Имя файла с настройкой */
-  #ifdef debug_printf
-  printf("writing %s to %s\n", value, config_file_single);
-  #endif
+  TRACE("writing %s to %s\n", value, config_file_single);
   FILE *file_descriptor=fopen(config_file_single,"wt");
   if (!file_descriptor)
   {
-    #ifdef debug_printf
-    printf("UNABLE TO OPEN %s SETTING FILE FOR WRITING! IT'S BAD!\n", config_file_single);
-    #endif
+    TRACE("UNABLE TO OPEN %s SETTING FILE FOR WRITING! IT'S BAD!\n", config_file_single);
     free(config_file_single);
     return ;
   }
@@ -174,15 +146,11 @@ void write_config_string(const char *name, const char *value) /*Запись с�
 void write_archive_stack(const char *name, struct_panel *panel) /*Запись массива имён архивов из верхней панели */
 {
   char *config_file_single = xconcat_path_file(cfg_directory, name); /* Имя файла с настройкой */
-  #ifdef debug_printf
-  printf("writing array to '%s'\n", config_file_single);
-  #endif
+  TRACE("writing array to '%s'\n", config_file_single);
   FILE *file_descriptor=fopen(config_file_single,"wt");
   if (!file_descriptor)
   {
-    #ifdef debug_printf
-    printf("UNABLE TO OPEN '%s' SETTING FILE FOR WRITING! IT'S BAD!\n", config_file_single);
-    #endif
+    TRACE("UNABLE TO OPEN '%s' SETTING FILE FOR WRITING! IT'S BAD!\n", config_file_single);
     free(config_file_single);
     return ;
   }
@@ -191,9 +159,7 @@ void write_archive_stack(const char *name, struct_panel *panel) /*Запись �
     int i=0;
     while (panel->archive_stack[i][0] != '\0')
     {
-      #ifdef debug_printf
-      printf("writing '%s' to '%s'\n", panel->archive_stack[i], config_file_single);
-      #endif
+      TRACE("writing '%s' to '%s'\n", panel->archive_stack[i], config_file_single);
       fprintf(file_descriptor, "%s\n", panel->archive_stack[i]);
       i++;
     }
@@ -209,9 +175,7 @@ void create_cfg (void)  /*создание файлов настроек по у
   free(current_dir);
   if ((mkdir (cfg_directory, S_IRWXU)) == -1)
   {
-    #ifdef debug_printf
-    printf("UNABLE TO mkdir %s! IT'S BAD!\n", cfg_directory);
-    #endif
+    TRACE("UNABLE TO mkdir %s! IT'S BAD!\n", cfg_directory);
   }
   current_dir = get_current_dir_name();
   write_config_int("crop", crop=TRUE);
@@ -269,9 +233,7 @@ void read_panel_configuration(struct_panel *panel)
     name_prefix = "top";
   else
     name_prefix = "bottom";
-  #ifdef debug_printf
-  printf("Reading %s panel configuration\n", name_prefix);
-  #endif
+  TRACE("Reading %s panel configuration\n", name_prefix);
 
   path_file=xconcat(name_prefix, "_panel.path");
   selected_name_file=xconcat(name_prefix, "_panel.selected_name");
@@ -335,9 +297,7 @@ void read_configuration (void)
 
 void reset_config(void)
 {
-  #ifdef debug_printf
-  printf("Removing '%s'\n", cfg_directory);
-  #endif
+  TRACE("Removing '%s'\n", cfg_directory);
   char *command=NULL;
   asprintf(&command, "rm -rf \"%s\"", cfg_directory);
   xsystem(command);

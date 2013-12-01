@@ -39,9 +39,7 @@ void power_information(void)
 {
   char *label_text, *battery_capacity, *battery_chip_temp, *battery_chip_volt, *battery_current, *power_supplier, *battery_status, *battery_temp, *battery_voltage, *battery_time_to_empty, *battery_time_to_full, *usb_current, *usb_voltage, *ac_current, *ac_voltage;
   /* Создаём виджеты */
-  #ifdef debug_printf
-  printf ("Show battery_information\n");
-  #endif
+  TRACE("Show battery_information\n");
 
   read_string(BATTERY_POWER_SUPPLIER, &power_supplier); // источник питания (USB)
   read_string(BATTERY_CAPACITY, &battery_capacity); // Заряд в процентах
@@ -194,9 +192,7 @@ void frame_image_toggler (void) // Callback для галки умного ли�
 void overlap_changed(GtkWidget *scalebutton)
 {
   write_config_int("overlap", overlap = gtk_range_get_value(GTK_RANGE(scalebutton)));
-  #ifdef debug_printf
-  printf("Overlap set to %d\n", overlap);
-  #endif
+  TRACE("Overlap set to %d\n", overlap);
   e_ink_refresh_default();
 }
 
@@ -284,9 +280,7 @@ void reset_statistics() // Callback для кнопки статистики (с
 {
   if(confirm_request(RESET_VIEWED_PAGES, GTK_STOCK_OK, GTK_STOCK_CANCEL))
   {
-    #ifdef debug_printf
-    printf("Resetting static!\n");
-    #endif
+    TRACE("Resetting static!\n");
     write_config_int("viewed_pages", viewed_pages=0);
     gtk_button_set_label(GTK_BUTTON(viewed), VIEWED_PAGES" 0");
     wait_for_draw();
@@ -602,9 +596,7 @@ void fm_start (void) // Callback для галки включения ФМ в н
     write_config_int ("fm_toggle", fm_toggle);
   } else {
     enable_refresh=FALSE;
-    #ifdef debug_printf
-    printf("hiding second panel\n");
-    #endif
+    TRACE("hiding second panel\n");
     gtk_widget_destroy (bottom_panel.path_label);
     gtk_widget_destroy (bottom_panel.table);
     inactive_panel=NULL;
@@ -666,15 +658,11 @@ void reset_configuration_callback(void) // Callback для кнопки сбро
 {
   if(confirm_request(RESET_CONFIGURATION"?", GTK_STOCK_OK, GTK_STOCK_CANCEL))
   {
-    #ifdef debug_printf
-    printf("Resetting configuration!\n");
-    #endif
+    TRACE("Resetting configuration!\n");
     reset_config();
     gtk_main_quit();
     if (QT) xsystem("killall Xfbdev");
-    #ifdef debug_printf
-    printf("Resetting configuration done, bye!\n");
-    #endif
+    TRACE("Resetting configuration done, bye!\n");
   }
   e_ink_refresh_local();
 }
@@ -684,24 +672,20 @@ void backlight_changed(GtkWidget *scalebutton)
   write_config_int("backlight", backlight = gtk_range_get_value(GTK_RANGE(scalebutton)));
   set_brightness(backlight);
   e_ink_refresh_default();
-  #ifdef debug_printf
-  printf("Brightness set to %d\n", backlight);
-  #endif
+  TRACE("Brightness set to %d\n", backlight);
 }
 
 void sleep_timeout_changed(GtkWidget *scalebutton)
 {
   write_config_int("sleep_timeout", sleep_timeout = gtk_range_get_value(GTK_RANGE(scalebutton)));
   sleep_timer=sleep_timeout;
-  #ifdef debug_printf
-  printf("Sleep timeout set to %d\n", sleep_timeout);
-  #endif
+  TRACE("Sleep timeout set to %d\n", sleep_timeout);
   e_ink_refresh_default();
   if(pthread_kill(sleep_timer_tid, 0) == ESRCH) // Если поток таймера умер
     start_sleep_timer();
 }
 
-#ifdef debug_printf
+#ifdef debug
 static void led_changed(GtkWidget *scalebutton)
 {
   set_led_state(gtk_range_get_value(GTK_RANGE(scalebutton)));
@@ -848,7 +832,7 @@ void options_menu_create(void) //Создание меню опций в ФМ
     gtk_container_add (GTK_CONTAINER (sleep_timeout_frame), sleep_timeout_scale);
   }
 
-  #ifdef debug_printf
+  #ifdef debug
   GtkWidget *LED_test_frame = gtk_frame_new ("LED_TEST");
   gtk_box_pack_start (GTK_BOX (menu_vbox), LED_test_frame, FALSE, TRUE, 0);
   GtkWidget *led_test_scale = gtk_hscale_new_with_range (0, 255, 1);
@@ -885,9 +869,7 @@ void create_folder(void)
 
 void menu_destroy (GtkWidget *dialog)
 {
-  #ifdef debug_printf
-  printf("Destroying menu\n");
-  #endif
+  TRACE("Destroying menu\n");
   gtk_widget_destroy(dialog);
   gtk_widget_grab_focus (GTK_WIDGET(active_panel->list));
   /*   g_signal_handlers_unblock_by_func( window, focus_in_callback, NULL ); */
@@ -926,7 +908,7 @@ gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *pan
       }
       else if ((dialog == options) && GTK_WIDGET_SENSITIVE(create) == FALSE)
       {
-        printf("options\n");
+        TRACE("options\n");
         gtk_widget_grab_focus (exit_button);
         e_ink_refresh_local();
         return TRUE;

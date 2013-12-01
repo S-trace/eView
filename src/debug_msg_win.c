@@ -21,7 +21,7 @@ gint if_key_press ()
 void print_msg (char *msg)
 {
   GtkWidget *label;
-  /*printf("msg=%s\n", msg); */
+  /*TRACE("msg=%s\n", msg); */
   label = gtk_label_new (msg);
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0);

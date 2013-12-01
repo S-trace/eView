@@ -25,9 +25,7 @@ const char msg_memory_exhausted[] = "memory exhausted";
 
 void calculate_scaling_dimensions(int *new_width, int *new_height, const int image_height, const int image_width, const int display_height, const int display_width)
 {
-  #ifdef debug_printf
-  printf("calculate_scaling_dimensions called (image %dx%d, display %dx%d)\n", image_height, image_width, display_height, display_width);
-  #endif
+  TRACE("calculate_scaling_dimensions called (image %dx%d, display %dx%d)\n", image_height, image_width, display_height, display_width);
   double scale_width=0, scale_height=0, scale;
   if (display_height > 0 && display_width > 0)
   {
@@ -41,15 +39,11 @@ void calculate_scaling_dimensions(int *new_width, int *new_height, const int ima
     scale = (double)display_width / image_width;
   else
     scale=1;
-  #ifdef debug_printf
-  printf("scale_width=%f, scale_height=%f, scale=%f\n", scale_width, scale_height, scale);
-  #endif
+  TRACE("scale_width=%f, scale_height=%f, scale=%f\n", scale_width, scale_height, scale);
 
   *new_width = scale * image_width;
   *new_height = scale * image_height;
-  #ifdef debug_printf
-  printf("new_width=%d, new_height=%d\n", *new_width, *new_height);
-  #endif
+  TRACE("new_width=%d, new_height=%d\n", *new_width, *new_height);
 }
 
 void get_system_sleep_timeout(void)
@@ -62,9 +56,7 @@ void get_system_sleep_timeout(void)
   char temp_buffer[PATHSIZE+1];
   if (fgets(temp_buffer, PATHSIZE, process) == 0)
   {
-    #ifdef debug_printf
-    printf("Reading system sleep timeout from process failed\n");
-    #endif
+    TRACE("Reading system sleep timeout from process failed\n");
     temp_buffer[0]='\0';
   }
   else if (feof(process))
@@ -73,9 +65,7 @@ void get_system_sleep_timeout(void)
     trim_line(temp_buffer);
   pclose(process);
   system_sleep_timeout=strdup(temp_buffer);
-  #ifdef debug_printf
-  printf("Sleep timeout is %s\n", system_sleep_timeout);
-  #endif
+  TRACE("Sleep timeout is %s\n", system_sleep_timeout);
 }
 
 void set_system_sleep_timeout(const char *timeout)
@@ -98,19 +88,13 @@ void get_screensavers_list(void)
   {
     if (fgets(temp_buffer, PATHSIZE, list_of_screensavers) == 0)
     {
-      #ifdef debug_printf
-      printf("Reading next screensaver filename failed\n");
-      #endif
+      TRACE("Reading next screensaver filename failed\n");
       pclose(list_of_screensavers);
-      #ifdef debug_printf
-      printf("Process closed\n");
-      #endif
+      TRACE("Process closed\n");
       break;
     }
     trim_line(temp_buffer);
-    #ifdef debug_printf
-    printf("read %s\n", temp_buffer);
-    #endif
+    TRACE("read %s\n", temp_buffer);
     strcpy(screensavers_array[screensavers_count], temp_buffer);
     screensavers_count++;
   }
@@ -121,9 +105,7 @@ void read_string(const char *name, char **destination) /*Чтение строк
   FILE *file_descriptor=fopen(name,"rt");
   if (!file_descriptor)
   {
-    #ifdef debug_printf
-    printf("UNABLE TO OPEN %s FILE FOR READ!\n", name);
-    #endif
+    TRACE("UNABLE TO OPEN %s FILE FOR READ!\n", name);
     *destination=strdup("\0");
     return;
   }
@@ -133,36 +115,28 @@ void read_string(const char *name, char **destination) /*Чтение строк
     if (fgets(temp, PATHSIZE, file_descriptor) == 0)
     {
       (void)fclose(file_descriptor);
-      #ifdef debug_printf
-      printf("Reading from %s failed!\n", name);
-      #endif
+      TRACE("Reading from %s failed!\n", name);
       *destination=strdup("\0");
       return;
     }
     *destination=strdup(temp);
     (void)fclose(file_descriptor);
     trim_line(*destination);
-    #ifdef debug_printf
-    printf("Read '%s' from %s\n", *destination, name);
-    #endif
+    TRACE("Read '%s' from %s\n", *destination, name);
     return;
   }
 }
 
 void kill_panel (void) /* Убиваем struct_panel */
 {
-  #ifdef debug_printf
-  printf ("killing panel\n");
-  #endif
+  TRACE ("killing panel\n");
   xsystem("killall panel");
   return;
 }
 
 void start_panel (void) /* Перезапускаем struct_panel */
 {
-  #ifdef debug_printf
-  printf ("starting panel\n");
-  #endif
+  TRACE ("starting panel\n");
   xsystem("panel &");
   return;
 }
@@ -214,17 +188,13 @@ char *get_natural_time(int seconds) /* Возвращает строку в фо
 
 void xsystem(const char *command) /* Вывод на экран и запуск команды */
 {
-  #ifdef debug_printf
-  printf("Executing '%s'\n", command);
-  #endif
+  TRACE("Executing '%s'\n", command);
   (void)system(command);
 }
 
 void trim_line(char *input_line) /* Удаляет последний символ у строки */
 {
-  #ifdef debug_printf
-  printf("trim_line called for line '%s'\n", input_line);
-  #endif
+  TRACE("trim_line called for line '%s'\n", input_line);
   if (input_line[0] != '\0')
   {
     size_t len=strlen(input_line)-1;
@@ -237,9 +207,7 @@ void trim_line(char *input_line) /* Удаляет последний симво
 
 char *find_first_picture_name(struct_panel *panel)
 {
-  #ifdef DEBUG_PRINTF
-  printf("entering find_first_picture_name\n");
-  #endif
+  TRACE("entering find_first_picture_name\n");
   GtkTreeIter iter;
   GtkTreeModel *model;
   char *tmp;
@@ -269,9 +237,7 @@ char *find_next_picture_name(struct_panel *panel)
   GtkTreeModel *model;
   char *tmp;
   gboolean valid;
-  #ifdef DEBUG_PRINTF
-  printf("entering find_next_picture_name\n");
-  #endif
+  TRACE("entering find_next_picture_name\n");
   model = gtk_tree_view_get_model (panel->list);
   if (gtk_tree_model_get_iter_from_string (model, &iter, panel->selected_iter))
   {
@@ -297,9 +263,7 @@ char *find_next_picture_name(struct_panel *panel)
 
 char *find_prev_picture_name(struct_panel *panel)
 {
-  #ifdef DEBUG_PRINTF
-  printf("entering find_prev_picture_name\n");
-  #endif
+  TRACE("entering find_prev_picture_name\n");
   GtkTreeIter iter;
   GtkTreeModel *model;
   char *tmp, *last_found_image=NULL;
@@ -330,9 +294,7 @@ char *find_prev_picture_name(struct_panel *panel)
 
 char *find_last_picture_name(struct_panel *panel)
 {
-  #ifdef DEBUG_PRINTF
-  printf("entering find_last_picture_name\n");
-  #endif
+  TRACE("entering find_last_picture_name\n");
   GtkTreeIter iter;
   GtkTreeModel *model;
   char *tmp, *last_found_image=NULL;
@@ -355,9 +317,7 @@ char *find_last_picture_name(struct_panel *panel)
 
 char *find_next_node(struct_panel *panel, int reset_position) /* Поиск следующей директории или архива в списке */
 {
-  #ifdef DEBUG_PRINTF
-  printf("entering find_first_picture_name\n");
-  #endif
+  TRACE("entering find_first_picture_name\n");
   char *tmp;
   gboolean valid;
   GtkTreeIter iter;
@@ -392,9 +352,7 @@ char *find_next_node(struct_panel *panel, int reset_position) /* Поиск сл
 
 char *find_prev_node(struct_panel *panel) /* Поиск следующей директории или архива в списке */
 {
-  #ifdef DEBUG_PRINTF
-  printf("entering find_prev_node\n");
-  #endif
+  TRACE("entering find_prev_node\n");
   char *tmp;
   int current_row;
   gboolean valid;
@@ -447,9 +405,7 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
     now_name=xconcat(panel->archive_cwd,now_name);
   else
     now_name=strdup(now_name);
-  #ifdef debug_printf
-  printf("Finding next image (now at '%s'), panel->files_num=%d\n", now_name, panel->files_num);
-  #endif
+  TRACE("Finding next image (now at '%s'), panel->files_num=%d\n", now_name, panel->files_num);
   free(now_name);
   next_name=find_next_picture_name(panel);
   if (next_name == NULL)
@@ -465,9 +421,7 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
   {
     if (loop_dir == LOOP_NONE)
     {
-      #ifdef debug_printf
-      printf("Already on last file!\n");
-      #endif
+      TRACE("Already on last file!\n");
       if (allow_actions)
       {
         GtkWidget *message=Message (INFORMATION,LAST_FILE_REACHED);
@@ -479,9 +433,7 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
     }
     if (loop_dir == LOOP_LOOP)
     {
-      #ifdef debug_printf
-      printf("Loop reached for forward\n");
-      #endif
+      TRACE("Loop reached for forward\n");
       if (allow_actions)
       {
         GtkWidget *message=Message (INFORMATION,LAST_FILE_REACHED_LOOP);
@@ -495,15 +447,11 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
     {
       if (allow_actions) /* Предзагрузка не будет срабатывать на границе директорий - ну и гхыр с ней! */
       {
-        #ifdef debug_printf
-        printf("Finding next directory\n");
-        #endif
+        TRACE("Finding next directory\n");
         char *next_node=find_next_node(panel, TRUE); /* Получаем следующий каталог */
         if (next_node == NULL)
         {
-          #ifdef debug_printf
-          printf("JUMP FORWARD FAILED!\n");
-          #endif
+          TRACE("JUMP FORWARD FAILED!\n");
           Message (ERROR, UNABLE_TO_ENTER_NEXT_DIRECTORY);
           update(active_panel);
           free(next_name);
@@ -511,9 +459,7 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
         }
         else
         {
-          #ifdef debug_printf
-          printf("NEXT_NODE=%s\n",next_node);
-          #endif
+          TRACE("NEXT_NODE=%s\n",next_node);
           if (is_archive(next_node)) // Если find_next_node() вернула имя архива - входим в него
           {
             if (panel->archive_depth == 0)
@@ -536,18 +482,14 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       }
       else
       {
-        #ifdef debug_printf
-        printf("Got end of directory!\n");
-        #endif
+        TRACE("Got end of directory!\n");
         free(next_name);
         return NULL;
       }
     }
     if (loop_dir == LOOP_EXIT)
     {
-      #ifdef debug_printf
-      printf("Got last image, exiting\n");
-      #endif
+      TRACE("Got last image, exiting\n");
       if (allow_actions)
       {
         interface_is_locked=TRUE; // Чтобы не было двойного обновления при закрытии окна сообщения
@@ -575,9 +517,7 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
     now_name=xconcat(panel->archive_cwd,now_name);
   else
     now_name=strdup(now_name);
-  #ifdef debug_printf
-  printf("Finding previous image (now at '%s'), panel->files_num=%d\n", now_name, panel->files_num);
-  #endif
+  TRACE("Finding previous image (now at '%s'), panel->files_num=%d\n", now_name, panel->files_num);
   free(now_name);
   prev_name=find_prev_picture_name(panel);
   if (prev_name == NULL)
@@ -593,9 +533,7 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
   {
     if (loop_dir == LOOP_NONE)
     {
-      #ifdef debug_printf
-      printf("Already on first image!\n");
-      #endif
+      TRACE("Already on first image!\n");
       if (allow_actions)
       {
         GtkWidget *message=Message (INFORMATION,FIRST_FILE_REACHED);
@@ -607,9 +545,7 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
     }
     if (loop_dir == LOOP_LOOP)
     {
-      #ifdef debug_printf
-      printf("Loop reached for backward\n");
-      #endif
+      TRACE("Loop reached for backward\n");
       if (allow_actions)
       {
         GtkWidget *message=Message (INFORMATION,FIRST_FILE_REACHED_LOOP);
@@ -623,15 +559,11 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
     {
       if (allow_actions) /* Предзагрузка не будет срабатывать на границе директорий - ну и гхыр с ней! */
       {
-        #ifdef debug_printf
-        printf("Finding previous directory\n");
-        #endif
+        TRACE("Finding previous directory\n");
         char *prev_node=find_prev_node(panel); /* Получаем следующий каталог */
         if (prev_node == NULL)
         {
-          #ifdef debug_printf
-          printf("JUMP BACKWARD FAILED!\n");
-          #endif
+          TRACE("JUMP BACKWARD FAILED!\n");
           Message (ERROR, UNABLE_TO_ENTER_PREVIOUS_DIRECTORY);
           update(active_panel);
           free(prev_name);
@@ -641,9 +573,7 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
         {
           if (prev_node != (char *) -1) // Сюда мы никогда не попадём, но пусть будет
           {
-            #ifdef debug_printf
-            printf("PREV_NODE=%s\n", prev_node);
-            #endif
+            TRACE("PREV_NODE=%s\n", prev_node);
             if (is_archive(prev_node)) // Если find_prev_node() вернула имя архива - входим в него
             {
               if (panel->archive_depth == 0)
@@ -667,18 +597,14 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       }
       else
       {
-        #ifdef debug_printf
-        printf("Got end of directory!\n");
-        #endif
+        TRACE("Got end of directory!\n");
         free(prev_name);
         return NULL;
       }
     }    
     if (loop_dir == LOOP_EXIT)
     {
-      #ifdef debug_printf
-      printf("Got first image, exiting\n");
-      #endif
+      TRACE("Got first image, exiting\n");
       if (allow_actions)
       {
         interface_is_locked=TRUE; // Чтобы не было двойного обновления при закрытии окна сообщения
@@ -803,9 +729,7 @@ void xfree(void *ptr)
 {
   /*	 sets the pointer to NULL
    *	after it has been freed.*/
-  #ifdef debug_printf
-  /*   printf("called xfree\n"); */
-  #endif
+  /*   TRACE("called xfree\n"); */
 
   void **pp = (void **)ptr;
 
@@ -828,9 +752,7 @@ char *xgetcwd (char *cwd)
     path_max += 32;
     cwd = (char*)xrealloc (cwd, path_max);
   }
-  #ifdef debug_printf
-  printf("GET_CWD=%s\n", cwd);
-  #endif
+  TRACE("GET_CWD=%s\n", cwd);
   if (ret == NULL) xfree(&cwd);
   return cwd;
 }
@@ -848,9 +770,7 @@ char *xconcat_path_file(const char *path,const char *filename)
 {
   if (path < (char *)2)
   {
-    #ifdef debug_printf
-    printf("Path passed to xconcat_path_file() is NULL!\n");
-    #endif
+    TRACE("Path passed to xconcat_path_file() is NULL!\n");
     return (strdup(filename));
   }
   /*
@@ -889,9 +809,7 @@ void preload_next_screensaver(void)
   if (++suspend_count==screensavers_count-1) /* Закольцовываем список картинок для скринсейвера (последняя запись - фигня!) */
     suspend_count=0;
 
-  #ifdef debug_printf
-  printf("Preloading screensaver %s\n", screensavers_array[suspend_count]);
-  #endif
+  TRACE("Preloading screensaver %s\n", screensavers_array[suspend_count]);
 
   crop=rotate=frame=preload_enable=boost_contrast=FALSE; /* Грязно перенастраиваем смотрелку */
   suspended=keepaspect=TRUE;

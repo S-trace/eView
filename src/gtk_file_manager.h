@@ -38,6 +38,12 @@
 #define SIZE_COLUMN     ((int) 1)
 #define PATHSIZE 256
 
+#ifdef debug
+#define TRACE(s, args...) do { printf(s, ## args); fflush(stdout); } while (0)
+#else
+#define TRACE(s, args...)
+#endif
+
 enum {
   KILOBYTE = 1024,
   MEGABYTE = (KILOBYTE*1024),
