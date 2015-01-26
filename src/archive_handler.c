@@ -276,14 +276,15 @@ void enter_subarchive(const char *name, struct_panel *panel) /* Вход во в
 {
   char *subarchive=NULL;
   #ifdef __amd64
-  const char *prefix="/tmp/";
+  char *prefix=strdup("/tmp/");
   #else
-  const char *prefix=detect_subarchive_prefix();
+  char *prefix=detect_subarchive_prefix();
   #endif
   archive_extract_file(panel->archive_stack[panel->archive_depth], name, prefix);
   asprintf(&subarchive, "%s%s/%s", prefix, panel->archive_cwd, name);
   TRACE("Entering into subarchive '%s' of archive '%s'\n", subarchive, panel->archive_stack[panel->archive_depth]);
   enter_archive(subarchive, panel, TRUE);
+  xfree(&prefix);
 }
 
 void leave_archive(struct_panel *panel)
