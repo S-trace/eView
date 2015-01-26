@@ -25,6 +25,20 @@ typedef struct {
   const char *sign;       /* Signature to compare to   */
 } magic_sign;
 
+char *detect_subarchive_prefix(void)
+{
+  if (access("/media/data/", R_OK))
+  {
+    TRACE("Unable to access /media/data/ - using / as subarchive extracting prefix\n");
+    return (strdup("/"));
+  }
+  else
+  {
+    TRACE("Using /media/data/ as subarchive extracting prefix\n");
+    return (strdup("/media/data/"));
+  }
+}
+
 char *escape(const char *input) /* Экранирование нежелательных символов для грепа (прежде всего квадратных скобок) */
 {
   char  *escaped;
@@ -264,7 +278,7 @@ void enter_subarchive(const char *name, struct_panel *panel) /* Вход во в
   #ifdef __amd64
   const char *prefix="/tmp/";
   #else
-  const char *prefix="/";
+  const char *prefix=detect_subarchive_prefix();
   #endif
   archive_extract_file(panel->archive_stack[panel->archive_depth], name, prefix);
   asprintf(&subarchive, "%s%s/%s", prefix, panel->archive_cwd, name);
