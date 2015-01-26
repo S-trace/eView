@@ -75,23 +75,20 @@ void epaperUpdate(__attribute__((unused)) unsigned long int ioctl_call, __attrib
 
 int detect_refresh_type (void)
 {
-  if (refresh_type == REFRESH_UNKNOWN)
+  int mode=3;
+  if (epaper_update_helper(framebuffer_descriptor, EPAPER_UPDATE_DISPLAY_QT, &mode) == 0)
   {
-    int mode=3;
-    if (epaper_update_helper(framebuffer_descriptor, EPAPER_UPDATE_FULL, &mode) == 0)
-    {
-      refresh_type=REFRESH_LEGACY;
-      TRACE("Display refresh was successed, legacy\n");
-    }
-    else if (epaper_update_helper(framebuffer_descriptor, EPAPER_UPDATE_DISPLAY_QT, &mode) == 0)
-    {
-      refresh_type=REFRESH_NEW;
-      TRACE("Display refresh was successed, new\n");
-    }
-    else
-    {
-      TRACE("Display refresh was not detected!\n");
-    }
+    refresh_type=REFRESH_NEW;
+    TRACE("Display refresh was successed, new\n");
+  }
+  else if (epaper_update_helper(framebuffer_descriptor, EPAPER_UPDATE_FULL, &mode) == 0)
+  {
+    refresh_type=REFRESH_LEGACY;
+    TRACE("Display refresh was successed, legacy\n");
+  }
+  else
+  {
+    TRACE("Display refresh was not detected!\n");
   }
   return (refresh_type);
 }
