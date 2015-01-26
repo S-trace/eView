@@ -20,8 +20,11 @@
 #include "digma_hw.h"
 #include "mylib.h"
 
-int hardware_has_backlight=FALSE, hardware_has_LED=FALSE, hardware_has_APM=FALSE, hardware_has_sysfs_sleep=FALSE;
-const char *LED_path, *backlight_path, *sysfs_sleep_path;
+void write_string_to_file(const char *file, const char *value);
+void write_int_to_file(const char *file, int value);
+
+int hardware_has_backlight=FALSE, hardware_has_LED=FALSE, hardware_has_APM=FALSE, hardware_has_sysfs_sleep=FALSE, hardware_has_eink_mode_control=FALSE;
+const char *LED_path, *backlight_path, *sysfs_sleep_path, *eink_mode_control_path;
 int LED_state[LED_STATES]; /* Массив содержащий значения которые надо писать в sysfs чтобы управлять LED */
 int previous_backlight_level; /* Уровень подсветки перед запуском eView */
 int suspended=FALSE; /* Текущее состояние книги */
@@ -47,9 +50,9 @@ int epaper_update_helper(int fb, unsigned long int ioctl_call, int *mode)
   return TRUE;
 }
 
-__attribute__((pure)) void epaperUpdate(__attribute__((unused)) unsigned long int ioctl_call, __attribute__((unused)) int mode);
 void epaperUpdate(__attribute__((unused)) unsigned long int ioctl_call, __attribute__((unused)) int mode)
 {
+  TRACE("Called void epaperUpdate()\n");
   if (enable_refresh == FALSE)
   {
     TRACE("Display refresh was locked, IGNORED (ioctl %lud mode %d)!\n", ioctl_call, mode);
@@ -99,6 +102,13 @@ int detect_refresh_type (void)
 __attribute__((pure)) void epaperUpdateFull(void);
 void epaperUpdateFull(void)
 {
+  TRACE("epaperUpdateFull()\n");  
+  if (hardware_has_eink_mode_control)
+  {
+    write_string_to_file (eink_mode_control_path, "m");
+    write_int_to_file(eink_mode_control_path, 0);
+  }
+
   if (refresh_type == REFRESH_NEW)
     epaperUpdate(EPAPER_UPDATE_DISPLAY_QT, 3);
   else if (refresh_type == REFRESH_LEGACY)
@@ -106,6 +116,11 @@ void epaperUpdateFull(void)
   else
   {
     TRACE("Unable to refresh display - refresh type is unknown!\n");
+  }
+
+  if (hardware_has_eink_mode_control)
+  {
+    write_string_to_file (eink_mode_control_path, "q");
   }
 }
 
@@ -115,6 +130,13 @@ void epaperUpdateFull(void)
 __attribute__((pure)) void epaperUpdateLocal(void);
 void epaperUpdateLocal(void)
 {
+  TRACE("epaperUpdateLocal()\n");  
+  if (hardware_has_eink_mode_control)
+  {
+    write_string_to_file (eink_mode_control_path, "m");
+    write_int_to_file(eink_mode_control_path, 2);
+  }
+
   if (refresh_type == REFRESH_NEW)
     epaperUpdate(EPAPER_UPDATE_DISPLAY_QT, 2);
   else if (refresh_type == REFRESH_LEGACY)
@@ -122,6 +144,11 @@ void epaperUpdateLocal(void)
   else
   {
     TRACE("Unable to refresh display - refresh type is unknown!\n");
+  }
+
+  if (hardware_has_eink_mode_control)
+  {
+    write_string_to_file (eink_mode_control_path, "q");
   }
 }
 
@@ -131,6 +158,14 @@ void epaperUpdateLocal(void)
 __attribute__((pure)) void epaperUpdatePart(void);
 void epaperUpdatePart(void)
 {
+  TRACE("epaperUpdatePart()\n");  
+
+  if (hardware_has_eink_mode_control)
+  {
+    write_string_to_file (eink_mode_control_path, "m");
+    write_int_to_file(eink_mode_control_path, 5);
+  }
+
   if (refresh_type == REFRESH_NEW)
     epaperUpdate(EPAPER_UPDATE_DISPLAY_QT, 1);
   else if (refresh_type == REFRESH_LEGACY)
@@ -138,6 +173,11 @@ void epaperUpdatePart(void)
   else
   {
     TRACE("Unable to refresh display - refresh type is unknown!\n");
+  }
+
+  if (hardware_has_eink_mode_control)
+  {
+    write_string_to_file (eink_mode_control_path, "q");
   }
 }
 
@@ -274,6 +314,16 @@ void detect_hardware(void) /* Обнаружение оборудования и
     }
   }
 
+  if (hardware_has_eink_mode_control == FALSE)
+  {
+    hardware_has_eink_mode_control=check_for_file ("/sys/eink/einkmode");
+    if (hardware_has_eink_mode_control)
+    {
+      eink_mode_control_path="/sys/eink/einkmode";
+      TRACE("Found eInk mode control at file %s\n", eink_mode_control_path);
+    }
+  }
+
   #ifdef debug
   if (! hardware_has_LED)
     TRACE("LED control not found\n");
@@ -283,6 +333,8 @@ void detect_hardware(void) /* Обнаружение оборудования и
     TRACE("APM not found\n");
   if (! hardware_has_sysfs_sleep)
     TRACE("Sysfs sleep trigger not found\n");
+  if (! hardware_has_eink_mode_control)
+    TRACE("eInk mode control file not found\n");
   TRACE("Hardware detect finished\n");
   #endif
 
