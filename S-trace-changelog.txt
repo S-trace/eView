@@ -241,3 +241,6 @@ https://github.com/S-trace/eView/raw/master/eView_screenshoots.rar]eView_screens
 064t2 от 16.nov.2013
 * Заменена иконка на специалльно разработанную для eView (спасибо Userok(aka QbiX) с фонума ddixlab.ru за неё)
 - Удалён скрипт eView_reset_configuration.sh за ненадобностью (используйте eView_remover.sh - он очищает конфигурацию даже если программа не была установлена)
+
+064t3 от 26.jan.2015
+* Исправлена проблема с некорректно работающим автоопределением типа обновления экрана (не обновлялся на Digma R60G/Gmini MagicBook T6LHD и аналогичных)
