@@ -49,3 +49,17 @@
 #define AC_VOLTAGE  "/sys/class/power_supply/ac/voltage_now"
 
 #endif
+
+
+// Для RK2818:
+#define AC_ONLINE_RK2818 "/sys/class/power_supply/ac/online"
+// Взводится также и при USB-подключении
+#define AC_VOLTAGE_RK2818 "/sys/class/power_supply/ac/batt_vol"
+
+#define USB_ONLINE_RK2818 "/sys/class/power_supply/usb/online"
+#define USB_VOLTAGE_RK2818 "/sys/class/power_supply/usb/batt_vol"
+
+#define BATTERY_VOLTAGE_RK2818 "/sys/class/power_supply/battery/batt_vol"
+#define BATTERY_STATUS_RK2818 "/sys/class/power_supply/battery/status"
+#define BATTERY_CAPACITY_RK2818 "/sys/class/power_supply/battery/capacity"
+#define BATTERY_CURRENT_NOW_RK2818 "/sys/class/power_supply/battery/current_now"

@@ -35,7 +35,7 @@ void add_toggle_button_to_menu(GtkWidget *widget, GtkWidget *menu_vbox, void *cl
 
 
 // **************************************************  Picture menu  ***********************************************************
-void power_information(void)
+void power_information_legacy(void)
 {
   char *label_text, *battery_capacity, *battery_chip_temp, *battery_chip_volt, *battery_current, *power_supplier, *battery_status, *battery_temp, *battery_voltage, *battery_time_to_empty, *battery_time_to_full, *usb_current, *usb_voltage, *ac_current, *ac_voltage;
   /* Создаём виджеты */
@@ -93,6 +93,55 @@ void power_information(void)
   xfree(&battery_current);
   xfree(&battery_temp);
   xfree(&battery_voltage);
+}
+
+void power_information_rk2818(void)
+{
+  char *label_text, *battery_capacity, *battery_current, *battery_voltage, *battery_status, *usb_online, *usb_voltage, *ac_online, *ac_voltage;
+  /* Создаём виджеты */
+  TRACE("Show RK2818 battery_information\n");
+
+  read_string(BATTERY_CAPACITY_RK2818, &battery_capacity); // Заряд в процентах
+  read_string(BATTERY_CURRENT_NOW_RK2818, &battery_current); // Ток батареи (милиамперы)
+  read_string(BATTERY_VOLTAGE_RK2818,  &battery_voltage); // Вольтаж батареи (миливольты)
+  read_string(BATTERY_STATUS_RK2818, &battery_status); // Ход зарядки или разрядки (Full/Discharging/Charging)
+
+  read_string(USB_ONLINE_RK2818,  &usb_online); // USB подключено
+  read_string(AC_ONLINE_RK2818,  &ac_online); // AC подключено (также взводится по USB)
+
+  if (strcmp(usb_online, "1") == 0)
+  {
+    read_string(USB_VOLTAGE_RK2818,  &usb_voltage); // Вольтаж USB
+    asprintf(&label_text, POWER_SOURCE_IS_USB_RK2818, battery_capacity, battery_current, battery_status, battery_voltage, usb_voltage);
+    xfree(&usb_voltage);
+  }
+  else if (strcmp(ac_online, "1") == 0)
+  {
+    read_string(AC_VOLTAGE_RK2818,  &ac_voltage); // Вольтаж AC
+    asprintf(&label_text, POWER_SOURCE_IS_AC_RK2818, battery_capacity, battery_current, battery_status, battery_voltage, ac_voltage);
+    xfree(&ac_voltage);
+  }
+  else
+  {
+    asprintf(&label_text, POWER_SOURCE_IS_BATTERY_RK2818, battery_capacity, battery_current, battery_status, battery_voltage);
+  }
+
+  Message(POWER_STATUS, label_text);
+  xfree(&label_text);
+  xfree(&ac_online);
+  xfree(&usb_online);
+  xfree(&battery_capacity);
+  xfree(&battery_current);
+  xfree(&battery_status);
+  xfree(&battery_voltage);
+}
+
+void power_information(void)
+{
+  if (access(BATTERY_CAPACITY, F_OK))
+    power_information_rk2818();
+  else
+    power_information_legacy();
 }
 
 void crop_image_toggler (void) // Callback для галки обрезки полей
@@ -525,7 +574,10 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
     add_toggle_button_to_menu(suppress_panel_button, menu_vbox, suppress_panel_callback, keys_in_picture_menu, suppress_panel, panel);
   }
 
-  read_string(BATTERY_CAPACITY, &battery_capacity); // Заряд в процентах
+  if (access(BATTERY_CAPACITY, F_OK))
+    read_string(BATTERY_CAPACITY_RK2818, &battery_capacity); // Заряд в процентах
+  else
+    read_string(BATTERY_CAPACITY, &battery_capacity); // Заряд в процентах
   asprintf(&name, BATTERY_CHARGE_PERCENT, battery_capacity);
   power_information_button=gtk_button_new_with_label (name);
   add_toggle_button_to_menu(power_information_button, menu_vbox, power_information, keys_in_picture_menu, FALSE, panel);

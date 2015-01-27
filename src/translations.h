@@ -29,6 +29,10 @@
 #define POWER_SOURCE_IS_USB "Заряд: %s%%\nТемпература чипа (C): %s\nНапряжение чипа (мВ): %s\nТок батареи (мА): %s\nИсточник питания: %s\nХод зарядки: %s\nТемпература батареи (С): %s\nНапряжение батареи (мВ): %s\nВремя до зарядки: %s\nТок USB (мА): %s\nНапряжение USB (мВ): %s"
 #define POWER_SOURCE_IS_AC "Заряд: %s%%\nТемпература чипа (C): %s\nНапряжение чипа (мВ): %s\nТок батареи (мА): %s\nИсточник питания: %s\nХод зарядки: %s\nТемпература батареи (С): %s\nНапряжение батареи (мВ): %s\nВремя до зарядки: %s\nТок AC (мА): %s\nНапряжение AC (мВ): %s"
 
+#define POWER_SOURCE_IS_BATTERY_RK2818 "Заряд: %s%%\nТок батареи (мА): %s\nИсточник питания: батарея\nХод зарядки: %s\nНапряжение батареи (мВ): %s"
+#define POWER_SOURCE_IS_USB_RK2818 "Заряд: %s%%\nТок батареи (мА): %s\nИсточник питания: USB\nХод зарядки: %s\nНапряжение батареи (мВ): %s\nНапряжение USB (мВ): %s"
+#define POWER_SOURCE_IS_AC_RK2818 "Заряд: %s%%\nТок батареи (мА): %s\nИсточник питания: AC адаптер\nХод зарядки: %s\nНапряжение батареи (мВ): %s\nНапряжение AC (мВ): %s"
+
 #define MAIN_MENU "Главное меню"
 #define CREATE_TEMPORARY_DIRECTORY "Cоздать каталог temp000"
 #define COPY "Копировать"
@@ -113,6 +117,10 @@
 #define POWER_SOURCE_IS_BATTERY "Charge: %s%%\nChip temperature (C): %s\nChip voltage (mV): %s\nBattery current (mA): %s\nPower source: %s\nCharging status: %s\nBattery temperature (С): %s\nBattery voltage (mV): %s\nTime to discharge: %s"
 #define POWER_SOURCE_IS_USB "Charge: %s%%\nChip temperature (C): %s\nChip voltage (mV): %s\nBattery current (mA): %s\nPower source: %s\nCharging status: %s\nBattery temperature (С): %s\nBattery voltage (mV): %s\nTime to full charge: %s\nUSB current (mA): %s\nUSB voltage (mV): %s"
 #define POWER_SOURCE_IS_AC "Charge: %s%%\nChip temperature (C): %s\nChip voltage (mV): %s\nBattery current (mA): %s\nPower source: %s\nCharging status: %s\nBattery temperature (С): %s\nBattery voltage (mV): %s\nTime to full charge: %s\nAC current (mA): %s\nAC voltage (mV): %s"
+
+#define POWER_SOURCE_IS_BATTERY_RK2818 "Charge: %s%%\nBattery current (mA): %s\nPower source: battery\nCharging status: %s\nBattery voltage (mV): %s"
+#define POWER_SOURCE_IS_USB_RK2818 "Charge: %s%%\nBattery current (mA): %s\nPower source: USB\nCharging status: %s\nBattery voltage (mV): %s\nUSB voltage (mV): %s"
+#define POWER_SOURCE_IS_AC_RK2818 "Charge: %s%%\nBattery current (mA): %s\nPower source: AС adapter\nCharging status: %s\nBattery voltage (mV): %s\nAC voltage (mV): %s"
 
 #define MAIN_MENU "Main menu"
 #define CREATE_TEMPORARY_DIRECTORY "Create temp000 directory"
