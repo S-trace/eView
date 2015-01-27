@@ -447,7 +447,10 @@ void init (void)
     int timer=0;
     QT=TRUE;
     TRACE("X is down! Assuming QT\n");
-    read_string("/home/root/.GTK_parts.version", &string);
+    if (access("/etc/GTK_parts.version", F_OK))
+      read_string("/home/root/.GTK_parts.version", &string);
+    else
+      read_string("/etc/GTK_parts.version", &string);
     if (atoi(string) < NEEDED_GTK_PARTS_VERSION)
     {
       asprintf(&message, GTK_PARTS_IS_OUTDATED, string, NEEDED_GTK_PARTS_VERSION);

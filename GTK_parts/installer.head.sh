@@ -22,6 +22,7 @@ gdk-pixbuf-query-loaders > /etc/gtk-2.0/gdk-pixbuf.loaders
 pango-querymodules > '/etc/pango/pango.modules'
 rm -rf $self_path/temp.tar $self_path/temp_$PRGNAME
 echo $version > /home/root/.GTK_parts.version
+echo $version > /etc/GTK_parts.version
 
 Xfbdev :0 -br -pn -hide-cursor -dpi 150 -rgba vrgb &
 messagebox "Installing GTK_parts version $version" & # На самом деле важная штука, во время этого вывода строится кэш fontconfig!
