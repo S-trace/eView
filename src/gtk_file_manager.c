@@ -469,22 +469,22 @@ void init (void)
       }
     }
     TRACE("Xfbdev started after 0,%d seconds\n", timer);
-    if (strcmp (ROT, "0") != 0)
-    {
-      xsystem("matchbox-window-manager -theme Sato -use_desktop_mode decorated &"); // На GMini C6LHD/Digma R60G вызывает серую рамку вокруг экрана, да и на других книгах тоже мало хорошего. Но нужен для корректного поворота через xrandr (по сути, ему нужен любой клиент, который до него будет подключен к Xfbdev).
-      (void)usleep(2000000);
-      TRACE("ROT=%s\n", ROT);
-      if (strcmp (ROT, "90" ) == 0) xsystem("xrandr -d :0 -o left");
-      if (strcmp (ROT, "180") == 0) xsystem("xrandr -d :0 -o inverted");
-      if (strcmp (ROT, "270") == 0) xsystem("xrandr -d :0 -o right");
-    }
-    else
+
+    // Запускаем window manager - без него окно с изображением отображается поверх файл-менеджера и вокруг проглядывают файлы. А ещё он нужен для корректной работы xrandr.
+    xsystem("matchbox-window-manager -theme Sato -use_desktop_mode decorated &"); 
+    (void)usleep(2000000);
+    
+    TRACE("ROT=%s\n", ROT);
+    if (strcmp (ROT, "0") == 0)
     {
       get_system_sleep_timeout();
       set_system_sleep_timeout("86400"); /* Боремся со злостным усыплятором */
     }
-    get_screensavers_list();
+    if (strcmp (ROT, "90" ) == 0) xsystem("xrandr -d :0 -o left");
+    if (strcmp (ROT, "180") == 0) xsystem("xrandr -d :0 -o inverted");
+    if (strcmp (ROT, "270") == 0) xsystem("xrandr -d :0 -o right");
 
+    get_screensavers_list();
   }
   current.name[0]='\0';
   preloaded.name[0]='\0';
