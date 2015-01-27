@@ -15,7 +15,7 @@ cd $self_path/temp_$PRGNAME
 sed -e '1,/^__DATA__$/d' "$self_name" > $self_path/temp.tar.gz
 gzip -d $self_path/temp.tar.gz
 cd /
-tar -vxpf $self_path/temp.tar
+tar -vxp --overwrite -f $self_path/temp.tar
 cd -
 # Просто на всякий случай перегенерируем файлы
 gdk-pixbuf-query-loaders > /etc/gtk-2.0/gdk-pixbuf.loaders
