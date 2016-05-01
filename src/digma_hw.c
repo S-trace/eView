@@ -15,9 +15,9 @@
 #include <string.h>
 #include <dlfcn.h> /* dlopen() */
 #include <pthread.h>
-
 #include "gtk_file_manager.h" /* Инклюдить первой среди своих, ибо typedef panel! */
 #include "digma_hw.h"
+#include "kobo_hw.h"
 #include "mylib.h"
 
 void write_string_to_file(const char *file, const char *value);
@@ -39,7 +39,7 @@ extern int LED_notify; /* Оповещение светодиодом об об�
 int (*apm_suspend)(int fd); /* Функция из libapm.so, загружается через dlopen */
 
 /* Helper FB update function */
-int epaper_update_helper(int fb, unsigned long int ioctl_call, int *mode)
+int epaper_update_helper(int fb, unsigned long int ioctl_call, void *mode)
 {
   if (framebuffer_descriptor >= 0)
   {
@@ -50,7 +50,7 @@ int epaper_update_helper(int fb, unsigned long int ioctl_call, int *mode)
   return TRUE;
 }
 
-void epaperUpdate(__attribute__((unused)) unsigned long int ioctl_call, __attribute__((unused)) int mode)
+void epaperUpdate(__attribute__((unused)) unsigned long int ioctl_call, __attribute__((unused)) void *mode)
 {
   TRACE("Called void epaperUpdate()\n");
   if (enable_refresh == FALSE)
@@ -62,7 +62,7 @@ void epaperUpdate(__attribute__((unused)) unsigned long int ioctl_call, __attrib
   int ioctl_result;
   /* Иначе запись в видеопамять не успевает завершиться и получаем верхний левый угол новой картинки и нижний правый - прежней. */
   if (QT) (void)usleep(355000);
-  ioctl_result=epaper_update_helper(framebuffer_descriptor, ioctl_call, &mode);
+  ioctl_result=epaper_update_helper(framebuffer_descriptor, ioctl_call, mode);
   #ifdef debug
   if (ioctl_result != TRUE)
   {
@@ -81,6 +81,16 @@ void epaperUpdate(__attribute__((unused)) unsigned long int ioctl_call, __attrib
 int detect_refresh_type (void)
 {
   int mode=3;
+  struct mxcfb_update_data data = {
+    .update_region.top = 0,
+    .update_region.left = 0,
+    .update_region.width = 1080,
+    .update_region.height = 1440,
+    .update_mode = UPDATE_MODE_FULL,
+//     .update_mode = UPDATE_MODE_PARTIAL,
+    .waveform_mode = WAVEFORM_MODE_AUTO,
+    .temp = TEMP_USE_AMBIENT
+  };
   if (epaper_update_helper(framebuffer_descriptor, EPAPER_UPDATE_DISPLAY_QT, &mode) == 0)
   {
     refresh_type=REFRESH_NEW;
@@ -90,6 +100,11 @@ int detect_refresh_type (void)
   {
     refresh_type=REFRESH_LEGACY;
     TRACE("Display refresh was successed, legacy\n");
+  }
+  else if (epaper_update_helper(framebuffer_descriptor, MXCFB_SEND_UPDATE_ORG, &data) == 0)
+  {
+    refresh_type=REFRESH_KOBO;
+    TRACE("Display refresh was successed, kobo\n");
   }
   else
   {
@@ -110,11 +125,25 @@ void epaperUpdateFull(void)
     write_string_to_file (eink_mode_control_path, "m");
     write_int_to_file(eink_mode_control_path, 0);
   }
-
+  struct mxcfb_update_data data = {
+    .update_region.top = 0,
+    .update_region.left = 0,
+    .update_region.width = 1080,
+    .update_region.height = 1440,
+    .update_mode = UPDATE_MODE_FULL,
+//     .update_mode = UPDATE_MODE_PARTIAL,
+    .waveform_mode = WAVEFORM_MODE_AUTO,
+    .temp = TEMP_USE_AMBIENT
+  };
+  int mode = 3;
   if (refresh_type == REFRESH_NEW)
-    epaperUpdate(EPAPER_UPDATE_DISPLAY_QT, 3);
+    epaperUpdate(EPAPER_UPDATE_DISPLAY_QT, &mode);
   else if (refresh_type == REFRESH_LEGACY)
-    epaperUpdate(EPAPER_UPDATE_FULL, 3);
+    epaperUpdate(EPAPER_UPDATE_FULL, &mode);
+  else if (refresh_type == REFRESH_KOBO) {
+    epaperUpdate(MXCFB_SEND_UPDATE_ORG, &data);
+    epaperUpdate(MXCFB_WAIT_FOR_UPDATE_COMPLETE, &data.update_marker);
+  }
   else
   {
     TRACE("Unable to refresh display - refresh type is unknown!\n");
@@ -138,11 +167,25 @@ void epaperUpdateLocal(void)
     write_string_to_file (eink_mode_control_path, "m");
     write_int_to_file(eink_mode_control_path, 2);
   }
-
+  struct mxcfb_update_data data = {
+    .update_region.top = 0,
+    .update_region.left = 0,
+    .update_region.width = 1080,
+    .update_region.height = 1440,
+//     .update_mode = UPDATE_MODE_FULL,
+    .update_mode = UPDATE_MODE_PARTIAL,
+    .waveform_mode = WAVEFORM_MODE_AUTO,
+    .temp = TEMP_USE_AMBIENT
+  };
+  int mode = 2;
   if (refresh_type == REFRESH_NEW)
-    epaperUpdate(EPAPER_UPDATE_DISPLAY_QT, 2);
+    epaperUpdate(EPAPER_UPDATE_DISPLAY_QT, &mode);
   else if (refresh_type == REFRESH_LEGACY)
-    epaperUpdate(EPAPER_UPDATE_LOCAL, 2);
+    epaperUpdate(EPAPER_UPDATE_LOCAL, &mode);
+  else if (refresh_type == REFRESH_KOBO) {
+    epaperUpdate(MXCFB_SEND_UPDATE_ORG, &data);
+    epaperUpdate(MXCFB_WAIT_FOR_UPDATE_COMPLETE, &data.update_marker);
+  }
   else
   {
     TRACE("Unable to refresh display - refresh type is unknown!\n");
@@ -168,10 +211,25 @@ void epaperUpdatePart(void)
     write_int_to_file(eink_mode_control_path, 5);
   }
 
+  struct mxcfb_update_data data = {
+    .update_region.top = 0,
+    .update_region.left = 0,
+    .update_region.width = 1080,
+    .update_region.height = 1440,
+//     .update_mode = UPDATE_MODE_FULL,
+    .update_mode = UPDATE_MODE_PARTIAL,
+    .waveform_mode = WAVEFORM_MODE_AUTO,
+    .temp = TEMP_USE_AMBIENT
+  };
+  int mode = 1;
   if (refresh_type == REFRESH_NEW)
-    epaperUpdate(EPAPER_UPDATE_DISPLAY_QT, 1);
+    epaperUpdate(EPAPER_UPDATE_DISPLAY_QT, &mode);
   else if (refresh_type == REFRESH_LEGACY)
-    epaperUpdate(EPAPER_UPDATE_PART, 1);
+    epaperUpdate(EPAPER_UPDATE_LOCAL, &mode);
+  else if (refresh_type == REFRESH_KOBO) {
+    epaperUpdate(MXCFB_SEND_UPDATE_ORG, &data);
+    epaperUpdate(MXCFB_WAIT_FOR_UPDATE_COMPLETE, &data.update_marker);
+  }
   else
   {
     TRACE("Unable to refresh display - refresh type is unknown!\n");
