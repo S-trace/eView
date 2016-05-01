@@ -70,6 +70,8 @@ void epaperUpdate(__attribute__((unused)) unsigned long int ioctl_call, __attrib
     // GTK прошивка, обновление от Qt: 1 (Операция не позволяется)
     // Qt прошивка, обновление от GTK: 22 (Недопустимый аргумент)
   }
+  #else
+  (void) ioctl_result;
   #endif
   #endif
   return;
