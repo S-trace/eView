@@ -2,7 +2,7 @@ name ?= eView
 version ?= 064t2
 lang ?= russian
 CFLAGS+=-std=c99 -D_GNU_SOURCE -Winit-self -Wformat=2 -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wcast-qual -Wwrite-strings -Wall -Werror -Wno-error=cast-align -Wno-error=format-nonliteral -Wno-format-nonliteral -Wbad-function-cast -Winline -Wnested-externs -Wpointer-arith -DVERSION="\"eView $(version) $(shell LANG=en_US date '+%d.%b.%Y')\""
-# -Wredundant-decls -Wmissing-prototypes -Wstrict-prototypes -Wcast-align 
+# -Wredundant-decls -Wmissing-prototypes -Wstrict-prototypes -Wcast-align
 LDFLAGS+=-lX11 -ldl -lpthread
 DFLAGS = -MD
 ifeq ($(MAKECMDGOALS), arm)
@@ -42,7 +42,7 @@ include $(wildcard src/*.d)
 
 cleanup:
 	@for i in $(OBJ); do \
-		if [ `file $$i | cut -d "," -f 2 | cut -c 2-4` != $(T_ARCH) ]; then \
+		if [ "q$$(file $$i | cut -d ',' -f 2 | cut -c 2-4)" != "q$(T_ARCH)" ]; then \
 			rm -f $(OBJ) $(OBJ:.o=.d); \
 			break; \
 		fi; \
