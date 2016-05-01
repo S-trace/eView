@@ -55,7 +55,9 @@ void epaperUpdate(__attribute__((unused)) unsigned long int ioctl_call, __attrib
   TRACE("Called void epaperUpdate()\n");
   if (enable_refresh == FALSE)
   {
-    TRACE("Display refresh was locked, IGNORED (ioctl %lud mode %d)!\n", ioctl_call, mode);
+    TRACE("Display refresh was locked, IGNORED!\n");
+    (void) ioctl_call;
+    (void) mode;
     return;
   }
   #ifndef __amd64
