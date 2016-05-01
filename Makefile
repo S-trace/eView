@@ -1,7 +1,7 @@
 name ?= eView
 version ?= 064t2
 lang ?= russian
-CFLAGS+=-std=c99 -D_GNU_SOURCE -Winit-self -Wformat=2 -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wcast-qual -Wwrite-strings -Wall -Werror -Wno-error=cast-align -Wno-error=format-nonliteral -Wno-format-nonliteral -Wbad-function-cast -Winline -Wnested-externs -Wpointer-arith -DVERSION="\"eView $(version) $(shell LANG=en_US date '+%d.%b.%Y')\""
+CFLAGS+=-std=c99 -D_GNU_SOURCE -Winit-self -Wformat=2 -Wmissing-include-dirs -Wswitch-default -Wfloat-equal -Wundef -Wshadow -Wcast-qual -Wwrite-strings -Wall -Werror -Wno-error=missing-field-initializers -Wno-error=cast-align -Wno-error=format-nonliteral -Wno-format-nonliteral -Wbad-function-cast -Winline -Wnested-externs -Wpointer-arith -DVERSION="\"eView $(version) $(shell LANG=en_US date '+%d.%b.%Y')\""
 # -Wredundant-decls -Wmissing-prototypes -Wstrict-prototypes -Wcast-align
 LDFLAGS+=-lX11 -ldl -lpthread
 DFLAGS = -MD
