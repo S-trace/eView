@@ -3,6 +3,7 @@
 #include "ViewImageWindow.h"
 #include "contrast.h"
 // http://habrahabr.ru/post/139428/
+// http://habrahabr.ru/post/304210/
 void adjust_contrast(image *target, int contrast, int page) // contrast (256 - normal)
 {
   if (! GDK_IS_PIXBUF (target->pixbuf[page]))
@@ -19,8 +20,10 @@ void adjust_contrast(image *target, int contrast, int page) // contrast (256 - n
     midBright1 += imageData[i++];
     midBright2 += imageData[i++];
   }
-  midBright = (midBright * 77 + midBright1 * 150 + midBright2 * 29) / (256 * dataSize / 3);
-  
+
+  // 0,212656*255; 0,715158*255; 0,072186*255 => 54; 183; 19 (for sRGB colorspace)
+  midBright = (midBright * 54 + midBright1 * 183 + midBright2 * 19) / (256 * dataSize / 3);
+
   for (i = 0; i < 256; i++)
   {
     int a = ((((int)i - (int)midBright) * contrast) >> 8) + (int)midBright;
