@@ -43,7 +43,7 @@ include $(wildcard src/*.d)
 cleanup:
 	@for i in $(OBJ); do \
 		if [ "q$$(file $$i | cut -d ',' -f 2 | cut -c 2-4)" != "q$(T_ARCH)" ]; then \
-			rm -f $(OBJ) $(OBJ:.o=.d); \
+			rm -f $(i) $(i:.o=.d); \
 			break; \
 		fi; \
 	done
