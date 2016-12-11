@@ -384,7 +384,8 @@ char *find_prev_node(struct_panel *panel) /* Поиск следующей ди�
   wait_for_draw();
   current_row = atoi(panel->selected_iter) - 1; // Получаем текущий выбор
   valid = gtk_tree_model_get_iter_from_string (model, &iter, itoa(current_row));
-  while (valid && current_row > 0)
+  if (valid)
+  while (current_row > 0)
   {
     char *current_position_name;
     gtk_tree_model_get (model, &iter, FILE_COLUMN, &tmp, -1);
@@ -413,6 +414,7 @@ char *find_prev_node(struct_panel *panel) /* Поиск следующей ди�
     else
       g_free(current_position_name);
     valid = gtk_tree_model_get_iter_from_string (model, &iter, itoa(current_row--));
+    if (! valid) break;
   }
   if (strcmp(panel->path, "/") == 0) // Если мы достигли верха в структуре каталогов, и выше нет ничего
     return NULL;
