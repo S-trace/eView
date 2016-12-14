@@ -793,9 +793,8 @@ void reset_configuration_callback(void) // Callback для кнопки сбро
   {
     TRACE("Resetting configuration!\n");
     reset_config();
-    gtk_main_quit();
-    if (hw_platform == HW_PLATFORM_SIBRARY_QT) xsystem("killall Xfbdev");
     TRACE("Resetting configuration done, bye!\n");
+    shutdown(0);
   }
   e_ink_refresh_local();
 }
