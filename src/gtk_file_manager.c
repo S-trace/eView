@@ -451,10 +451,21 @@ void init (void)
   }
   else
   {
-    char *string, *message, *ROT;
+    char *string, *message, *ROT = NULL;
     int timer=0;
-    hw_platform = HW_PLATFORM_SIBRARY_QT;
-    TRACE("X is down! Assuming QT\n");
+    if (hw_platform == HW_PLATFORM_UNKNOWN)
+    {
+      TRACE("X is down! Assuming HW_PLATFORM_SIBRARY_QT\n");
+      hw_platform = HW_PLATFORM_SIBRARY_QT;
+      ROT=getenv("ROT"); // Get screen rotation value from environment
+    }
+    else if (hw_platform == HW_PLATFORM_KOBO)
+    {
+      TRACE("X is down and we are on KOBO\n");
+      TRACE("Normalizing framebuffer rotation\n");
+      xsystem("echo 0 > /sys/class/graphics/fb0/rotate ; echo $(cat /sys/class/graphics/fb0/rotate) > /sys/class/graphics/fb0/rotate");
+    }
+
     if (access("/etc/GTK_parts.version", F_OK))
       read_string("/home/root/.GTK_parts.version", &string);
     else
@@ -482,7 +493,6 @@ void init (void)
       usleep (200000); /* Some sleep to allow X server to go online */
     }
 
-    ROT=getenv("ROT"); // Получаем поворот экрана из переменной окружения
     while (!XOpenDisplay(NULL))
     {
       usleep (1000);
