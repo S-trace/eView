@@ -487,7 +487,7 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
       if (rotate || web_manga_mode) /* Действия при просмотре с превышением размера экрана */
       {
         int display_size=0;
-        GtkAdjustment *adjust;
+        GtkAdjustment *adjust = NULL;
         if (rotate)
         {
           display_size=width_display;
