@@ -149,7 +149,7 @@ void crop_image_toggler (void) // Callback для галки обрезки по
   write_config_int("crop", crop=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(crop_image)));
   need_refresh=TRUE;
   wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_local ();
 }
 
@@ -162,7 +162,7 @@ void split_spreads_toggler (void) // Callback для галки поворота
     gtk_widget_set_sensitive(manga_mode, FALSE);
   need_refresh=TRUE;
   wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_local ();
 }
 
@@ -185,7 +185,7 @@ void rotate_image_toggler(void) // Callback для галки поворота
   }
   need_refresh=TRUE;
   wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_local ();
 }
 
@@ -212,7 +212,7 @@ void web_manga_mode_toggler(void) // Callback для галки режима в�
     gtk_widget_set_sensitive(split_spreads_button, TRUE);
   }
   wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
   enable_refresh=TRUE;
   need_refresh=TRUE;
   e_ink_refresh_local ();
@@ -234,7 +234,7 @@ void frame_image_toggler (void) // Callback для галки умного ли�
   }
   need_refresh=TRUE;
   wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_local ();
 }
 
@@ -254,7 +254,7 @@ void manga_mode_toggler (void) // Callback для галки просмотра 
     gtk_widget_set_sensitive(split_spreads_button, TRUE);
   need_refresh=TRUE;
   wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_local ();
 }
 
@@ -263,7 +263,7 @@ void keepaspect_image_toggler (void) // Callback для галки сохран�
   write_config_int("keepaspect", keepaspect = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(keepaspect_image)));
   need_refresh=TRUE;
   wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_local ();
 }
 
@@ -271,7 +271,7 @@ void double_refresh_toggler (void) // Callback для галки двойног�
 {
   write_config_int("double_refresh", double_refresh=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(double_refresh_image)));
   wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_local ();
 }
 
@@ -280,7 +280,7 @@ void preload_toggler (void) // Callback для галки включения п�
   write_config_int("preload_enable", preload_enable=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(preload_enabled_button)));
   if (preload_enable == FALSE) reset_image(&preloaded);
   wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_local ();
 }
 
@@ -289,7 +289,7 @@ void caching_toggler (void) // Callback для галки включения к�
   write_config_int("caching_enable", caching_enable=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(caching_enabled_button)));
   if (caching_enable == FALSE) reset_image(&cached);
   wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_local ();
 }
 
@@ -301,7 +301,7 @@ void suppress_panel_callback (void) // Callback для галки подавле
   else
     start_panel();
   wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_local ();
 }
 
@@ -333,7 +333,7 @@ void reset_statistics() // Callback для кнопки статистики (с
     write_config_int("viewed_pages", viewed_pages=0);
     gtk_button_set_label(GTK_BUTTON(viewed), VIEWED_PAGES" 0");
     wait_for_draw();
-    if (QT) usleep (QT_REFRESH_DELAY);
+    if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
   }
   e_ink_refresh_local();
 }
@@ -353,7 +353,7 @@ void picture_menu_destroy (struct_panel *panel) // Уничтожаем меню
   }
   enable_refresh=TRUE;
   wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_local();
   //   g_signal_handlers_unblock_by_func( win, focus_in_callback, NULL );
   //   g_signal_handlers_unblock_by_func( win, focus_out_callback, NULL );
@@ -386,7 +386,7 @@ gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *
         write_config_int("loop_dir", loop_dir);
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog), TRUE);
         wait_for_draw();
-        if (QT) usleep (QT_REFRESH_DELAY); else usleep(GTK_REFRESH_DELAY);
+        if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY); else usleep(GTK_REFRESH_DELAY);
         e_ink_refresh_local ();
         return TRUE;
       }
@@ -399,7 +399,7 @@ gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *
         if (dialog == loop_dir_loop) gtk_widget_grab_focus(loop_dir_none);
         if (dialog == loop_dir_next) gtk_widget_grab_focus(loop_dir_loop);
         if (dialog == loop_dir_exit) gtk_widget_grab_focus(loop_dir_next);
-        if (QT) usleep (QT_REFRESH_DELAY); else usleep(GTK_REFRESH_DELAY);
+        if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY); else usleep(GTK_REFRESH_DELAY);
         e_ink_refresh_local ();
         return TRUE;
       }
@@ -439,7 +439,7 @@ gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *
         if (dialog == loop_dir_loop) gtk_widget_grab_focus(loop_dir_next);
         if (dialog == loop_dir_next) gtk_widget_grab_focus(loop_dir_exit);
         if (dialog == loop_dir_exit) gtk_widget_grab_focus(preload_enabled_button);
-        if (QT) usleep (QT_REFRESH_DELAY); else usleep(GTK_REFRESH_DELAY);
+        if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY); else usleep(GTK_REFRESH_DELAY);
         e_ink_refresh_local ();
         return TRUE;
       }
@@ -453,7 +453,7 @@ gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *
         else
           gtk_widget_grab_focus (manga_mode);
         wait_for_draw();
-        if (QT) usleep (QT_REFRESH_DELAY);
+        if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
         e_ink_refresh_local ();
         return TRUE;
       }
@@ -474,7 +474,7 @@ gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *
       return FALSE;
 
     default:
-      if (QT) usleep (QT_REFRESH_DELAY);
+      if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
       e_ink_refresh_local ();
       return FALSE;
   }
@@ -488,7 +488,7 @@ void loop_dir_toggler (void) // Callback для радиобаттона по д
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loop_dir_exit))) loop_dir = LOOP_EXIT;
   write_config_int("loop_dir", loop_dir);
   wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
   e_ink_refresh_part ();
 }
 
@@ -568,7 +568,7 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
 
   boost_contrast_button = gtk_check_button_new_with_label(BOOST_CONTRAST);
   add_toggle_button_to_menu(boost_contrast_button, menu_vbox, boost_contrast_callback, keys_in_picture_menu, boost_contrast, panel);
-  if (QT == FALSE)
+  if (hw_platform == HW_PLATFORM_SIBRARY_GTK)
   {
     suppress_panel_button = gtk_check_button_new_with_label (SUPPRESS_BATTERY_WARNINGS);
     add_toggle_button_to_menu(suppress_panel_button, menu_vbox, suppress_panel_callback, keys_in_picture_menu, suppress_panel, panel);
@@ -655,7 +655,7 @@ void fm_start (void) // Callback для галки включения ФМ в н
     write_config_string("bottom_panel.selected_name", bottom_panel.selected_name);
     gtk_widget_set_sensitive(copy, FALSE);
     gtk_widget_set_sensitive(moving, FALSE);
-    if (!QT) usleep(GTK_REFRESH_DELAY);
+    if (hw_platform == HW_PLATFORM_SIBRARY_GTK) usleep(GTK_REFRESH_DELAY);
     enable_refresh=TRUE;
     e_ink_refresh_full();
   }
@@ -713,7 +713,7 @@ void reset_configuration_callback(void) // Callback для кнопки сбро
     TRACE("Resetting configuration!\n");
     reset_config();
     gtk_main_quit();
-    if (QT) xsystem("killall Xfbdev");
+    if (hw_platform == HW_PLATFORM_SIBRARY_QT) xsystem("killall Xfbdev");
     TRACE("Resetting configuration done, bye!\n");
   }
   e_ink_refresh_local();
@@ -754,7 +754,7 @@ void options_destroy (GtkWidget *dialog) // Уничтожаем меню нас
   enable_refresh=FALSE;
   gtk_widget_destroy(dialog);
   wait_for_draw();
-  if (QT) usleep (QT_REFRESH_DELAY);
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
   enable_refresh=TRUE;
   e_ink_refresh_local();
 }
@@ -852,7 +852,7 @@ void options_menu_create(void) //Создание меню опций в ФМ
   show_hidden_files_chk = gtk_check_button_new_with_label (SHOW_HIDDEN_FILES);
   add_toggle_button_to_menu(show_hidden_files_chk, menu_vbox, show_hidden_files_callback, keys_in_options, show_hidden_files, active_panel);
 
-  if (QT == FALSE)
+  if (hw_platform == HW_PLATFORM_SIBRARY_GTK)
   {
     clock_panel = gtk_check_button_new_with_label(SHOW_PANEL);
     add_toggle_button_to_menu(clock_panel, menu_vbox, clock_panel_toggler, keys_in_options, show_clock, active_panel);
@@ -873,7 +873,7 @@ void options_menu_create(void) //Создание меню опций в ФМ
     (void)g_signal_connect (G_OBJECT (backlight_frame), "key_press_event", G_CALLBACK (keys_in_options), NULL);
   }
 
-  if (QT)
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT)
   {
     sleep_timeout_frame = gtk_frame_new (SLEEP_TIMEOUT);
     gtk_box_pack_start (GTK_BOX (menu_vbox), sleep_timeout_frame, FALSE, TRUE, 0);
@@ -941,7 +941,7 @@ gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *pan
       menu_destroy (main_menu);
       (void)chdir(active_panel->path);
       wait_for_draw();
-      if (QT) usleep(QT_REFRESH_DELAY);
+      if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep(QT_REFRESH_DELAY);
       e_ink_refresh_local();
       interface_is_locked=FALSE;
       return TRUE;
@@ -1022,6 +1022,6 @@ void start_main_menu (struct_panel *panel)
   gtk_widget_show_all (main_menu);
   wait_for_draw();
   enable_refresh=TRUE;
-  if (!QT) usleep(GTK_REFRESH_DELAY);
+  if (hw_platform == HW_PLATFORM_SIBRARY_GTK) usleep(GTK_REFRESH_DELAY);
   e_ink_refresh_local();
 }

@@ -29,10 +29,10 @@ int LED_state[LED_STATES]; /* Массив содержащий значения
 int previous_backlight_level; /* Уровень подсветки перед запуском eView */
 int suspended=FALSE; /* Текущее состояние книги */
 int was_in_picture_viewer=FALSE;
+int hw_platform=HW_PLATFORM_UNKNOWN; /* Hardware platform detected by eView */
 pthread_t suspend_helper_tid;
 
 extern int framebuffer_descriptor;
-extern int QT;
 extern int enable_refresh; /* Принудительно запретить обновлять экран в особых случаях */
 extern int LED_notify; /* Оповещение светодиодом об обновлении панелей и загрузке */
 
@@ -63,7 +63,7 @@ void epaperUpdate(__attribute__((unused)) unsigned long int ioctl_call, __attrib
   #ifndef __amd64
   int ioctl_result;
   /* Иначе запись в видеопамять не успевает завершиться и получаем верхний левый угол новой картинки и нижний правый - прежней. */
-  if (QT) (void)usleep(355000);
+  if (hw_platform != HW_PLATFORM_SIBRARY_GTK) (void)usleep(355000);
   ioctl_result=epaper_update_helper(framebuffer_descriptor, ioctl_call, mode);
   #ifdef debug
   if (ioctl_result != TRUE)

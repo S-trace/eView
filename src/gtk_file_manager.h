@@ -89,7 +89,6 @@ extern GtkWidget *main_window; /* Окно файлменеджера */
 extern GtkWidget *panels_vbox; /* vBox для панелей */
 extern struct_panel top_panel, bottom_panel, *active_panel, *inactive_panel;
 extern int interface_is_locked;
-extern int QT;
 extern volatile int sleep_timer;
 extern pthread_t sleep_timer_tid;
 extern guint idle_call_handler;

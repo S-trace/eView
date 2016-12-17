@@ -91,10 +91,10 @@ void die_viewer_window (void)
   enable_refresh=FALSE;
   gtk_widget_destroy(ImageWindow);
   in_picture_viewer=FALSE;
-  if ((suppress_panel == TRUE) && QT != TRUE)
+  if ((suppress_panel == TRUE) && (hw_platform == HW_PLATFORM_SIBRARY_GTK))
     start_panel();
   wait_for_draw();
-  if (QT) usleep(QT_REFRESH_DELAY);
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep(QT_REFRESH_DELAY);
   if (silent == FALSE)
   {
     interface_is_locked=FALSE;
@@ -353,10 +353,10 @@ gboolean show_image(image *target, struct_panel *panel, int enable_actions, int 
   if (position != 0)
   {
     wait_for_draw(); /* Ожидаем отрисовки всего */
-    if (QT) // Задержка нужна чтобы gtk_image_set_from_pixbuf() успело отработать, иначе не восстанавливается значение положения экрана
-      usleep(QT_REFRESH_DELAY);
-    else 
+    if (hw_platform == HW_PLATFORM_SIBRARY_GTK) /* We need delay to allow gtk_image_set_from_pixbuf() to complete */
       usleep(GTK_REFRESH_DELAY);
+    else
+      usleep(QT_REFRESH_DELAY);
     wait_for_draw();  
     if (rotate) gtk_adjustment_set_value(gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW(scrolled_window)), position);
         if (web_manga_mode) gtk_adjustment_set_value(gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW(scrolled_window)), position);
@@ -809,7 +809,7 @@ void ViewImageWindow(const char *file, struct_panel *panel, int enable_actions) 
     return;
   }
   
-  if (suppress_panel && (QT == FALSE))
+  if (suppress_panel && (hw_platform == HW_PLATFORM_SIBRARY_GTK))
     kill_panel();
   TRACE("Opening viewer for '%s'\n", file);
   ImageWindow = window_create (width_display+6, height_display+6, 0, "", NOT_MODAL);

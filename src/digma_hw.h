@@ -68,6 +68,15 @@ enum
   REFRESH_TYPE
 };
 
+enum
+{
+  HW_PLATFORM_UNKNOWN,
+  HW_PLATFORM_SIBRARY_GTK,
+  HW_PLATFORM_SIBRARY_QT,
+  HW_PLATFORM
+};
+
+extern int hw_platform; /* Hardware platform */
 extern int LED_state[LED_STATES]; /* Состояния светодиода */
 extern int previous_backlight_level; /* Уровень подсветки перед запуском eView */
 extern int suspended; /* Текущее состояние книги */

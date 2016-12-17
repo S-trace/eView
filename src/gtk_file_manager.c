@@ -41,7 +41,6 @@ struct_panel top_panel, bottom_panel, *active_panel, *inactive_panel;
 GtkWidget *main_window, *panels_vbox; /* Окно файлменеджера */
 int width_display, height_display;
 int framebuffer_descriptor=0; /* Дескриптор файла фреймбуффера (для обновления) */
-int QT=FALSE; /* Обнаружен ли QT (влияет на IOCTL обновления и запуск Xfbdev) */
 int screensavers_count=0;
 char screensavers_array[16][PATHSIZE+1];
 
@@ -445,7 +444,7 @@ void init (void)
   {
     char *string, *message, *ROT;
     int timer=0;
-    QT=TRUE;
+    hw_platform = HW_PLATFORM_SIBRARY_QT;
     TRACE("X is down! Assuming QT\n");
     if (access("/etc/GTK_parts.version", F_OK))
       read_string("/home/root/.GTK_parts.version", &string);
@@ -512,7 +511,7 @@ void shutdown(int exit_code)
   (void)remove(bottom_panel.archive_list);
   set_brightness(previous_backlight_level);
   gtk_main_quit();
-  if (QT)
+  if (hw_platform != HW_PLATFORM_SIBRARY_GTK)
   {
     TRACE("Shutting down Xfbdev\n");
     xsystem("killall Xfbdev");
@@ -570,7 +569,7 @@ int main (int argc, char **argv)
   framebuffer_descriptor = open("/dev/fb0", O_RDWR); /* Открываем фреймбуффер */
   if (framebuffer_descriptor == 0)
   {
-    if (QT == FALSE)
+    if (hw_platform == HW_PLATFORM_SIBRARY_GTK)
       Message(ERROR, FAILED_TO_OPEN_DEV_FB0);
     else
       Qt_error_message(FAILED_TO_OPEN_DEV_FB0);
@@ -690,7 +689,7 @@ int main (int argc, char **argv)
     ViewImageWindow (active_panel->last_name, active_panel, TRUE);
   else
     e_ink_refresh_full();
-  if (QT)
+  if (hw_platform != HW_PLATFORM_SIBRARY_GTK)
   {
     preload_next_screensaver(); // Загружаем первую заставку в память для мгновенного отображения
     start_sleep_timer();
