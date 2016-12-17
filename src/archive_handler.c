@@ -130,8 +130,10 @@ int get_archive_list(const char *archive, const char *list_file) /* Создан
         shutdown(FALSE);
       }
       else
+      {
         xsystem(command); /* Получаем список каталогов и файлов в каноничном формате (каталоги должны завершаться слэшем) */
         xfree(&command);
+      }
       (void)remove("/tmp/ziplist");
       (void)remove("/tmp/list");
       return TRUE;
