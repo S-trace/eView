@@ -84,10 +84,12 @@ int detect_refresh_type (void)
 {
   int mode=3;
   struct mxcfb_update_data data = {
-    .update_region.top = 0,
-    .update_region.left = 0,
-    .update_region.width = 1080,
-    .update_region.height = 1440,
+    .update_region =
+    { .top = 0,
+      .left = 0,
+      .width = 1080,
+      .height = 1440
+    },
     .update_mode = UPDATE_MODE_FULL,
 //     .update_mode = UPDATE_MODE_PARTIAL,
     .waveform_mode = WAVEFORM_MODE_AUTO,
@@ -128,10 +130,12 @@ void epaperUpdateFull(void)
     write_int_to_file(eink_mode_control_path, 0);
   }
   struct mxcfb_update_data data = {
-    .update_region.top = 0,
-    .update_region.left = 0,
-    .update_region.width = 1080,
-    .update_region.height = 1440,
+    .update_region =
+    { .top = 0,
+      .left = 0,
+      .width = 1080,
+      .height = 1440
+    },
     .update_mode = UPDATE_MODE_FULL,
 //     .update_mode = UPDATE_MODE_PARTIAL,
     .waveform_mode = WAVEFORM_MODE_AUTO,
@@ -170,10 +174,12 @@ void epaperUpdateLocal(void)
     write_int_to_file(eink_mode_control_path, 2);
   }
   struct mxcfb_update_data data = {
-    .update_region.top = 0,
-    .update_region.left = 0,
-    .update_region.width = 1080,
-    .update_region.height = 1440,
+    .update_region =
+    { .top = 0,
+      .left = 0,
+      .width = 1080,
+      .height = 1440
+    },
 //     .update_mode = UPDATE_MODE_FULL,
     .update_mode = UPDATE_MODE_PARTIAL,
     .waveform_mode = WAVEFORM_MODE_AUTO,
@@ -214,10 +220,12 @@ void epaperUpdatePart(void)
   }
 
   struct mxcfb_update_data data = {
-    .update_region.top = 0,
-    .update_region.left = 0,
-    .update_region.width = 1080,
-    .update_region.height = 1440,
+    .update_region =
+    { .top = 0,
+      .left = 0,
+      .width = 1080,
+      .height = 1440
+    },
 //     .update_mode = UPDATE_MODE_FULL,
     .update_mode = UPDATE_MODE_PARTIAL,
     .waveform_mode = WAVEFORM_MODE_AUTO,
