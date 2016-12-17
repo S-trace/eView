@@ -70,10 +70,16 @@ void get_system_sleep_timeout(void)
 
 void set_system_sleep_timeout(const char *timeout)
 {
-  char *command;
-  asprintf(&command,"dbus-send --print-reply --type=method_call --dest=com.sibrary.BoeyeServer /PowerManager com.sibrary.Service.PowerManager.setSuspendTime int32:%s", timeout);
-  xsystem(command);
-  free(command);
+  if (timeout) {
+    char *command;
+    asprintf(&command,"dbus-send --print-reply --type=method_call --dest=com.sibrary.BoeyeServer /PowerManager com.sibrary.Service.PowerManager.setSuspendTime int32:%s", timeout);
+    xsystem(command);
+    free(command);
+  }
+  else
+  {
+    TRACE("timeout is NULL, skipping dbus-send call!");
+  }
 }
 
 void get_screensavers_list(void)
