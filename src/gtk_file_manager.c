@@ -438,8 +438,17 @@ void init (void)
   // Qt GMini M6HD:
   // Linux boeye 2.6.24.2-Boeye #346 PREEMPT Tue Jul 17 13:50:49 CST 2012 armv5tejl GNU/Linux
   #endif
-  if (XOpenDisplay(NULL))
-    TRACE("X is up and running!\n");
+  Display *disp = NULL;
+  if (hw_platform != HW_PLATFORM_KOBO)
+  {
+    disp = XOpenDisplay(NULL); // Is painfully slow on Kobo
+  }
+
+  if (disp)
+  {
+    TRACE("X is up and running, assuming HW_PLATFORM_SIBRARY_GTK!\n");
+    hw_platform = HW_PLATFORM_SIBRARY_GTK;
+  }
   else
   {
     char *string, *message, *ROT;
