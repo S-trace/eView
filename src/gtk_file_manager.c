@@ -477,32 +477,54 @@ void init (void)
       free(message); // Хотя этого уже никто не увидит...
     }
 
-    TRACE("Trying to start Xfbdev\n");
-    int pid=fork();
-    if (!pid) /* Child process */
-     {
-      close(0);
-      close(1);
-      close(2);
-      execlp("Xfbdev", ":0", "-br", "-pn", "-hide-cursor", "-dpi", "150", "-rgba", "vrgb", NULL); // Sibrary QT
-      TRACE("execlp() call failed while trying to start Xfbdev");
-      _exit(1);
-    }
-    else /* Parent process */
+    TRACE("Trying to start X server\n");
+
+    if (hw_platform == HW_PLATFORM_KOBO)
     {
-      usleep (200000); /* Some sleep to allow X server to go online */
+      int pid=fork();
+      if (!pid) /* Child process */
+      {
+        close(0);
+        close(1);
+        close(2);
+        execlp("Xorg", "-novtswitch", "vt01", "-keeptty", "-noreset", NULL); // Kobo
+        TRACE("execlp() call failed while trying to start Xorg");
+        _exit(1);
+      }
+      else /* Parent process */
+      {
+        usleep (200000); /* Some sleep to allow X server to go online */
+      }
+    }
+    else /* HW_PLATFORM_SIBRARY_QT */
+    {
+      int pid=fork();
+      if (!pid) /* Child process */
+      {
+        close(0);
+        close(1);
+        close(2);
+        execlp("Xfbdev", ":0", "-br", "-pn", "-hide-cursor", "-dpi", "150", "-rgba", "vrgb", NULL); // Sibrary QT
+        TRACE("execlp() call failed while trying to start Xfbdev");
+        _exit(1);
+      }
+      else /* Parent process */
+      {
+        usleep (200000); /* Some sleep to allow X server to go online */
+      }
     }
 
-    while (!XOpenDisplay(NULL))
-    {
-      usleep (1000);
+    do {
+      usleep (200000);
       if (++timer > 5000)
       {
-        TRACE("Failed to start Xfbdev - timed out!\n");
+        TRACE("Failed to start X server - timed out!\n");
         Qt_error_message(XFBDEV_STARTUP_TIMEOUT);
       }
     }
-    TRACE("Xfbdev started after 0,%d seconds\n", timer);
+    while (!XOpenDisplay(NULL));
+
+    TRACE("X server started after 0,%d seconds\n", timer);
 
     // Запускаем window manager - без него окно с изображением отображается поверх файл-менеджера и вокруг проглядывают файлы. А ещё он нужен для корректной работы xrandr.
     xsystem("matchbox-window-manager -theme Sato -use_desktop_mode decorated &"); 
