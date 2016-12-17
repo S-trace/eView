@@ -286,6 +286,12 @@ void detect_hardware(void) /* Обнаружение оборудования и
 {
   TRACE("Detecting hardware\n");
 
+  if (access("/sys/power/state-extended", F_OK) == 0)
+  {
+      TRACE("Found extended power control at file /sys/power/state-extended - looks like we are running on KOBO\n");
+      hw_platform = HW_PLATFORM_KOBO;
+  }
+
   if (hardware_has_backlight == FALSE) /* Digma R60G/GMini C6LHD (Qt) */
   {
     hardware_has_backlight=check_for_file ("/sys/class/backlight/boeye_backlight/brightness");
