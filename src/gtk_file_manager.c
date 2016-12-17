@@ -458,7 +458,20 @@ void init (void)
     }
 
     TRACE("Trying to start Xfbdev\n");
-    xsystem("Xfbdev :0 -br -pn -hide-cursor -dpi 150 -rgba vrgb & ");
+    int pid=fork();
+    if (!pid) /* Child process */
+     {
+      close(0);
+      close(1);
+      close(2);
+      execlp("Xfbdev", ":0", "-br", "-pn", "-hide-cursor", "-dpi", "150", "-rgba", "vrgb", NULL); // Sibrary QT
+      TRACE("execlp() call failed while trying to start Xfbdev");
+      _exit(1);
+    }
+    else /* Parent process */
+    {
+      usleep (200000); /* Some sleep to allow X server to go online */
+    }
 
     ROT=getenv("ROT"); // Получаем поворот экрана из переменной окружения
     while (!XOpenDisplay(NULL))
