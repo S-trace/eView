@@ -530,15 +530,17 @@ void init (void)
     xsystem("matchbox-window-manager -theme Sato -use_desktop_mode decorated &"); 
     (void)usleep(2000000);
     
-    TRACE("ROT=%s\n", ROT);
-    if (strcmp (ROT, "0") == 0)
-    {
-      get_system_sleep_timeout();
-      set_system_sleep_timeout("86400"); /* Боремся со злостным усыплятором */
+    if (ROT) {
+      TRACE("ROT=%s\n", ROT);
+      if (strcmp (ROT, "0") == 0)
+      {
+        get_system_sleep_timeout();
+        set_system_sleep_timeout("86400"); /* Do not let sleep timer to disturb us */
+      }
+      if (strcmp (ROT, "90" ) == 0) xsystem("xrandr -d :0 -o left");
+      if (strcmp (ROT, "180") == 0) xsystem("xrandr -d :0 -o inverted");
+      if (strcmp (ROT, "270") == 0) xsystem("xrandr -d :0 -o right");
     }
-    if (strcmp (ROT, "90" ) == 0) xsystem("xrandr -d :0 -o left");
-    if (strcmp (ROT, "180") == 0) xsystem("xrandr -d :0 -o inverted");
-    if (strcmp (ROT, "270") == 0) xsystem("xrandr -d :0 -o right");
 
     get_screensavers_list();
   }
