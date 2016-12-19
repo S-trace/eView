@@ -38,7 +38,7 @@
 
 int interface_is_locked=TRUE; /* Сразу блокируем интерфейс программы, чтобы при запуске она не падала если зажата клавиша */
 struct_panel top_panel, bottom_panel, *active_panel, *inactive_panel;
-GtkWidget *main_window, *panels_vbox; /* Окно файлменеджера */
+GtkWidget *main_window, *panels_vbox, *controls_vbox, *controls_hbox; /* Filemanager window */
 int width_display, height_display;
 int framebuffer_descriptor=0; /* Дескриптор файла фреймбуффера (для обновления) */
 int screensavers_count=0;
@@ -676,7 +676,25 @@ int main (int argc, char **argv)
   (void)g_signal_connect (G_OBJECT (main_window), "destroy", G_CALLBACK (shutdown), NULL);
   panels_vbox = gtk_vbox_new (TRUE, 0);
   gtk_box_set_homogeneous (GTK_BOX (panels_vbox), FALSE);
-  gtk_container_add (GTK_CONTAINER (main_window), panels_vbox);
+  if (hw_platform == HW_PLATFORM_KOBO)
+  {
+    controls_vbox = gtk_vbox_new (FALSE, 0);
+    controls_hbox = gtk_hbox_new (FALSE, 0);
+    panels_vbox = gtk_vbox_new (FALSE, 0);
+    gtk_container_add (GTK_CONTAINER (main_window), controls_vbox);
+    GtkWidget * menu_button = gtk_button_new_with_label (MAIN_MENU);
+    GtkWidget * exit_button = gtk_button_new_with_label (EXIT);
+    gtk_box_pack_start (GTK_BOX (controls_vbox), controls_hbox, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (controls_hbox), menu_button, TRUE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (controls_hbox), exit_button, TRUE, FALSE, 0);
+    gtk_container_add (GTK_CONTAINER (controls_vbox), panels_vbox);
+    (void)g_signal_connect (G_OBJECT (menu_button), "clicked", G_CALLBACK (start_main_menu), active_panel);
+    (void)g_signal_connect (G_OBJECT (exit_button), "clicked", G_CALLBACK (shutdown), 0);
+  }
+  else
+  {
+    gtk_container_add (GTK_CONTAINER (main_window), panels_vbox);
+  }
   create_panel(&top_panel);
 
   if ( fm_toggle)
