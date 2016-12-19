@@ -15,9 +15,9 @@
 #include "contrast.h"
 #include "os-specific.h"
 
-static GtkWidget *create, *copy, *moving, *del, *options, *exit_button; // Кнопки в главном меню
-static GtkWidget *fmanager, *move_chk, *clock_panel, *ink_speed, *show_hidden_files_chk, *LED_notify_checkbox, *reset_configuration, *backlight_scale, *sleep_timeout_scale, *about_program; // Пункты в настройках ФМ
-static GtkWidget *crop_image, *split_spreads_button, *manga_mode, *rotate_image, *web_manga_mode_checkbox, *frame_image, *overlap_scale, *overlap_frame, *keepaspect_image, *double_refresh_image, *viewed, *preload_enabled_button, *caching_enabled_button, *suppress_panel_button, *HD_scaling_button, *boost_contrast_button, *power_information_button; // Чекбоксы в настройках вьювера
+static GtkWidget *back_button, *create, *copy, *moving, *del, *options, *exit_button; // Main menu items
+static GtkWidget *back_button_fm_options, *fmanager, *move_chk, *clock_panel, *ink_speed, *show_hidden_files_chk, *LED_notify_checkbox, *reset_configuration, *backlight_scale, *sleep_timeout_scale, *about_program; // File manager options menu items
+static GtkWidget *back_button_picture_options, *crop_image, *split_spreads_button, *manga_mode, *rotate_image, *web_manga_mode_checkbox, *frame_image, *overlap_scale, *overlap_frame, *keepaspect_image, *double_refresh_image, *viewed, *preload_enabled_button, *caching_enabled_button, *suppress_panel_button, *HD_scaling_button, *boost_contrast_button, *power_information_button; // Viewer options menu checkboxes
 static GtkWidget *loop_dir_none, *loop_dir_loop, *loop_dir_next, *loop_dir_exit, *loop_dir_frame, *loop_dir_vbox; // Радиобаттон в настройках вьювера
 static GtkWidget *picture_menu, *main_menu, *options_menu;
 int need_refresh=FALSE;
@@ -498,6 +498,9 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
   char *battery_capacity, *name, *viewed_count, *viewed_text;
   need_refresh=FALSE;
 
+  back_button_picture_options = gtk_button_new_with_label (CLOSE_MENU);
+  add_toggle_button_to_menu(back_button_picture_options, menu_vbox, picture_menu_destroy, keys_in_picture_menu, FALSE, panel);
+
   crop_image = gtk_check_button_new_with_label (CROP_IMAGE);
   add_toggle_button_to_menu(crop_image, menu_vbox, crop_image_toggler, keys_in_picture_menu, crop, panel);
 
@@ -749,10 +752,10 @@ void about_program_callback(void) // Callback для кнопки информа
   Message(ABOUT_PROGRAM, ABOUT_PROGRAM_TEXT);
 }
 
-void options_destroy (GtkWidget *dialog) // Уничтожаем меню настроек ФМ
+void options_destroy (void) // Destroy FM options menu
 {
   enable_refresh=FALSE;
-  gtk_widget_destroy(dialog);
+  gtk_widget_destroy(options_menu);
   wait_for_draw();
   if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
   enable_refresh=TRUE;
@@ -768,7 +771,7 @@ gint keys_in_options (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel
     case   KEY_BACK:
     case   KEY_MENU_LIBROII:
     case   KEY_MENU_QT:
-      options_destroy (options_menu);
+      options_destroy ();
       return FALSE;
 
     case   KEY_REFRESH_LIBROII:
@@ -839,6 +842,9 @@ void options_menu_create(void) //Создание меню опций в ФМ
   options_menu = gtk_dialog_new_with_buttons (SETTINGS, GTK_WINDOW(main_menu),
                                               GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT|GTK_DIALOG_NO_SEPARATOR, NULL);
   GtkWidget *menu_vbox = gtk_vbox_new (FALSE, 0);
+
+  back_button_fm_options = gtk_button_new_with_label (CLOSE_MENU);
+  add_toggle_button_to_menu(back_button_fm_options, menu_vbox, options_destroy, keys_in_options, FALSE, active_panel);
 
   fmanager = gtk_check_button_new_with_label (FILEMANAGER_MODE);
   add_toggle_button_to_menu(fmanager, menu_vbox, fm_start, keys_in_options, fm_toggle, active_panel);
@@ -928,6 +934,16 @@ void menu_destroy (GtkWidget *dialog)
   /*   g_signal_handlers_unblock_by_func( window, focus_out_callback, NULL ); */
 }
 
+void main_menu_destroy (void) // Destroy FM main menu
+{
+  enable_refresh=FALSE;
+  gtk_widget_destroy(main_menu);
+  enable_refresh=TRUE;
+  wait_for_draw();
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
+  e_ink_refresh_local();
+}
+
 gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel) //задействует кнопку М в меню
 {
   if (check_key_press(event->keyval, panel)) return TRUE;
@@ -992,6 +1008,9 @@ void start_main_menu (struct_panel *panel)
   main_menu = gtk_dialog_new_with_buttons (MAIN_MENU, GTK_WINDOW(main_window),
                                            GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT|GTK_DIALOG_NO_SEPARATOR, NULL);
   GtkWidget *menu_vbox = gtk_vbox_new (TRUE, 0);
+
+  back_button = gtk_button_new_with_label (CLOSE_MENU);
+  add_toggle_button_to_menu(back_button, menu_vbox, main_menu_destroy, keys_in_main_menu, FALSE, panel);
 
   create = gtk_button_new_with_label (CREATE_TEMPORARY_DIRECTORY);
   add_toggle_button_to_menu(create, menu_vbox, create_folder, keys_in_main_menu, FALSE, panel);

@@ -34,6 +34,7 @@
 #define POWER_SOURCE_IS_AC_RK2818 "Заряд: %s%%\nТок батареи (мА): %s\nИсточник питания: AC адаптер\nХод зарядки: %s\nНапряжение батареи (мВ): %s\nНапряжение AC (мВ): %s"
 
 #define MAIN_MENU "Главное меню"
+#define CLOSE_MENU "Закрыть меню"
 #define CREATE_TEMPORARY_DIRECTORY "Cоздать каталог temp000"
 #define COPY "Копировать"
 #define MOVE_FILE "Переместить"
@@ -123,6 +124,7 @@
 #define POWER_SOURCE_IS_AC_RK2818 "Charge: %s%%\nBattery current (mA): %s\nPower source: AС adapter\nCharging status: %s\nBattery voltage (mV): %s\nAC voltage (mV): %s"
 
 #define MAIN_MENU "Main menu"
+#define CLOSE_MENU "Close menu"
 #define CREATE_TEMPORARY_DIRECTORY "Create temp000 directory"
 #define COPY "Copy"
 #define MOVE_FILE "Move"
