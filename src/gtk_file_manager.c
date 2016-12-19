@@ -601,6 +601,7 @@ void sigsegv_handler(void) /* Обработчик для вывода Backtrace
 
 int main (int argc, char **argv)
 {
+  putenv (strdup("LC_ALL=ru_RU.UTF-8"));
   GtkWidget *starting_message;
   signal(SIGSEGV, (__sighandler_t)sigsegv_handler);
   signal(SIGABRT, (__sighandler_t)sigsegv_handler);
