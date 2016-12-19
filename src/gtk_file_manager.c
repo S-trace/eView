@@ -567,11 +567,19 @@ void shutdown(int exit_code)
   (void)remove(bottom_panel.archive_list);
   set_brightness(previous_backlight_level);
   gtk_main_quit();
-  if (hw_platform != HW_PLATFORM_SIBRARY_GTK)
+  switch (hw_platform)
   {
-    TRACE("Shutting down Xfbdev\n");
-    xsystem("killall Xfbdev");
-    set_system_sleep_timeout(system_sleep_timeout);
+    case HW_PLATFORM_SIBRARY_QT:
+      TRACE("Shutting down Xfbdev\n");
+      xsystem("killall Xfbdev");
+      set_system_sleep_timeout(system_sleep_timeout);
+      break;
+    case HW_PLATFORM_KOBO:
+      TRACE("Shutting down Xorg\n");
+      xsystem("killall Xorg");
+      break;
+    default:
+      break;
   }
   TRACE("\n\neView shutudown done. Bye! =^_^=/~\n");
   exit (exit_code);
