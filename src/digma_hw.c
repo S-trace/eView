@@ -15,6 +15,7 @@
 #include <string.h>
 #include <dlfcn.h> /* dlopen() */
 #include <pthread.h>
+#include <linux/fb.h>
 #include "gtk_file_manager.h" /* Инклюдить первой среди своих, ибо typedef panel! */
 #include "digma_hw.h"
 #include "kobo_hw.h"
@@ -129,12 +130,18 @@ void epaperUpdateFull(void)
     write_string_to_file (eink_mode_control_path, "m");
     write_int_to_file(eink_mode_control_path, 0);
   }
+
+  struct fb_var_screeninfo vinfo;
+  if (ioctl(framebuffer_descriptor, FBIOGET_VSCREENINFO, &vinfo) == -1) {
+    TRACE("Error reading variable framebuffer information\n");
+  }
+
   struct mxcfb_update_data data = {
     .update_region =
     { .top = 0,
       .left = 0,
-      .width = 1080,
-      .height = 1440
+      .width = (int) vinfo.xres,
+      .height = (int) vinfo.yres
     },
     .update_mode = UPDATE_MODE_FULL,
 //     .update_mode = UPDATE_MODE_PARTIAL,
@@ -173,12 +180,18 @@ void epaperUpdateLocal(void)
     write_string_to_file (eink_mode_control_path, "m");
     write_int_to_file(eink_mode_control_path, 2);
   }
+
+  struct fb_var_screeninfo vinfo;
+  if (ioctl(framebuffer_descriptor, FBIOGET_VSCREENINFO, &vinfo) == -1) {
+    TRACE("Error reading variable framebuffer information\n");
+  }
+
   struct mxcfb_update_data data = {
     .update_region =
     { .top = 0,
       .left = 0,
-      .width = 1080,
-      .height = 1440
+      .width = (int) vinfo.xres,
+      .height = (int) vinfo.yres
     },
 //     .update_mode = UPDATE_MODE_FULL,
     .update_mode = UPDATE_MODE_PARTIAL,
@@ -219,12 +232,17 @@ void epaperUpdatePart(void)
     write_int_to_file(eink_mode_control_path, 5);
   }
 
+  struct fb_var_screeninfo vinfo;
+  if (ioctl(framebuffer_descriptor, FBIOGET_VSCREENINFO, &vinfo) == -1) {
+    TRACE("Error reading variable framebuffer information\n");
+  }
+
   struct mxcfb_update_data data = {
     .update_region =
     { .top = 0,
       .left = 0,
-      .width = 1080,
-      .height = 1440
+      .width = (int) vinfo.xres,
+      .height = (int) vinfo.yres
     },
 //     .update_mode = UPDATE_MODE_FULL,
     .update_mode = UPDATE_MODE_PARTIAL,
