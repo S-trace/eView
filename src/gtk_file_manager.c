@@ -477,6 +477,11 @@ void init (void)
       free(message); // Хотя этого уже никто не увидит...
     }
 
+    if (hw_platform == HW_PLATFORM_KOBO) {
+      TRACE("Killing nickel and sickel processes\n");
+      xsystem("ps x -o  '%r %c '|egrep ' [ns]ickel |kobomenu'|tr -d ' [a-z]'|xargs -igroup kill -group");
+    }
+
     TRACE("Trying to start X server\n");
 
     if (hw_platform == HW_PLATFORM_KOBO)
