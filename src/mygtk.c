@@ -211,11 +211,14 @@ GtkWidget *Message (const char *const title, const char *const message)
   TRACE("Show message '%s', data: '%s'\n", title, message);
   MessageWindow = gtk_dialog_new_with_buttons (title, NULL, GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT |GTK_DIALOG_NO_SEPARATOR, NULL);
   gtk_window_set_position (GTK_WINDOW (MessageWindow), GTK_WIN_POS_CENTER_ALWAYS);
+  gtk_widget_add_events (GTK_WIDGET (MessageWindow), GDK_BUTTON_PRESS_MASK);
   label = gtk_label_new (message);
   gtk_label_set_justify (GTK_LABEL (label),GTK_JUSTIFY_CENTER);
   gtk_label_set_line_wrap(GTK_LABEL (label), TRUE);
   /* Гарантирует закрытие диалога когда пользователь ответил. */
   (void)g_signal_connect (G_OBJECT (MessageWindow), "key_press_event", G_CALLBACK (MessageDie), MessageWindow);
+  /* Close MessageWindow on click (for touchscreen-only books) */
+  (void)g_signal_connect (G_OBJECT (MessageWindow), "button-press-event", G_CALLBACK (MessageDie), MessageWindow);
   /* Добавляет ярлык и отображает всё что мы добавили к диалогу. */
   gtk_container_add (GTK_CONTAINER (GTK_DIALOG(MessageWindow)->vbox), label);
   gtk_widget_show_all (MessageWindow);
