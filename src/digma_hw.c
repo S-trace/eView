@@ -87,8 +87,8 @@ int detect_refresh_type (void)
     .update_region =
     { .top = 0,
       .left = 0,
-      .width = 1080,
-      .height = 1440
+      .width = 1,
+      .height = 1
     },
     .update_mode = UPDATE_MODE_FULL,
 //     .update_mode = UPDATE_MODE_PARTIAL,
