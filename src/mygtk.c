@@ -255,7 +255,12 @@ void e_ink_refresh_part(void)
   TRACE("Updating eINK (part)\n");
   #endif
   wait_for_draw();
-  epaperUpdatePart();
+  pthread_t thread = { 0 };
+  pthread_attr_t threadAttr;
+  pthread_attr_init(&threadAttr);
+  pthread_attr_setdetachstate(&threadAttr, PTHREAD_CREATE_DETACHED);
+  pthread_create(&thread, &threadAttr, epaperUpdatePart, NULL);
+  pthread_attr_destroy(&threadAttr);
 }
 
 void e_ink_refresh_local(void)
@@ -263,8 +268,12 @@ void e_ink_refresh_local(void)
   #ifdef __amd64
   TRACE("Updating eINK (local)\n");
   #endif
-  wait_for_draw();
-  epaperUpdateLocal();
+  pthread_t thread = { 0 };
+  pthread_attr_t threadAttr;
+  pthread_attr_init(&threadAttr);
+  pthread_attr_setdetachstate(&threadAttr, PTHREAD_CREATE_DETACHED);
+  pthread_create(&thread, &threadAttr, epaperUpdateLocal, NULL);
+  pthread_attr_destroy(&threadAttr);
 }
 
 void e_ink_refresh_full(void)
@@ -273,7 +282,12 @@ void e_ink_refresh_full(void)
   TRACE("Updating eINK (full)\n");
   #endif
   wait_for_draw();
-  epaperUpdateFull();
+  pthread_t thread = { 0 };
+  pthread_attr_t threadAttr;
+  pthread_attr_init(&threadAttr);
+  pthread_attr_setdetachstate(&threadAttr, PTHREAD_CREATE_DETACHED);
+  pthread_create(&thread, &threadAttr, epaperUpdateFull, NULL);
+  pthread_attr_destroy(&threadAttr);
 }
 
 void e_ink_refresh_default(void) /* Рефреш экрана по умолчанию (из настроек) */

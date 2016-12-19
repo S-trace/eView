@@ -12,9 +12,9 @@ gint if_key_press ()
 {
   gtk_widget_hide (dbg_win);
   while (gtk_events_pending ())    gtk_main_iteration ();
-  epaperUpdatePart();
+  epaperUpdatePart(NULL);
   while (gtk_events_pending ())    gtk_main_iteration ();
-  epaperUpdateFull();
+  epaperUpdateFull(NULL);
   return FALSE;
 }
 
@@ -30,9 +30,9 @@ void print_msg (char *msg)
 
   gtk_widget_show_all (dbg_win);
   while (gtk_events_pending ())    gtk_main_iteration ();
-  epaperUpdatePart();
+  epaperUpdatePart(NULL);
   while (gtk_events_pending ())    gtk_main_iteration ();
-  epaperUpdateFull();
+  epaperUpdateFull(NULL);
 }
 
 void debug_msg_win ()

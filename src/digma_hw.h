@@ -41,9 +41,9 @@
 #define KEY_OPTIONS_QT 0xFFC4
 #define KEY_POWER_QT   0xFF13 /* BREAK на PC */
 
-void epaperUpdateFull(void);
-void epaperUpdateLocal(void);
-void epaperUpdatePart(void);
+void *epaperUpdateFull(void *arg);
+void *epaperUpdateLocal(void *arg);
+void *epaperUpdatePart(void *arg);
 void set_brightness(int value);
 void set_led_state (int state);
 void detect_hardware(void);

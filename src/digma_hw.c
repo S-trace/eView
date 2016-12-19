@@ -121,9 +121,9 @@ int detect_refresh_type (void)
 /**
  * Update E-Ink screen fully
  */
-__attribute__((pure)) void epaperUpdateFull(void);
-void epaperUpdateFull(void)
+void *epaperUpdateFull(void *arg)
 {
+  (void)arg;
   TRACE("epaperUpdateFull()\n");  
   if (hardware_has_eink_mode_control)
   {
@@ -166,14 +166,15 @@ void epaperUpdateFull(void)
   {
     write_string_to_file (eink_mode_control_path, "q");
   }
+  return NULL;
 }
 
 /**
  * Update only local (???)
  */
-__attribute__((pure)) void epaperUpdateLocal(void);
-void epaperUpdateLocal(void)
+void *epaperUpdateLocal(void *arg)
 {
+  (void)arg;
   TRACE("epaperUpdateLocal()\n");  
   if (hardware_has_eink_mode_control)
   {
@@ -216,14 +217,15 @@ void epaperUpdateLocal(void)
   {
     write_string_to_file (eink_mode_control_path, "q");
   }
+  return NULL;
 }
 
 /**
  * Untested E-Ink function
  */
-__attribute__((pure)) void epaperUpdatePart(void);
-void epaperUpdatePart(void)
+void *epaperUpdatePart(void *arg)
 {
+  (void)arg;
   TRACE("epaperUpdatePart()\n");  
 
   if (hardware_has_eink_mode_control)
@@ -267,6 +269,7 @@ void epaperUpdatePart(void)
   {
     write_string_to_file (eink_mode_control_path, "q");
   }
+  return NULL;
 }
 
 int check_for_file (const char *fpath)  /* Проверка наличия файла в файловой системе */
