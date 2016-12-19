@@ -641,9 +641,10 @@ int main (int argc, char **argv)
   if (access(".eView/", F_OK) != 0) /* Действия когда каталог не существует:  */
   {
     create_cfg ();
-    (void)chdir("/media/mmcblk0p1/"); /* Для новых книг */
-    (void)chdir("/userdata/media/mmcblk0p1/"); /* Для старых книг */
-    /* Неизвестно, где мы оказались после предыдущих двух переходов (сработал только один):  */
+    (void)chdir("/media/mmcblk0p1/"); /* Sibrary QT */
+    (void)chdir("/userdata/media/mmcblk0p1/"); /* Sibrary GTK */
+    (void)chdir("/mnt/onboard/"); /* Kobo QT */
+    /* We are not know where we got now (only one chdir() worked):  */
     top_panel.path = xgetcwd(top_panel.path);
     bottom_panel.path = xgetcwd(bottom_panel.path);
     write_config_string("top_panel.path", top_panel.path );
