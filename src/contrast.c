@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
 #include <gtk/gtk.h>
 #include "gtk_file_manager.h" /* Инклюдить первой среди своих, ибо typedef panel! */
 #include "ViewImageWindow.h"

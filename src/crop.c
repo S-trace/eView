@@ -1,7 +1,9 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /* Norin Maxim, 2011, Distributed under GPLv2 Terms */
 /* Rewritten by S-trace <S-trace@list.ru>, 2017, Distributed under GPLv2 Terms */
 
->>>>>>> d9f3fc3... [CROP] Rewrite crop.c to eliminate global variables
 #include <gtk/gtk.h>
 #include "crop.h"
 #include "gtk_file_manager.h" // typedef panel

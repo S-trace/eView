@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.3
 /* Norin Maxim, 2011, Distributed under GPLv2 Terms
  *FRAME_FIND_MODE*/
 /*определение координат "кадров" на изображении, pixbuf на входе */

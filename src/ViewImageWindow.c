@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /* Norin Maxim, 2011, Soul Trace, 2013 Distributed under GPLv2 Terms.
  * ImageViewew for Digma E600 & compatible*/
 #include <gdk/gdkkeysyms.h>

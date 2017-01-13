@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
 /* Soul Trace, 2013, Distributed under GPLv2 Terms */
 #include <gtk/gtk.h>
 #include <string.h>

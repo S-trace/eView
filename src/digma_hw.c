@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
 /**
  * Copyright (c) 2011 Alexander Drozdoff <hatred@inbox.ru>
  * Update for Qt support by S-trace <s-trace@list.ru>, 2013
