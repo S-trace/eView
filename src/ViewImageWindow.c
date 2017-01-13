@@ -365,237 +365,302 @@ gboolean show_image(image *target, struct_panel *panel, int enable_actions, int 
   return TRUE;
 }
 
-gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *event, struct_panel *panel) /*реакция на кнопки */
-{
+int action_next_image(struct_panel *panel) {
   char *next_file;
-  if (check_key_press(event->keyval, panel)) return TRUE;
-  TRACE("Caught in viewer: %d\n",event->keyval);
-  switch (event->keyval){
-    case KEY_PGDOWN:/*GDK_Right */
-    case KEY_RIGHT:/*GDK_Right */ {
-      interface_is_locked=TRUE; /* Блокируем интерфейс на время длительной операции по показу картинки */
-      if (rotate || web_manga_mode) /* Действия при просмотре с превышением размера экрана */
+  interface_is_locked=TRUE; /* Lock interface during long operation */
+  if (rotate || web_manga_mode) /* Actions when picture exceeds display size */
+  {
+    int display_size=0, image_size=0;
+    GtkAdjustment *adjust=NULL;
+    if (rotate)
+    {
+      adjust=gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW(scrolled_window));
+      display_size=width_display;
+      image_size=current.width[current_page];
+    }
+    else if (web_manga_mode)
+    {
+      adjust=gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW(scrolled_window));
+      display_size=height_display;
+      image_size=current.height[current_page];
+    }
+
+    gdouble value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
+    if (value + display_size < image_size) /* If we have something to show below current display */
+    {
+      shift_val = shift (value, current.frames[current_page], current.frame_map[current_page], display_size);
+      if (image_size - (shift_val + value) < display_size) /* In case if shift() returned value which can lead to display bottom edge will be higher than picture bottom edge */
+      shift_val = image_size - (value + display_size);
+
+      TRACE("shift_val=%f, new value=%f, offscreen=%f\n", shift_val, shift_val+value, image_size-(shift_val+value));
+      gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), value + shift_val);
+      current_position=gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
+      if (double_refresh) e_ink_refresh_local ();
+      e_ink_refresh_full ();
+      interface_is_locked=FALSE; /* Unlock interface */
+      return FALSE;
+    }
+  }
+
+  if (split_spreads) /* Actions when viewing with rotation */
+  {
+    if (manga)
+    {
+      if (current.pages_count > 1 && current_page == PAGE_RIGHT) /* If first page is shown */
       {
-        int display_size=0, image_size=0;
-        GtkAdjustment *adjust=NULL;
-        if (rotate)
-        {
-          adjust=gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW(scrolled_window));
-          display_size=width_display;
-          image_size=current.width[current_page];
-        }
-        else if (web_manga_mode)
-        {
-          adjust=gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW(scrolled_window));
-          display_size=height_display;
-          image_size=current.height[current_page];  
-        }
-        
-        gdouble value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
-        TRACE("value=%f\n", value);
-        if (value + display_size < image_size) // Если ниже ещё есть что показать за пределами текущего экрана
-        {
-          shift_val = shift (value, current.frames[current_page], current.frame_map[current_page], display_size);
-          if (image_size - (shift_val + value) < display_size) // Если shift вернула значение, приводящее к тому, что нижний край картинки окажется выше нижнего края экрана
-            shift_val = image_size - (value + display_size);
-
-          TRACE("shift_val=%f, new value=%f, offscreen=%f\n", shift_val, shift_val+value, image_size-(shift_val+value));
-          gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), value + shift_val);
-          current_position=gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
-          if (double_refresh) e_ink_refresh_local ();
-          e_ink_refresh_full ();
-          interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
-          return FALSE;
-        }
+        (void)show_image (&current, panel, TRUE, PAGE_LEFT, 0);
+        wait_for_draw();
+        if (double_refresh) e_ink_refresh_local();
+        e_ink_refresh_full ();
+        interface_is_locked=FALSE;
+        return FALSE;
       }
+    }
+    else if (current.pages_count > 1 && current_page == PAGE_LEFT)
+    {
+      (void)show_image (&current, panel, TRUE, PAGE_RIGHT, 0);
+      if (double_refresh) e_ink_refresh_local();
+      e_ink_refresh_full ();
+      interface_is_locked=FALSE;
+      return FALSE;
+    }
+  }
 
-      if (split_spreads) /* Действия при просмотре с поворотом */
+  next_file = next_image (panel->selected_name, TRUE, panel);
+  if (next_file==NULL)
+  {
+    interface_is_locked=FALSE; /* Unlock interface */
+    return FALSE;
+  }
+  enable_refresh=TRUE;
+
+  /* Move panel cursor */
+  {
+    char *full_name=strdup(next_file);
+    char *iter=iter_from_filename (basename(full_name), panel);
+    move_selection(iter, panel);
+    free(iter);
+    free(full_name);
+  }
+
+  if (is_picture(next_file) == FALSE)
+  {
+    interface_is_locked=FALSE; /* Unlock interface */
+    free(next_file);
+    return FALSE;
+  }
+  (void)load_image (next_file, panel, TRUE, &current);
+  if (!split_spreads)
+    (void)show_image (&current, panel, TRUE, PAGE_FULL, 0);
+  else if (manga)
+    (void)show_image (&current, panel, TRUE, PAGE_RIGHT, 0);
+  else
+    (void)show_image (&current, panel, TRUE, PAGE_LEFT, 0);
+  free(next_file);
+  wait_for_draw(); /* Waiting for painting everything */
+  if (panel == &top_panel)
+    write_config_string("top_panel.last_name", panel->selected_name);
+  else
+    write_config_string("bottom_panel.last_name", panel->selected_name);
+  if (double_refresh) e_ink_refresh_local();
+  e_ink_refresh_full ();
+  if(preload_enable) /* Preloading next image */
+  {
+    char *next=next_image (panel->selected_name, FALSE, panel);
+    (void)load_image(next, panel, FALSE, &preloaded);
+    free(next);
+  }
+  interface_is_locked=FALSE; /* Unlock interface */
+  return FALSE;
+}
+
+int action_prev_image(struct_panel *panel) {
+  char *next_file;
+  interface_is_locked=TRUE; /* Lock interface during long operation */
+  if (rotate || web_manga_mode) /* Actions when picture exceeds display size */
+  {
+    int display_size=0;
+    GtkAdjustment *adjust = NULL;
+    if (rotate)
+    {
+      display_size=width_display;
+      adjust=gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW(scrolled_window));
+    }
+    else if (web_manga_mode)
+    {
+      adjust=gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW(scrolled_window));
+      display_size=height_display;
+    }
+
+    gdouble value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
+    if (value > 0)
+    {
+      shift_val = shift_back (value, current.frames[current_page], current.frame_map[current_page], display_size) * -1;
+      /* If shift_back() returned value, which can lead to top display edge will be upper than top image edge - scroll to image top */
+      if (value + shift_val < 0)
+        shift_val = -1 * value;
+
+          gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), value + shift_val);
+      current_position=gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
+      if (double_refresh) e_ink_refresh_local ();
+      e_ink_refresh_full ();
+      interface_is_locked=FALSE; /* Unlock interface */
+      return FALSE;
+    }
+    else
+    {
+      if (split_spreads) /* Show previous page when splitting spreads */
       {
         if (manga)
         {
-          if (current.pages_count > 1 && current_page == PAGE_RIGHT) /* Если показана правая страница */
+          if (current.pages_count > 1 && current_page == PAGE_LEFT)
           {
-            (void)show_image (&current, panel, TRUE, PAGE_LEFT, 0);
-            wait_for_draw();
+            if (web_manga_mode) current_position=current.height[PAGE_RIGHT]-height_display;
+            else if (rotate) current_position=current.width[PAGE_RIGHT]-width_display;
+            (void)show_image (&current, panel, TRUE, PAGE_RIGHT, current_position);
             if (double_refresh) e_ink_refresh_local();
             e_ink_refresh_full ();
-            interface_is_locked=FALSE;
+            interface_is_locked=FALSE; /* Unlock interface */
             return FALSE;
           }
         }
-        else if (current.pages_count > 1 && current_page == PAGE_LEFT)
-        {
-          (void)show_image (&current, panel, TRUE, PAGE_RIGHT, 0);
-          if (double_refresh) e_ink_refresh_local();
-          e_ink_refresh_full ();
-          interface_is_locked=FALSE;
-          return FALSE;
-        }
-      }
-
-      next_file = next_image (panel->selected_name, TRUE, panel);
-      if (next_file==NULL)
-      {
-        interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
-        return FALSE;
-      }
-      enable_refresh=TRUE;
-
-      // Перемещаем курсор
-      {
-        char *full_name=strdup(next_file);
-        char *iter=iter_from_filename (basename(full_name), panel);
-        move_selection(iter, panel);
-        free(iter);
-        free(full_name);
-      }
-
-      if (is_picture(next_file) == FALSE)
-      {
-        interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
-        free(next_file);
-        return FALSE;
-      }
-      /*g_print ("загрузка новой картинки\n"); */
-      (void)load_image (next_file, panel, TRUE, &current);
-      if (!split_spreads)
-        (void)show_image (&current, panel, TRUE, PAGE_FULL, 0);
-      else if (manga)
-        (void)show_image (&current, panel, TRUE, PAGE_RIGHT, 0);
-      else
-        (void)show_image (&current, panel, TRUE, PAGE_LEFT, 0);
-      free(next_file);
-      wait_for_draw(); /* Ожидаем отрисовки всего */
-      if (panel == &top_panel)
-        write_config_string("top_panel.last_name", panel->selected_name);
-      else
-        write_config_string("bottom_panel.last_name", panel->selected_name);
-      if (double_refresh) e_ink_refresh_local();
-      e_ink_refresh_full ();
-      if(preload_enable) /* Предзагрузка */
-      {
-        char *next=next_image (panel->selected_name, FALSE, panel);
-        (void)load_image(next, panel, FALSE, &preloaded);
-        free(next);
-      }
-      interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
-      return FALSE;
-    }
-    case KEY_PGUP:/*GDK_Left: */
-    case KEY_LEFT:/*GDK_Left: */ {
-      interface_is_locked=TRUE; /* Блокируем интерфейс на время длительной операции по показу картинки */
-      if (rotate || web_manga_mode) /* Действия при просмотре с превышением размера экрана */
-      {
-        int display_size=0;
-        GtkAdjustment *adjust = NULL;
-        if (rotate)
-        {
-          display_size=width_display;
-          adjust=gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW(scrolled_window));
-        }
-        else if (web_manga_mode)
-        {
-          adjust=gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW(scrolled_window));
-          display_size=height_display;
-        }
-        
-        gdouble value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
-        if (value > 0)
-        {
-          shift_val = shift_back (value, current.frames[current_page], current.frame_map[current_page], display_size) * -1;
-          // Если прокрутка на значение которое вернула shift_back приведёт к тому что верх экрана окажется выше верха изображения - прокручиваем к верху изображения
-          if (value + shift_val < 0)
-            shift_val = -1 * value;
-
-          gtk_adjustment_set_value(GTK_ADJUSTMENT(adjust), value + shift_val);
-          current_position=gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
-          if (double_refresh) e_ink_refresh_local ();
-          e_ink_refresh_full ();
-          interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
-          return FALSE;
-        }
         else
         {
-          if (split_spreads) // Листание на страницу назад в текущем изображении при делении разворотов
+          if (current.pages_count > 1 && current_page == PAGE_LEFT)
           {
-            if (manga)
-            {
-              if (current.pages_count > 1 && current_page == PAGE_LEFT)
-              {
-                if (web_manga_mode) current_position=current.height[PAGE_RIGHT]-height_display;
-                else if (rotate) current_position=current.width[PAGE_RIGHT]-width_display;
-                (void)show_image (&current, panel, TRUE, PAGE_RIGHT, current_position);
-                if (double_refresh) e_ink_refresh_local();
-                e_ink_refresh_full ();
-                interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
-                return FALSE;
-              }
-            }
-            else
-            {
-              if (current.pages_count > 1 && current_page == PAGE_LEFT)
-              {
-                if (web_manga_mode) current_position=current.height[PAGE_LEFT]-height_display;
-                else if (rotate) current_position=current.width[PAGE_LEFT]-width_display;
-                (void)show_image (&current, panel, TRUE, PAGE_LEFT, current_position);
-                if (double_refresh) e_ink_refresh_local();
-                e_ink_refresh_full ();
-                interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
-                return FALSE;
-              }
-            }
+            if (web_manga_mode) current_position=current.height[PAGE_LEFT]-height_display;
+            else if (rotate) current_position=current.width[PAGE_LEFT]-width_display;
+            (void)show_image (&current, panel, TRUE, PAGE_LEFT, current_position);
+            if (double_refresh) e_ink_refresh_local();
+            e_ink_refresh_full ();
+            interface_is_locked=FALSE; /* Unlock interface */
+            return FALSE;
           }
         }
       }
-      next_file = prev_image (panel->selected_name, TRUE, panel);
-      if (next_file==NULL)
-      {
-        interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
-        return FALSE;
-      }
-      select_file_by_name(next_file, panel);
-      if (is_picture(panel->selected_name) == FALSE)
-      {
-        free(next_file);
-        interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
-        return FALSE;
-      }
-      (void)load_image (panel->selected_name, panel, TRUE, &current);
-      if (!split_spreads)
-      {
-        if (web_manga_mode) current_position=current.height[PAGE_FULL]-height_display;
-        else if (rotate) current_position=current.width[PAGE_FULL]-width_display;        
-        (void)show_image (&current, panel, TRUE, PAGE_FULL, current_position);
-      }
-      else if (manga)
-      {
-        if (web_manga_mode) current_position=current.height[PAGE_LEFT]-height_display;
-        else if (rotate) current_position=current.width[PAGE_LEFT]-width_display;        
-        (void)show_image (&current, panel, TRUE, PAGE_LEFT, current_position);
-      }
-      else
-      {
-        if (web_manga_mode) current_position=current.height[PAGE_RIGHT]-height_display;
-        else if (rotate) current_position=current.width[PAGE_RIGHT]-width_display;        
-        (void)show_image (&current, panel, TRUE, PAGE_RIGHT, current_position);
-      }
-      free(next_file);
+    }
+  }
+  next_file = prev_image (panel->selected_name, TRUE, panel);
+  if (next_file==NULL)
+  {
+    interface_is_locked=FALSE; /* Unlock interface */
+    return FALSE;
+  }
+  select_file_by_name(next_file, panel);
+  if (is_picture(panel->selected_name) == FALSE)
+  {
+    free(next_file);
+    interface_is_locked=FALSE; /* Unlock interface */
+    return FALSE;
+  }
+  (void)load_image (panel->selected_name, panel, TRUE, &current);
+  if (!split_spreads)
+  {
+    if (web_manga_mode) current_position=current.height[PAGE_FULL]-height_display;
+    else if (rotate) current_position=current.width[PAGE_FULL]-width_display;
+    (void)show_image (&current, panel, TRUE, PAGE_FULL, current_position);
+  }
+  else if (manga)
+  {
+    if (web_manga_mode) current_position=current.height[PAGE_LEFT]-height_display;
+    else if (rotate) current_position=current.width[PAGE_LEFT]-width_display;
+    (void)show_image (&current, panel, TRUE, PAGE_LEFT, current_position);
+  }
+  else
+  {
+    if (web_manga_mode) current_position=current.height[PAGE_RIGHT]-height_display;
+    else if (rotate) current_position=current.width[PAGE_RIGHT]-width_display;
+    (void)show_image (&current, panel, TRUE, PAGE_RIGHT, current_position);
+  }
+  free(next_file);
 
       if (double_refresh) e_ink_refresh_local ();
-      e_ink_refresh_full ();
-      if (panel == &top_panel)
-        write_config_string("top_panel.last_name", panel->selected_name);
-      else
-        write_config_string("bottom_panel.last_name", panel->selected_name);
-      if(preload_enable) /* Предзагрузка предыдущего по списку изображения */
-      {
-        char *next=prev_image(panel->selected_name, FALSE, panel);
-        (void)load_image(next, panel, FALSE, &preloaded);
-        free(next);
-      }
-      interface_is_locked=FALSE; /* Снимаем блокировку интерфейса */
-      return FALSE;
+  e_ink_refresh_full ();
+  if (panel == &top_panel)
+    write_config_string("top_panel.last_name", panel->selected_name);
+  else
+    write_config_string("bottom_panel.last_name", panel->selected_name);
+  if(preload_enable) /* Preload previous image by file list order */
+  {
+    char *next=prev_image(panel->selected_name, FALSE, panel);
+    (void)load_image(next, panel, FALSE, &preloaded);
+    free(next);
+  }
+  interface_is_locked=FALSE; /* Unlock interface */
+  return FALSE;
+}
+
+void action_toggle_boost_contrast(struct_panel *panel) {
+  if (boost_contrast)
+    write_config_int("boost_contrast", boost_contrast=FALSE);
+  else
+    write_config_int("boost_contrast", boost_contrast=TRUE);
+
+  if (boost_contrast == FALSE)
+  {
+    load_image(panel->last_name, panel, TRUE, &current);
+    show_image(&current, panel, TRUE, current_page, current_position);
+  }
+  else
+  {
+    adjust_contrast (&current, 512, PAGE_FULL);
+    gtk_widget_queue_draw(GTK_WIDGET(gimage)); /* Force GTK to redraw image */
+  }
+  e_ink_refresh_full();
+}
+
+static gboolean
+scrolled_window_click_handler( GtkWidget *widget, GdkEventMotion *event, struct_panel *panel )
+{
+  int x, y;
+  (void) widget;
+  GdkModifierType state;
+
+  if (event->is_hint)
+    gdk_window_get_pointer (event->window, &x, &y, &state);
+  else
+    {
+      x = event->x;
+      y = event->y;
+      state = event->state;
     }
+
+  int column = x / (width_display/3);
+  int row = y / (height_display/4);
+
+  TRACE("Got eventbox_handler, event=%p, x=%d, y=%d, state=%d, column=%d, row=%d\n", event, x, y, state, column, row);
+
+  if (column == 0)
+    action_prev_image(panel);
+
+  if (column == 1) {
+    if (row == 0)
+      die_viewer_window();
+    if (row == 1)
+      start_picture_menu (panel, ImageWindow); /* Open Viewer menu */
+    if (row == 2)
+      action_toggle_boost_contrast(panel);
+    if (row == 3)
+      e_ink_refresh_full();
+  }
+
+  if (column == 2)
+    action_next_image(panel);
+  return TRUE;
+}
+
+gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *event, struct_panel *panel) /*реакция на кнопки */
+{
+  TRACE("Caught in viewer: %d\n",event->keyval);
+  if (check_key_press(event->keyval, panel)) return TRUE;
+  switch (event->keyval){
+    case KEY_PGDOWN:/*GDK_Right */
+    case KEY_RIGHT:/*GDK_Right */
+      return(action_next_image(panel));
+      break;
+    case KEY_PGUP:/*GDK_Left: */
+    case KEY_LEFT:/*GDK_Left: */
+      return (action_prev_image(panel));
     case KEY_BACK:/*GDK_x: */
       die_viewer_window();
       return FALSE;
@@ -613,19 +678,7 @@ gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
       return FALSE;
 
     case   KEY_OK:
-      if (boost_contrast) write_config_int("boost_contrast", boost_contrast=FALSE);
-      else write_config_int("boost_contrast", boost_contrast=TRUE);
-      if (boost_contrast == FALSE)
-      {
-        load_image(panel->last_name, panel, TRUE, &current);
-        show_image(&current, panel, TRUE, current_page, current_position);
-      }
-      else
-      {
-        adjust_contrast (&current, 512, PAGE_FULL);
-        gtk_widget_queue_draw(GTK_WIDGET(gimage)); /* Заставляем GTK перерисовать картинку */
-      }
-      e_ink_refresh_full();
+      action_toggle_boost_contrast(panel);
       return FALSE;
 
     default:
@@ -831,6 +884,10 @@ void ViewImageWindow(const char *file, struct_panel *panel, int enable_actions) 
 
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW(scrolled_window), GTK_WIDGET(gimage));
   
+  /* Touch events */
+  gtk_widget_set_events(scrolled_window, GDK_ALL_EVENTS_MASK );
+  g_signal_connect(scrolled_window, "button-press-event", (GtkSignalFunc) scrolled_window_click_handler, panel);
+
   (void)load_image(file, panel, enable_actions, &current);
   if (!split_spreads)
     (void)show_image (&current, panel, TRUE, PAGE_FULL, 0); // FIXME: Тут вместо нулей надо сделать сохранение страницы и позиции на ней!
