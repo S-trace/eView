@@ -483,10 +483,12 @@ void init (void)
       char process_name[32+1];
       int group_id = 0;
       while (!feof(process) && ! ferror(process)) {
-        fscanf(process, "%i %s\n", &group_id, process_name);
+        if (fscanf(process, "%i %s\n", &group_id, process_name) < 2)
+          break;
         TRACE("Killing processes with group %d (%s)\n", group_id, process_name);
         kill(-group_id, SIGTERM);
       }
+      fclose(process);
     }
 
     TRACE("Trying to start X server\n");
@@ -621,7 +623,7 @@ void sigsegv_handler(void) /* Обработчик для вывода Backtrace
 
 int main (int argc, char **argv)
 {
-  putenv (strdup("LC_ALL=ru_RU.UTF-8"));
+  putenv (strdup("LC_ALL=C.UTF-8"));
   putenv (strdup("DISPLAY=:0"));
   GtkWidget *starting_message;
   signal(SIGSEGV, (__sighandler_t)sigsegv_handler);
