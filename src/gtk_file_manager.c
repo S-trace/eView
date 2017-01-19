@@ -479,7 +479,14 @@ void init (void)
 
     if (hw_platform == HW_PLATFORM_KOBO) {
       TRACE("Killing nickel and sickel processes\n");
-      xsystem("ps x -o  '%r %c '|egrep ' [ns]ickel |kobomenu'|tr -d ' [a-z]'|xargs -igroup kill -- -group");
+      FILE *process = popen("ps x -o 'pgid' -o 'comm'|egrep '[ns]ickel$|kobomenu'", "r");
+      char process_name[32+1];
+      int group_id = 0;
+      while (!feof(process) && ! ferror(process)) {
+        fscanf(process, "%i %s\n", &group_id, process_name);
+        TRACE("Killing processes with group %d (%s)\n", group_id, process_name);
+        kill(-group_id, SIGTERM);
+      }
     }
 
     TRACE("Trying to start X server\n");
