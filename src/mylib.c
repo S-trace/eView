@@ -726,7 +726,8 @@ void *xrealloc(void *ptr, size_t size)
 {
   /* It avoids to free ptr if size = 0 */
   /* if ptr == NULL it does malloc(size) */
-  if ((ptr = realloc(ptr, (size) ? size : 1))) return ptr;
+  void *tmpptr = realloc(ptr, (size) ? size : 1);
+  if (tmpptr) return tmpptr;
   err_msg_and_die(msg_memory_exhausted);
   return(NULL);
 }
