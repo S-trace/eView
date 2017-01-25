@@ -520,6 +520,7 @@ void *suspend_hardware_helper(__attribute__((unused)) void* arg)
     if (LED_notify)
       set_led_state(LED_ON);
     #endif
+    set_brightness(0);
     time_t startTime = time(NULL);
     if (hardware_has_APM)
     {
