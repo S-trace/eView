@@ -480,6 +480,16 @@ void set_led_state (int state)
     write_int_to_file(LED_path, state);
 }
 
+void kobo_enter_sleep(int deep_sleep) {
+  if (hw_platform == HW_PLATFORM_KOBO) {
+    write_int_to_file ("/sys/power/state-extended", deep_sleep == FALSE ? 0 : 1);
+    usleep (2000000);
+    sync();
+    write_string_to_file ("/sys/power/state","mem");
+    write_int_to_file ("/sys/power/state-extended", 0);
+  }
+}
+
 void *suspend_hardware_helper(__attribute__((unused)) void* arg)
 {
   int count=0;
@@ -501,6 +511,9 @@ void *suspend_hardware_helper(__attribute__((unused)) void* arg)
       int apm_bios=open("/dev/apm_bios", O_RDWR);
       (void)(*apm_suspend) (apm_bios);
       (void)close(apm_bios);
+    }
+    else if (hw_platform == HW_PLATFORM_KOBO) {
+      kobo_enter_sleep(TRUE); // TRUE = deep_sleep
     }
     else if (hardware_has_sysfs_sleep)
     {
