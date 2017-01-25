@@ -411,6 +411,19 @@ void second_panel_show(void)
   wait_for_draw();
 }
 
+void kobo_disable_wlan(void)
+{
+  xsystem("if lsmod | grep -q sdio_wifi_pwr ; then \
+             killall udhcpc default.script wpa_supplicant 2>/dev/null; \
+             wlarm_le -i eth0 down; \
+             ifconfig eth0 down; \
+             /sbin/rmmod -r dhd; \
+             /sbin/rmmod -r sdio_wifi_pwr; \
+             rmmod dhd; \
+             rmmod sdio_wifi_pwr; \
+           fi");
+}
+
 void init (void)
 {
   #ifndef __amd64
@@ -462,6 +475,7 @@ void init (void)
     else if (hw_platform == HW_PLATFORM_KOBO)
     {
       TRACE("X is down and we are on KOBO\n");
+      kobo_disable_wlan();
       TRACE("Normalizing framebuffer rotation\n");
       xsystem("echo 0 > /sys/class/graphics/fb0/rotate ; echo $(cat /sys/class/graphics/fb0/rotate) > /sys/class/graphics/fb0/rotate");
     }
