@@ -46,7 +46,6 @@ int check_key_press(guint keyval, struct_panel *panel) /* Возвращает T
         die_viewer_window();
       was_in_picture_viewer=suspended=FALSE;
       set_brightness(backlight);
-      sleep_timer=sleep_timeout;
       return TRUE;
     }
     else /* Продолжаем спать */
@@ -65,7 +64,6 @@ int check_key_press(guint keyval, struct_panel *panel) /* Возвращает T
     }
     else
     {
-      sleep_timer=sleep_timeout; /* При любом нажатии клавиши (где угодно) сбрасываем таймер сна на значение из настроек */
       return FALSE;
     }
   }

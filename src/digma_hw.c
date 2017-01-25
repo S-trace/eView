@@ -46,6 +46,7 @@ int epaper_update_helper(int fb, unsigned long int ioctl_call, void *mode)
   {
     errno=0;
     ioctl(fb, ioctl_call, mode);
+    sleep_timer=sleep_timeout; // Reset sleep timer on every display refresh = we are not have any constantly refreshing display parts now!
     return errno;
   }
   return TRUE;
