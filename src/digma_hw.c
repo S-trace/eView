@@ -471,7 +471,18 @@ void write_string_to_file(const char *file, const char *value)
 
 void set_brightness(int value)
 {
-  if (hardware_has_backlight) write_int_to_file(backlight_path, value);
+  if (hw_platform == HW_PLATFORM_KOBO) {
+    int ntx_io_fd=open("/dev/ntx_io", O_RDWR);
+    if (ntx_io_fd >= 0)
+    {
+      if (value > 100)
+        value=100; // ntx_io accepts 0...100 as IOCTL arg, not 0...255
+      ioctl(ntx_io_fd, 0xf1, value);
+      close(ntx_io_fd);
+    }
+  }
+  else if (hardware_has_backlight)
+    write_int_to_file(backlight_path, value);
 }
 
 void set_led_state (int state)
