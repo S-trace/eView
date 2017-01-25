@@ -879,7 +879,7 @@ void options_menu_create(void) //Создание меню опций в ФМ
     (void)g_signal_connect (G_OBJECT (backlight_frame), "key_press_event", G_CALLBACK (keys_in_options), NULL);
   }
 
-  if (hw_platform == HW_PLATFORM_SIBRARY_QT)
+  if (hw_platform != HW_PLATFORM_SIBRARY_GTK)
   {
     sleep_timeout_frame = gtk_frame_new (SLEEP_TIMEOUT);
     gtk_box_pack_start (GTK_BOX (menu_vbox), sleep_timeout_frame, FALSE, TRUE, 0);
