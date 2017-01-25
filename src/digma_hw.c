@@ -544,7 +544,7 @@ void *suspend_hardware_helper(__attribute__((unused)) void* arg)
     }
     endTime = time(NULL);
     duration = difftime(endTime, startTime);
-    if ((int) duration <= 1)
+    if ((int) duration <= 5)
     {
       TRACE("failed\n");
     }
