@@ -321,6 +321,11 @@ void detect_hardware(void) /* Обнаружение оборудования и
       backlight_path="/sys/class/backlight/boeye_backlight/brightness";
       TRACE("Found backlight control at file %s\n", backlight_path);
       previous_backlight_level=read_int_from_file(backlight_path);
+    } else {
+      hardware_has_backlight=check_for_file ("/dev/ntx_io");
+      if (hardware_has_backlight) {
+        TRACE("Found ntx_io backlight control\n");
+      }
     }
   }
 
