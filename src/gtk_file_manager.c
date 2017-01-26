@@ -513,7 +513,7 @@ void init (void)
         close(0);
         close(1);
         close(2);
-        execlp("Xorg", "-novtswitch", "vt01", "-keeptty", "-noreset", NULL); // Kobo
+        execlp("Xorg", "Xorg", "-novtswitch", "vt01", "-keeptty", "-noreset", NULL); // Kobo
         TRACE("execlp() call failed while trying to start Xorg");
         _exit(1);
       }
