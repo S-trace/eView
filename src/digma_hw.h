@@ -41,6 +41,10 @@
 #define KEY_OPTIONS_QT 0xFFC4
 #define KEY_POWER_QT   0xFF13 /* BREAK на PC */
 
+// Kobo Aura H2O:
+#define KEY_POWER_KOBO 0x1008ff2a
+#define KEY_MANGETIC_KOBO 0xffbe
+
 void *epaperUpdateFull(void *arg);
 void *epaperUpdateLocal(void *arg);
 void *epaperUpdatePart(void *arg);

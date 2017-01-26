@@ -58,7 +58,7 @@ int check_key_press(guint keyval, struct_panel *panel) /* Возвращает T
   }
   else /* Если не спим */
   {
-    if (keyval == KEY_POWER_QT)
+    if (keyval == KEY_POWER_QT || keyval == KEY_POWER_KOBO || keyval == KEY_MANGETIC_KOBO)
     {
       enter_suspend(panel);
       return TRUE;
