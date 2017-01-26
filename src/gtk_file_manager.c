@@ -535,6 +535,26 @@ void init (void)
       }
       usleep (200000); /* Some sleep to allow X server to go online */
       wait_for_x_server();
+
+      pid=fork();
+      if (!pid) /* Child process */
+      {
+        execlp("xmodmap", "xmodmap", "-e", "keycode 219 = XF86PowerOff", NULL);
+        TRACE("execlp() call failed while trying to start xmodmap, ignoring");
+        _exit(1); // Terminate child process
+      }
+      TRACE("Waiting for xmodmap\n");
+      waitpid(pid, NULL, 0);
+
+      pid=fork();
+      if (!pid) /* Child process */
+      {
+        execlp("xset", "xset", "r", "off", NULL);
+        TRACE("execlp() call failed (%s) while trying to start xset, ignoring", strerror(errno));
+        _exit(1); // Terminate child process
+      }
+      TRACE("Waiting for xset\n");
+      waitpid(pid, NULL, 0);
     }
     else /* HW_PLATFORM_SIBRARY_QT */
     {
