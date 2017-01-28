@@ -14,12 +14,12 @@
 // call gdk_pixbuf_save (target->pixbuf[0], "/home/starrk/developement/Sibrary/eView/test.png", "png", &top_panel.archive_stack[0])
 
 static int rowstride, n_channels;
-static guchar *pixels, *p;
-static int f_num;            /*индекс столбца для frame_map */
-static int f_count;	     /*счетчик кадров */
-static int s_count;	     /*счетчик линий-разделителей */
-static int y;
-static int wh, ht;
+static guchar *pixels, *current_pixel;
+static int f_num;   /* column counter for frame_map */
+static int f_count; /* frames counter */
+static int s_count; /* separators counter */
+static int vertical_position;
+static int width, height;
 
 #ifdef debug
 void mark_frames(image *target, int page, int frame_map[][FRAMES_MAX]) // Пометка границ найденных кадров на изображении тонкими красными линиями
@@ -30,7 +30,7 @@ void mark_frames(image *target, int page, int frame_map[][FRAMES_MAX]) // Пом
   int i, ii, pixel_y;
   for (i=0; i < 2; i++)
     for (ii=0; ii < FRAMES_MAX; ii++)
-      for (pixel_y=0; pixel_y < wh; pixel_y++)
+      for (pixel_y=0; pixel_y < width ; pixel_y++)
       {
         int offset = frame_map[i][ii] * rowstride + pixel_y * n_channels;
         if (offset < dataSize && offset > 0)
@@ -48,10 +48,10 @@ void mark_frames(image *target, int page, int frame_map[][FRAMES_MAX]) // Пом
 int frames_search (image *target, int page, int frame_map[][FRAMES_MAX])
 {
   int f;
-  y = FRAME_SIZE;
+  vertical_position = FRAME_SIZE;
   f_num = 0;
-  ht = target->height[page];
-  wh = target->width[page];
+  height = target->height[page];
+  width  = target->width[page];
   f = 0; /*флаг разрыва цикла */
   f_count = 0;
   s_count = 0;
@@ -81,12 +81,12 @@ int frames_search (image *target, int page, int frame_map[][FRAMES_MAX])
 
 int right_way (int frame_map[][FRAMES_MAX]) /*ветвление */
 {
-  if (ht-FRAME_SIZE > y) {
-    y++;
+  if (height-FRAME_SIZE > vertical_position) {
+    vertical_position++;
     return 0;
   }
   if (f_count>=1) {
-    frame_map[FRAME_END][f_num] = ht;
+    frame_map[FRAME_END][f_num] = height;
     f_count++;
     return 1;
   }
@@ -97,8 +97,8 @@ int right_way (int frame_map[][FRAMES_MAX]) /*ветвление */
 int left_way(int frame_map[][FRAMES_MAX]) /*ветвление */
 {
   int f = 0;
-  frame_map[FRAME_END][f_num] = y;
-  y++;
+  frame_map[FRAME_END][f_num] = vertical_position;
+  vertical_position++;
   s_count++;
   f_count++;
   f_num++;
@@ -107,10 +107,10 @@ int left_way(int frame_map[][FRAMES_MAX]) /*ветвление */
     if (f) return 1;
   }
   s_count = 0;
-  frame_map[FRAME_START][f_num] = y;
-  y = y + FRAME_SIZE;
-  if (ht - FRAME_SIZE > y) return 0;
-  frame_map[FRAME_END][f_num] = ht;
+  frame_map[FRAME_START][f_num] = vertical_position;
+  vertical_position = vertical_position + FRAME_SIZE;
+  if (height - FRAME_SIZE > vertical_position) return 0;
+  frame_map[FRAME_END][f_num] = height;
   f_count++;
   return 1;
 }
@@ -119,13 +119,13 @@ int left_way_sc(int frame_map[][FRAMES_MAX]) /*ветвление с прове�
 {
   int f = 0;
   for(;;){
-    if (ht-FRAME_SIZE < y)  f = left_way_fc(frame_map);
+    if (height-FRAME_SIZE < vertical_position)  f = left_way_fc(frame_map);
     if (f) break;
     if (s_count > SEPARATOR_LINE_MAX) {
       f = left_way_fc(frame_map);
       if (f) break;
     }
-    y++;
+    vertical_position++;
     return 0;
   }
   return 1;
@@ -134,7 +134,7 @@ int left_way_sc(int frame_map[][FRAMES_MAX]) /*ветвление с прове�
 int left_way_fc (int frame_map[][FRAMES_MAX]) /*ветвление */
 {
   if (f_count>1){
-    frame_map[FRAME_END][f_num] = ht;
+    frame_map[FRAME_END][f_num] = height;
     f_count++;
     return 1;
   }
@@ -156,19 +156,19 @@ void frame_map_clear(int frame_map[][FRAMES_MAX])
 int line_separator (void)
 {
   int x, b_color, w_color, prev, line, rp;
-  rp = 0;		/* count  random pixel */
-  prev = 1;	/* previous pixel   0 black     1  white */
-  line = 1;	/* 1 сплошная линия или нет 0 */
-  b_color = 0; 	/* 0  не черный */
-  w_color = 0; 	/* 0  не белый */
+  rp   = 0;    /* random pixels count */
+  prev = 1;    /* previous pixel: 0 black     1  white */
+  line = 1;    /* line is solid:  0 not solid 1  solid */
+  b_color = 0; /* 0 - not black */
+  w_color = 0; /* 0 - not white */
 
   /*поиск горизонтальной линии относительно равномерного цвета */
-  for  (x =0; x<wh-1; x++) {
+  for  (x = 0; x < width-1; x++) {
     guchar red, green, blue;
-    p = pixels + y * rowstride + x * n_channels;
-    red = p[0];
-    green = p[1];
-    blue = p[2];
+    current_pixel = pixels + vertical_position * rowstride + x * n_channels;
+    red   = current_pixel[0];
+    green = current_pixel[1];
+    blue  = current_pixel[2];
 
     /*цветной пиксель или нет */
     if (red != green || red != blue || green != blue)

@@ -13,7 +13,7 @@ static int width_crop;
 static int height_crop;
 static int coord_crop[4];
 static int rowstride, n_channels;
-static guchar *pixels, *p;
+static guchar *pixels, *current_pixel;
 
 void find_crop_image_coords(const image *target, int page)
 {
@@ -56,10 +56,10 @@ void find_x_crop (int height)
   /*////////////////////////////////определение цвета бордюра, черный или белый */
   for  (y=0; y<height-1; y++) {
     int red, green, blue;
-    p = pixels + y * rowstride + x * n_channels;
-    red = p[0];
-    green = p[1];
-    blue = p[2];
+    current_pixel = pixels + y * rowstride + x * n_channels;
+    red   = current_pixel[0];
+    green = current_pixel[1];
+    blue  = current_pixel[2];
     /*цветная или нет */
     if (red != green || red != blue || green != blue) {
       pcm++;
@@ -85,8 +85,8 @@ void find_x_crop (int height)
   if (w_color == 1){
     for (x=1; x<BORDER_SIZE; x++) {
       for  (y=0; y<height-1; y++) {
-        p = pixels + y * rowstride + x * n_channels;
-        if (p[0] < WHITE) {
+        current_pixel = pixels + y * rowstride + x * n_channels;
+        if (current_pixel[0] < WHITE) {
           prm++;
           if (y - xy_tmp > PIXEL_RESET_COUNT) prm = 0;
           xy_tmp = y;
@@ -104,8 +104,8 @@ void find_x_crop (int height)
 
     for (x=1; x<BORDER_SIZE; x++) {
       for  (y=0; y<height-1; y++) {
-        p = pixels + y * rowstride + x * n_channels;
-        if (p[0] > BLACK) {
+        current_pixel = pixels + y * rowstride + x * n_channels;
+        if (current_pixel[0] > BLACK) {
           prm++;
           if (x - xy_tmp > PIXEL_RESET_COUNT) prm = 0;
           xy_tmp = x;
@@ -136,10 +136,10 @@ void find_y_crop (int width)
   /*////////////////////////////////определение цвета бордюра, черный или белый */
   for  (x=x_crop; x<width-1; x++) {
     int red, green, blue;
-    p = pixels + y * rowstride + x * n_channels;
-    red = p[0];
-    green = p[1];
-    blue = p[2];
+    current_pixel = pixels + y * rowstride + x * n_channels;
+    red   = current_pixel[0];
+    green = current_pixel[1];
+    blue  = current_pixel[2];
     /*цветная или нет */
     if (red != green || red != blue || green != blue) {
       pcm++;
@@ -167,8 +167,8 @@ void find_y_crop (int width)
   if (w_color == 1){
     for (y=1; y<BORDER_SIZE; y++) {
       for  (x=x_crop; x<width-1; x++) {
-        p = pixels + y * rowstride + x * n_channels;
-        if (p[0] < WHITE) {
+        current_pixel = pixels + y * rowstride + x * n_channels;
+        if (current_pixel[0] < WHITE) {
           prm++;
           if (x - xy_tmp > PIXEL_RESET_COUNT) prm = 0;
           xy_tmp = x;
@@ -186,8 +186,8 @@ void find_y_crop (int width)
 
     for (y=1; y<BORDER_SIZE; y++) {
       for  (x=x_crop; x<width-1; x++) {
-        p = pixels + y * rowstride + x * n_channels;
-        if (p[0] > BLACK) {
+        current_pixel = pixels + y * rowstride + x * n_channels;
+        if (current_pixel[0] > BLACK) {
           prm++;
           if (x - xy_tmp > PIXEL_RESET_COUNT) prm = 0;
           xy_tmp = x;
@@ -218,10 +218,10 @@ void find_width_crop (int width, int height)
   /*////////////////////////////////определение цвета бордюра, черный или белый */
   for  (y=y_crop; y<height-1; y++) {
     int red, green, blue;
-    p = pixels + y * rowstride + x * n_channels;
-    red = p[0];
-    green = p[1];
-    blue = p[2];
+    current_pixel = pixels + y * rowstride + x * n_channels;
+    red   = current_pixel[0];
+    green = current_pixel[1];
+    blue  = current_pixel[2];
     /*цветная или нет */
     if (red != green || red != blue || green != blue) {
       pcm++;
@@ -247,8 +247,8 @@ void find_width_crop (int width, int height)
   if (w_color == 1){
     for (x=width - 1; x > width - BORDER_SIZE; x--) {
       for  (y=y_crop; y<height-1; y++) {
-        p = pixels + y * rowstride + x * n_channels;
-        if (p[0] < WHITE) {
+        current_pixel = pixels + y * rowstride + x * n_channels;
+        if (current_pixel[0] < WHITE) {
           prm++;
           if (y - xy_tmp > PIXEL_RESET_COUNT) prm = 0;
           xy_tmp = y;
@@ -266,8 +266,8 @@ void find_width_crop (int width, int height)
 
     for (x=width - 1; x > width - BORDER_SIZE; x--) {
       for  (y=y_crop; y<height-1; y++) {
-        p = pixels + y * rowstride + x * n_channels;
-        if (p[0] > BLACK) {
+        current_pixel = pixels + y * rowstride + x * n_channels;
+        if (current_pixel[0] > BLACK) {
           prm++;
           if (x - xy_tmp > PIXEL_RESET_COUNT) prm = 0;
           xy_tmp = x;
@@ -298,10 +298,10 @@ void find_height_crop (int width, int height)
   /*////////////////////////////////определение цвета бордюра, черный или белый */
   for  (x=x_crop; x<width_crop -1; x++) {
     int red, green, blue;
-    p = pixels + y * rowstride + x * n_channels;
-    red = p[0];
-    green = p[1];
-    blue = p[2];
+    current_pixel = pixels + y * rowstride + x * n_channels;
+    red   = current_pixel[0];
+    green = current_pixel[1];
+    blue  = current_pixel[2];
     /*цветная или нет */
     if (red != green || red != blue || green != blue) {
       pcm++;
@@ -327,8 +327,8 @@ void find_height_crop (int width, int height)
   if (w_color == 1){
     for (y= height - 1; y > height - BORDER_SIZE; y--) {
       for  (x=x_crop; x<width_crop-1; x++) {
-        p = pixels + y * rowstride + x * n_channels;
-        if (p[0] < WHITE) {
+        current_pixel = pixels + y * rowstride + x * n_channels;
+        if (current_pixel[0] < WHITE) {
           prm++;
           if (x - xy_tmp > PIXEL_RESET_COUNT) prm = 0;
           xy_tmp = x;
@@ -346,8 +346,8 @@ void find_height_crop (int width, int height)
 
     for (y= height - 1; y > height - BORDER_SIZE; y--) {
       for  (x=x_crop; x<width_crop-1; x++) {
-        p = pixels + y * rowstride + x * n_channels;
-        if (p[0] > BLACK) {
+        current_pixel = pixels + y * rowstride + x * n_channels;
+        if (current_pixel[0] > BLACK) {
           prm++;
           if (x - xy_tmp > PIXEL_RESET_COUNT) prm = 0;
           xy_tmp = x;
