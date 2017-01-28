@@ -26,10 +26,18 @@ CFLAGS += -Wextra  -Dlanguage_$(lang)
 
 SOURCE_PATH=src
 
-OBJS = gtk_file_manager.o mylib.o mygtk.o ViewImageWindow.o digma_hw.o crop.o cfg.o debug_msg_win.o frames_search.o shift.o archive_handler.o interface.o contrast.o
+OBJS = gtk_file_manager.o mylib.o mygtk.o ViewImageWindow.o digma_hw.o crop.o cfg.o frames_search.o shift.o archive_handler.o interface.o contrast.o
 OBJ = $(addprefix src/, $(OBJS))
 EXE = $(name)$(version)_$(lang).app
 
+INCLUDE_DIRS = $(shell pkg-config --cflags gtk+-2.0|tr ' ' '\n' |grep -v pthread|tr '\n' ' ')
+EXTRA_INCLUDE_DIRS =  -I/usr/include/linux -I/usr/include -I/usr/include/c++/6/tr1 -I/usr/include/c++/6 
+SPLINT_OPTIONS = +posixlib -D__ASSEMBLY__ -D'__u32=unsigned int'
+CPPCHECK_OPTIONS = --enable=warning,style,unusedFunction,missingInclude --inconclusive --library=gtk,posix --std=c99 --inline-suppr --quiet --rule-file=rules-c.xml --template=gcc
+CPPCHECK_OPTIONS_ARM_DEBUG   = -Ddebug -D__arm -U __amd64 -Dlanguage_en
+CPPCHECK_OPTIONS_ARM_RELEASE = -Udebug -D__arm -U __amd64 -Dlanguage_en
+CPPCHECK_OPTIONS_AMD64_DEBUG   = -Ddebug -U__arm -D __amd64 -Dlanguage_en
+CPPCHECK_OPTIONS_AMD64_RELEASE = -Udebug -U__arm -D __amd64 -Dlanguage_en
 
 .PHONY: all	arm
 
@@ -47,6 +55,20 @@ cleanup:
 			break; \
 		fi; \
 	done
+
+
+splint:
+	@for file in $(OBJ:.o=.c); do \
+		echo Checking $$file 1>&2 ; \
+		splint $(INCLUDE_DIRS) $(EXTRA_INCLUDE_DIRS) $(SPLINT_OPTIONS) $$file; \
+		echo Finished check for $$file 1>&2 ; \
+	done
+
+cppcheck:
+	cppcheck $(INCLUDE_DIRS) $(EXTRA_INCLUDE_DIRS) $(CPPCHECK_OPTIONS) $(CPPCHECK_OPTIONS_ARM_DEBUG)     $(OBJ:.o=.c)
+	cppcheck $(INCLUDE_DIRS) $(EXTRA_INCLUDE_DIRS) $(CPPCHECK_OPTIONS) $(CPPCHECK_OPTIONS_ARM_RELEASE)   $(OBJ:.o=.c)
+	cppcheck $(INCLUDE_DIRS) $(EXTRA_INCLUDE_DIRS) $(CPPCHECK_OPTIONS) $(CPPCHECK_OPTIONS_AMD64_DEBUG)   $(OBJ:.o=.c)
+	cppcheck $(INCLUDE_DIRS) $(EXTRA_INCLUDE_DIRS) $(CPPCHECK_OPTIONS) $(CPPCHECK_OPTIONS_AMD64_RELEASE) $(OBJ:.o=.c)
 
 clean:
 	-rm -f $(EXE) $(name) $(name)$(version)_* $(OBJ) $(EXE).sh $(name)$(version)_$(lang).tar.gz $(OBJ:.o=.d)  src/*~
