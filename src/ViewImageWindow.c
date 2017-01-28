@@ -84,9 +84,8 @@ int pixbuf_check_error(GdkPixbuf *pixbuf, const char *error_message, GError **er
 
 void die_viewer_window (void)
 {
-  int silent=FALSE; // Флаг того, что рефреш и блокировку интерфейса не трогать
+  int silent = interface_is_locked; // Do not refresh display and touch screensaver
   TRACE("Destroying ViewImageWindow\n");
-  silent=interface_is_locked;
   interface_is_locked=TRUE; // Чтобы не стреляло обновление экрана из фокусировки панелей
   enable_refresh=FALSE;
   gtk_widget_destroy(ImageWindow);

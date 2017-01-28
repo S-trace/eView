@@ -842,7 +842,6 @@ gint keys_in_options (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel
 
 void options_menu_create(void) //Создание меню опций в ФМ
 {
-  GtkWidget *sleep_timeout_frame;
   options_menu = gtk_dialog_new_with_buttons (SETTINGS, GTK_WINDOW(main_menu),
                                               GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT|GTK_DIALOG_NO_SEPARATOR, NULL);
   GtkWidget *menu_vbox = gtk_vbox_new (FALSE, 0);
@@ -885,7 +884,7 @@ void options_menu_create(void) //Создание меню опций в ФМ
 
   if (hw_platform != HW_PLATFORM_SIBRARY_GTK)
   {
-    sleep_timeout_frame = gtk_frame_new (SLEEP_TIMEOUT);
+    GtkWidget *sleep_timeout_frame = gtk_frame_new (SLEEP_TIMEOUT);
     gtk_box_pack_start (GTK_BOX (menu_vbox), sleep_timeout_frame, FALSE, TRUE, 0);
     sleep_timeout_scale = gtk_hscale_new_with_range ((gdouble)0,(gdouble) 600,(gdouble) 5);
     gtk_range_set_value (GTK_RANGE(sleep_timeout_scale), (gdouble)sleep_timeout);

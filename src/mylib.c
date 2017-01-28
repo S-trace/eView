@@ -25,11 +25,11 @@ const char msg_memory_exhausted[] = "memory exhausted";
 
 void calculate_scaling_dimensions(int *new_width, int *new_height, const int image_height, const int image_width, const int display_height, const int display_width)
 {
+  double scale = 0, scale_width = 0, scale_height = 0;
   TRACE("calculate_scaling_dimensions called (image %dx%d, display %dx%d)\n", image_height, image_width, display_height, display_width);
-  double scale_width=0, scale_height=0, scale;
   if (display_height > 0 && display_width > 0)
   {
-    scale_width = (double)display_width / image_width;
+    scale_width  = (double)display_width / image_width;
     scale_height = (double)display_height  / image_height;
     scale = scale_height < scale_width ? scale_height : scale_width;
   }
@@ -242,13 +242,12 @@ char *find_next_picture_name(struct_panel *panel)
   GtkTreeIter iter;
   GtkTreeModel *model;
   char *tmp;
-  gboolean valid;
   TRACE("entering find_next_picture_name\n");
   model = gtk_tree_view_get_model (panel->list);
   if (gtk_tree_model_get_iter_from_string (model, &iter, panel->selected_iter))
   {
     gtk_tree_model_get (model, &iter, FILE_COLUMN , &tmp, -1);
-    valid = gtk_tree_model_iter_next (model, &iter);
+    gboolean valid = gtk_tree_model_iter_next (model, &iter);
     while (valid)
     {
       char *current_position_name;
@@ -677,13 +676,13 @@ int is_text(char *name) /* Является ли текстом */
 int is_directory(char *name, struct_panel *panel) /* Является ли каталогом */
 {
   GtkTreeIter iter;
-  char *tmp, *file_size, *iter_string=iter_from_filename(name, panel);
+  char *tmp, *iter_string=iter_from_filename(name, panel);
   GtkTreeModel *model = gtk_tree_view_get_model (panel->list);
   if (gtk_tree_model_get_iter_from_string (model, &iter, iter_string))
   {
     free (iter_string);
     gtk_tree_model_get (model, &iter, SIZE_COLUMN , &tmp, -1);
-    file_size = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
+    char *file_size = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
     xfree(&tmp);
     
     if (strcmp(file_size, "dir ") == 0) /* каталог */

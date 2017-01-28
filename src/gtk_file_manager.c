@@ -511,7 +511,7 @@ void init (void)
       char process_name[32+1];
       int group_id = 0;
       while (!feof(process) && ! ferror(process)) {
-        if (fscanf(process, "%i %s\n", &group_id, process_name) < 2)
+        if (fscanf(process, "%7i %32s\n", &group_id, process_name) < 2)
           break;
         TRACE("Killing processes with group %d (%s)\n", group_id, process_name);
         kill(-group_id, SIGTERM);

@@ -184,11 +184,10 @@ void Qt_error_message(const char *message)
 
 int MessageDie (GtkWidget *Window)
 {
-  char *iter;
   gtk_idle_remove (MessageDie_idle_call_handler); /* Удаляем вызов этой функции из очереди вызовов (иначе она будет вызываться вечно) */
   if (GTK_IS_WINDOW(Window))
   {
-    iter=iter_from_filename(active_panel->selected_name, active_panel);
+    char *iter = iter_from_filename(active_panel->selected_name, active_panel);
     TRACE("Destroying message window\n");
     gtk_widget_destroy(Window);
     move_selection(iter, active_panel);
