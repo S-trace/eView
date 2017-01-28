@@ -25,6 +25,24 @@ int suspend_count=-1; /* Счётчик засыпаний книги - для �
 static int need_full_refresh; /* Тип необходимого обновления экрана при перемещении курсора по меню */
 static guint MessageDie_idle_call_handler;
 
+void wake_up_device(struct_panel *panel)
+{
+  sleep_timer = sleep_timeout;
+  if(was_in_picture_viewer)
+  {
+    (void)show_image(&current, panel, FALSE, current_page, current_position);
+    e_ink_refresh_full();
+  }
+  else
+    die_viewer_window();
+
+  was_in_picture_viewer=suspended=FALSE;
+  set_brightness(backlight);
+  pthread_cancel(suspend_helper_tid);
+  TRACE("NEO is awake!\n");
+  return;
+}
+
 int check_key_press(guint keyval, struct_panel *panel) /* Возвращает TRUE если всё сделано */
 {
   if (interface_is_locked)
@@ -34,24 +52,15 @@ int check_key_press(guint keyval, struct_panel *panel) /* Возвращает T
   }
   if (suspended)
   {
-    if (keyval == KEY_POWER_QT) /* Выход из сна */
+		if (keyval == KEY_POWER_QT || keyval == KEY_POWER_KOBO || keyval == KEY_MANGETIC_KOBO)
     {
-      pthread_cancel(suspend_helper_tid); // Принудительно завершаем работу потока, который усыпляет книгу (если он сам не завершился ещё)
-      if(was_in_picture_viewer)
-      {
-        (void)show_image(&current, panel, FALSE, current_page, current_position);
-        e_ink_refresh_full();
-      }
-      else
-        die_viewer_window();
-      was_in_picture_viewer=suspended=FALSE;
-      set_brightness(backlight);
+      wake_up_device(panel);
       return TRUE;
     }
     else /* Продолжаем спать */
     {
       TRACE("Program is suspended, keypress ignored!\n");
-      suspend_hardware();
+      suspend_hardware(panel);
     }
     return TRUE;
   }
@@ -858,7 +867,7 @@ void enter_suspend(struct_panel *panel)
     enable_refresh=TRUE;
     e_ink_refresh_full();
     preload_next_screensaver();
-    suspend_hardware();
+    suspend_hardware(panel);
     TRACE("Suspend done\n");
   }
   else

@@ -20,6 +20,7 @@
 #include "digma_hw.h"
 #include "kobo_hw.h"
 #include "mylib.h"
+#include "mygtk.h"
 
 void write_string_to_file(const char *file, const char *value);
 void write_int_to_file(const char *file, int value);
@@ -507,7 +508,7 @@ void kobo_enter_sleep(int deep_sleep) {
   }
 }
 
-void *suspend_hardware_helper(__attribute__((unused)) void* arg)
+void *suspend_hardware_helper(struct_panel *panel)
 {
   int count=0;
   (void)fflush (stdout);
@@ -547,12 +548,12 @@ void *suspend_hardware_helper(__attribute__((unused)) void* arg)
     duration = difftime(endTime, startTime);
     if ((int) duration <= 5)
     {
-      TRACE("failed\n");
+      TRACE("Hardware suspend failed\n");
     }
     else
     {
       #ifdef debug
-      TRACE("successed after %d attempts (sleeped %4.0f seconds)\n", count, duration);
+      TRACE("Hardware suspend successed after %d attempts (sleeped %4.0f seconds)\n", count, duration);
       if (LED_notify)
         set_led_state(LED_OFF);
       #endif
@@ -570,13 +571,14 @@ void *suspend_hardware_helper(__attribute__((unused)) void* arg)
     (void)usleep(100000);
   }
   while (TRUE);
-  sync();
+  TRACE("Waking up device!\n");
+  wake_up_device(panel);
   return NULL;
 }
 
-void suspend_hardware(void)
+void suspend_hardware(struct_panel *panel)
 {
-  if(pthread_create(&suspend_helper_tid, NULL, suspend_hardware_helper, NULL) != 0)
+	if(pthread_create(&suspend_helper_tid, NULL, (void * (*)(void *))suspend_hardware_helper, (void *)panel) != 0)
   {
     TRACE("Unable to start hardware sleep helper!\n");
   }

@@ -47,7 +47,6 @@ GtkTreeView *string_list_create_on_table(size_t num, GtkWidget *table, guint sta
                                          guint start_row, guint end_row, guint show_hide, guint editable,...);
 void add_data_to_list(GtkTreeView *tree, const char *data_string, int n_columns, int autoscroll, const char *fs);
 
-#endif /* __HAVE_MYGTK_  */
 void e_ink_refresh_part(void);
 void e_ink_refresh_local(void);
 void e_ink_refresh_full(void);
@@ -72,3 +71,5 @@ void select_file_by_name(const char * const name, const struct_panel * const pan
 extern int suspend_count;
 void go_upper(struct_panel *panel); /* Переход на уровень вверх в дереве */
 void enter_subdir(char *name, struct_panel *panel);/* Переход на уровень вниз в дереве panel->list */
+void wake_up_device(struct_panel *panel);
+#endif /* __HAVE_MYGTK_  */

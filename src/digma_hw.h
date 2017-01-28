@@ -86,5 +86,5 @@ extern int LED_state[LED_STATES]; /* Состояния светодиода */
 extern int previous_backlight_level; /* Уровень подсветки перед запуском eView */
 extern int suspended; /* Текущее состояние книги */
 extern int was_in_picture_viewer; /* Находились ли мы в смотрелке перед вызовом усыплятора */
-void suspend_hardware(void); /* Тупо усыпляет железяку (проснётся от любого нажатия клавиши и отработает его, словно и не спала вовсе) */
+void suspend_hardware(struct_panel *panel); /* Put device asleep */
 #endif /* _DIGMA_HW_H_ */
