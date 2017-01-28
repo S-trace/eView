@@ -476,8 +476,6 @@ void init (void)
     {
       TRACE("X is down and we are on KOBO\n");
       kobo_disable_wlan();
-      TRACE("Normalizing framebuffer rotation\n");
-      xsystem("echo 0 > /sys/class/graphics/fb0/rotate ; echo $(cat /sys/class/graphics/fb0/rotate) > /sys/class/graphics/fb0/rotate");
     }
 
     if (access("/etc/GTK_parts.version", F_OK))
