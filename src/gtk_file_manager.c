@@ -310,8 +310,8 @@ void delete_dir_or_file (void)
 {
   if (confirm_request(DELETE_CONFIRM, GTK_STOCK_DELETE, GTK_STOCK_CANCEL))
   {
-    enable_refresh=FALSE;
     char *src;
+    enable_refresh=FALSE;
     if (strncmp (active_panel->selected_name, "../", 3) == 0)
       return;
     asprintf (&src, "rm -f -r -R \"%s\"", active_panel->selected_name);
@@ -334,8 +334,8 @@ void move_dir_or_file (void)
   if ( fm_toggle == FALSE) return;
   if ((move_toggle == FALSE) || ((move_toggle == TRUE) && confirm_request(MOVE_CONFIRM, MOVE, GTK_STOCK_CANCEL)))
   {
-    enable_refresh=FALSE;
     char *src, *str_iter;
+    enable_refresh=FALSE;
     if (strcmp (active_panel->selected_name, "../" ) == 0) return;
     asprintf (&src, "mv -f \"%s\" \"%s\"", active_panel->selected_name, inactive_panel->path);
     xsystem(src);
@@ -357,10 +357,10 @@ void move_dir_or_file (void)
 
 void copy_dir_or_file (void)
 {
+  char *src, *str_iter;
   if ( fm_toggle == FALSE) return;
   if (strcmp (active_panel->selected_name, "../") == 0) return;
   enable_refresh=FALSE;
-  char *src, *str_iter;
   asprintf (&src, "cp -fpR \"%s\" \"%s\"", active_panel->selected_name, inactive_panel->path);
   xsystem(src);
   xfree (&src);
@@ -442,6 +442,9 @@ void wait_for_x_server(void)
 
 void init (void)
 {
+  Display *disp = NULL;
+  int page_number;
+
   #ifndef __amd64
   #ifdef debug
   const char *name="/media/mmcblk0p1/eView_debug_log.txt";
@@ -467,7 +470,6 @@ void init (void)
   // Qt GMini M6HD:
   // Linux boeye 2.6.24.2-Boeye #346 PREEMPT Tue Jul 17 13:50:49 CST 2012 armv5tejl GNU/Linux
   #endif
-  Display *disp = NULL;
   if (hw_platform != HW_PLATFORM_KOBO)
   {
     disp = XOpenDisplay(NULL); // Is painfully slow on Kobo
@@ -506,10 +508,11 @@ void init (void)
     }
 
     if (hw_platform == HW_PLATFORM_KOBO) {
-      TRACE("Killing nickel and sickel processes\n");
-      FILE *process = popen("ps x -o 'pgid' -o 'comm'|egrep '[ns]ickel$|kobomenu'", "r");
+      FILE *process;
       char process_name[32+1];
       int group_id = 0;
+      TRACE("Killing nickel and sickel processes\n");
+      process = popen("ps x -o 'pgid' -o 'comm'|egrep '[ns]ickel$|kobomenu'", "r");
       while (!feof(process) && ! ferror(process)) {
         if (fscanf(process, "%7i %32s\n", &group_id, process_name) < 2)
           break;
@@ -594,7 +597,7 @@ void init (void)
   preloaded.name[0]='\0';
   cached.name[0]='\0';
   screensaver.name[0]='\0';
-  for (int page_number=0; page_number <= PAGE_RIGHT; page_number++)
+  for (page_number=0; page_number <= PAGE_RIGHT; page_number++)
   {
     current.pixbuf[page_number]=NULL;
     preloaded.pixbuf[page_number]=NULL;
@@ -640,11 +643,12 @@ void start_sleep_timer(void)
   }
 }
 
-void sigsegv_handler(void) __attribute__((noreturn));
-void sigsegv_handler(void) /* Обработчик для вывода Backtrace сегфолта */
+void sigsegv_handler(int unused __attribute__ ((unused))) __attribute__((noreturn));
+void sigsegv_handler(int unused __attribute__ ((unused))) /* Обработчик для вывода Backtrace сегфолта */
 {
   #ifdef debug
   void *backtrace_buffer[1024];
+  (void)unused;
   int depth=backtrace(backtrace_buffer, 1023);
   TRACE("got sigsegv_handler\n");
   TRACE("got backtrace of %d calls\n\nBacktrace:\n", depth);
@@ -655,21 +659,24 @@ void sigsegv_handler(void) /* Обработчик для вывода Backtrace
 
 int main (int argc, char **argv)
 {
+  GtkWidget *starting_message;
+  #ifndef __amd64
+  GdkScreen *screen;
+  #endif //__amd64
   putenv (strdup("LC_ALL=C.UTF-8"));
   putenv (strdup("DISPLAY=:0"));
   TRACE("Setting own pgid (was %d)\n", getpgid(0));
   setpgid (0, 0);
   TRACE("New pgid is %d\n", getpgid(0));
-  GtkWidget *starting_message;
-  signal(SIGSEGV, (__sighandler_t)sigsegv_handler);
-  signal(SIGABRT, (__sighandler_t)sigsegv_handler);
+  signal(SIGSEGV, sigsegv_handler);
+  signal(SIGABRT, sigsegv_handler);
   init();
   gtk_init (&argc, &argv);
   #ifdef __amd64
   width_display = 570 ;
   height_display = 762 ; /* Для отладки на ПК */
   #else /* -6 - ГРЯЗНЫЙ ХАК, потому как по умолчанию ViewImageWindow создаёт окно с рамкой в 3 пиксела вокруг картинки, так что она смещена на 3 пиксела вниз-вправо и 6 пикселов внизу-справа оказываются обрезаны. */
-  GdkScreen *screen = gdk_screen_get_default(); /* Текущий screen */
+  screen = gdk_screen_get_default(); /* Текущий screen */
   if(hardware_has_backlight)
   {
     width_display = gdk_screen_get_width (screen) - 1; /* Ширина экрана без менеджера окон */
@@ -722,12 +729,13 @@ int main (int argc, char **argv)
   gtk_box_set_homogeneous (GTK_BOX (panels_vbox), FALSE);
   if (hw_platform == HW_PLATFORM_KOBO)
   {
+    GtkWidget *menu_button, *exit_button;
     controls_vbox = gtk_vbox_new (FALSE, 0);
     controls_hbox = gtk_hbox_new (FALSE, 0);
     panels_vbox = gtk_vbox_new (FALSE, 0);
     gtk_container_add (GTK_CONTAINER (main_window), controls_vbox);
-    GtkWidget * menu_button = gtk_button_new_with_label (MAIN_MENU);
-    GtkWidget * exit_button = gtk_button_new_with_label (EXIT);
+    menu_button = gtk_button_new_with_label (MAIN_MENU);
+    exit_button = gtk_button_new_with_label (EXIT);
     gtk_box_pack_start (GTK_BOX (controls_vbox), controls_hbox, FALSE, FALSE, 0);
     gtk_box_pack_start (GTK_BOX (controls_hbox), menu_button, TRUE, FALSE, 0);
     gtk_box_pack_start (GTK_BOX (controls_hbox), exit_button, TRUE, FALSE, 0);

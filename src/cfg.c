@@ -106,8 +106,8 @@ void read_archive_stack(const char *name, struct_panel *panel) /*Чтение с
 void write_config_int(const char *name, int value) /*Запись числового параметра конфига */
 {
   char *config_file_single = xconcat_path_file(cfg_directory, name); /* Имя файла с настройкой */
-  TRACE("writing %d to %s\n", value, config_file_single);
   FILE *file_descriptor=fopen(config_file_single,"wt");
+  TRACE("writing %d to %s\n", value, config_file_single);
   if (!file_descriptor)
   {
     TRACE("UNABLE TO OPEN %s SETTING FILE FOR WRITING! IT'S BAD!\n", config_file_single);
@@ -127,8 +127,8 @@ void write_config_int(const char *name, int value) /*Запись числово
 void write_config_string(const char *name, const char *value) /*Запись строкового параметра конфига */
 {
   char *config_file_single = xconcat_path_file(cfg_directory, name); /* Имя файла с настройкой */
-  TRACE("writing %s to %s\n", value, config_file_single);
   FILE *file_descriptor=fopen(config_file_single,"wt");
+  TRACE("writing %s to %s\n", value, config_file_single);
   if (!file_descriptor)
   {
     TRACE("UNABLE TO OPEN %s SETTING FILE FOR WRITING! IT'S BAD!\n", config_file_single);
@@ -146,8 +146,8 @@ void write_config_string(const char *name, const char *value) /*Запись с�
 void write_archive_stack(const char *name, struct_panel *panel) /*Запись массива имён архивов из верхней панели */
 {
   char *config_file_single = xconcat_path_file(cfg_directory, name); /* Имя файла с настройкой */
-  TRACE("writing array to '%s'\n", config_file_single);
   FILE *file_descriptor=fopen(config_file_single,"wt");
+  TRACE("writing array to '%s'\n", config_file_single);
   if (!file_descriptor)
   {
     TRACE("UNABLE TO OPEN '%s' SETTING FILE FOR WRITING! IT'S BAD!\n", config_file_single);
@@ -297,8 +297,8 @@ void read_configuration (void)
 
 void reset_config(void)
 {
-  TRACE("Removing '%s'\n", cfg_directory);
   char *command=NULL;
+  TRACE("Removing '%s'\n", cfg_directory);
   asprintf(&command, "rm -rf \"%s\"", cfg_directory);
   xsystem(command);
   xfree(&command);

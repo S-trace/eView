@@ -6,14 +6,17 @@
 // http://habrahabr.ru/post/304210/
 void adjust_contrast(image *target, int contrast, int page) // contrast (256 - normal)
 {
+  guchar *imageData;
+  size_t i;
+  unsigned long long dataSize;
+  unsigned char buf[256];
+  unsigned long long int midBright = 0, midBright1 = 0, midBright2 = 0;
+
   if (! GDK_IS_PIXBUF (target->pixbuf[page]))
     return;
-  guchar *imageData = gdk_pixbuf_get_pixels (target->pixbuf[page]); // free() не требует!
-  size_t i;
-  unsigned long long dataSize = (unsigned)(gdk_pixbuf_get_rowstride (target->pixbuf[page])*(target->height[page]-1) + target->width[page] *((gdk_pixbuf_get_n_channels (target->pixbuf[page]) * gdk_pixbuf_get_bits_per_sample(target->pixbuf[page]) + 7) / 8) - 2);
-  unsigned char buf[256];
+  imageData = gdk_pixbuf_get_pixels (target->pixbuf[page]); // free() не требует!
+  dataSize = (unsigned)(gdk_pixbuf_get_rowstride (target->pixbuf[page])*(target->height[page]-1) + target->width[page] *((gdk_pixbuf_get_n_channels (target->pixbuf[page]) * gdk_pixbuf_get_bits_per_sample(target->pixbuf[page]) + 7) / 8) - 2);
   
-  unsigned long long int midBright = 0, midBright1 = 0, midBright2 = 0;
   for (i = 0; i < dataSize; )
   {
     midBright += imageData[i++];

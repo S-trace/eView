@@ -329,10 +329,10 @@ void archive_go_upper(struct_panel *panel) /* Переходим на урове
     leave_archive(panel);
   else /* А если нет - */
   {
-    char *path, *iter;
+    char *path, *iter, *slash;
     trim_line(panel->archive_cwd); /* Удяляем последний символ (слэш) из текущего имени */
     archive_cwd_prev=xconcat(basename(panel->archive_cwd),"/");
-    char *slash=strrchr(panel->archive_cwd, '/'); /* Ищем последний слэш в пути */
+    slash=strrchr(panel->archive_cwd, '/'); /* Ищем последний слэш в пути */
     if (slash==NULL) /* Если значение пути вырождается в NULL (слэша больше не оказалось) то делаем archive_cwd нулевой строкой*/
       panel->archive_cwd[0]='\0';
     else /* А иначе просто обрезаем путь в архиве на один уровень */

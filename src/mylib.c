@@ -213,11 +213,11 @@ void trim_line(char *input_line) /* Удаляет последний симво
 
 char *find_first_picture_name(struct_panel *panel)
 {
-  TRACE("entering find_first_picture_name\n");
   GtkTreeIter iter;
   GtkTreeModel *model;
   char *tmp;
   gboolean valid;
+  TRACE("entering find_first_picture_name\n");
   model = gtk_tree_view_get_model (panel->list);
   valid=gtk_tree_model_get_iter_first (model, &iter);
   while (valid)
@@ -246,8 +246,9 @@ char *find_next_picture_name(struct_panel *panel)
   model = gtk_tree_view_get_model (panel->list);
   if (gtk_tree_model_get_iter_from_string (model, &iter, panel->selected_iter))
   {
+    gboolean valid;
     gtk_tree_model_get (model, &iter, FILE_COLUMN , &tmp, -1);
-    gboolean valid = gtk_tree_model_iter_next (model, &iter);
+    valid = gtk_tree_model_iter_next (model, &iter);
     while (valid)
     {
       char *current_position_name;
@@ -268,11 +269,11 @@ char *find_next_picture_name(struct_panel *panel)
 
 char *find_prev_picture_name(struct_panel *panel)
 {
-  TRACE("entering find_prev_picture_name\n");
   GtkTreeIter iter;
   GtkTreeModel *model;
   char *tmp, *last_found_image=NULL;
   gboolean valid;
+  TRACE("entering find_prev_picture_name\n");
   model = gtk_tree_view_get_model (panel->list);
   valid=gtk_tree_model_get_iter_first (model, &iter);
   while (valid)
@@ -299,11 +300,11 @@ char *find_prev_picture_name(struct_panel *panel)
 
 char *find_last_picture_name(struct_panel *panel)
 {
-  TRACE("entering find_last_picture_name\n");
   GtkTreeIter iter;
   GtkTreeModel *model;
   char *tmp, *last_found_image=NULL;
   gboolean valid;
+  TRACE("entering find_last_picture_name\n");
   model = gtk_tree_view_get_model (panel->list);
   valid=gtk_tree_model_get_iter_first (model, &iter);
   while (valid)
@@ -322,11 +323,12 @@ char *find_last_picture_name(struct_panel *panel)
 
 char *find_next_node(struct_panel *panel, int reset_position) /* Поиск следующей директории или архива в списке */
 {
-  TRACE("entering find_first_picture_name\n");
   char *tmp;
   gboolean valid;
   GtkTreeIter iter;
-  GtkTreeModel *model = gtk_tree_view_get_model (panel->list);
+  GtkTreeModel *model;
+  TRACE("entering find_first_picture_name\n");
+  model = gtk_tree_view_get_model (panel->list);
   if (reset_position == TRUE) // Получаем итератор первого объекта в списке
     gtk_tree_model_get_iter_first (model, &iter);
   else // Получаем итератор текущего выбранного объекта
@@ -334,8 +336,9 @@ char *find_next_node(struct_panel *panel, int reset_position) /* Поиск сл
   valid = gtk_tree_model_iter_next (model, &iter); // И начинаем поиск со следующей
   while (valid)
   {
+    char *current_position_name;
     gtk_tree_model_get (model, &iter, FILE_COLUMN, &tmp, -1);
-    char *current_position_name = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
+    current_position_name = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
     xfree(&tmp);
     
     // Если под курсором оказалась строка с каталогом или архивом - выдаём её
@@ -357,20 +360,22 @@ char *find_next_node(struct_panel *panel, int reset_position) /* Поиск сл
 
 char *find_prev_node(struct_panel *panel) /* Поиск следующей директории или архива в списке */
 {
-  TRACE("entering find_prev_node\n");
   char *tmp;
   int current_row;
   gboolean valid;
   GtkTreeIter iter;
-  GtkTreeModel *model = gtk_tree_view_get_model (panel->list);
+  GtkTreeModel *model;
+  TRACE("entering find_prev_node\n");
+  model = gtk_tree_view_get_model (panel->list);
   go_upper(panel);
   wait_for_draw();
   current_row = atoi(panel->selected_iter) - 1; // Получаем текущий выбор
   valid = gtk_tree_model_get_iter_from_string (model, &iter, itoa(current_row));
   while (valid && current_row > 0)
   {
+    char *current_position_name;
     gtk_tree_model_get (model, &iter, FILE_COLUMN, &tmp, -1);
-    char *current_position_name = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
+    current_position_name = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
     xfree(&tmp);
     if (is_archive(current_position_name))
     {
@@ -452,8 +457,9 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
     {
       if (allow_actions) /* Предзагрузка не будет срабатывать на границе директорий - ну и гхыр с ней! */
       {
+        char *next_node;
         TRACE("Finding next directory\n");
-        char *next_node=find_next_node(panel, TRUE); /* Получаем следующий каталог */
+        next_node=find_next_node(panel, TRUE); /* Get next directory */
         if (next_node == NULL)
         {
           TRACE("JUMP FORWARD FAILED!\n");
@@ -464,6 +470,7 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
         }
         else
         {
+          char *next;
           TRACE("NEXT_NODE=%s\n",next_node);
           if (is_archive(next_node)) // Если find_next_node() вернула имя архива - входим в него
           {
@@ -479,7 +486,7 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
           else
             enter_subdir(next_node, panel);
           free(next_node);
-          char *next=find_first_picture_name(panel);
+          next=find_first_picture_name(panel);
           if ( next == NULL)
             Message(ERROR, NO_IMAGES_IN_CURRENT_DIRECTORY);
           return find_first_picture_name(panel);
@@ -497,13 +504,14 @@ char *next_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       TRACE("Got last image, exiting\n");
       if (allow_actions)
       {
+        GtkWidget *message;
+        pthread_t MessageDieDelayed_tid;
         interface_is_locked=TRUE; // Чтобы не было двойного обновления при закрытии окна сообщения
         enable_refresh=FALSE;
         die_viewer_window(); /* Если действия разрешены */
         wait_for_draw();
         enable_refresh=TRUE;
-        GtkWidget *message=Message (INFORMATION,LAST_FILE_REACHED_EXIT);
-        pthread_t MessageDieDelayed_tid;
+        message=Message (INFORMATION,LAST_FILE_REACHED_EXIT);
         pthread_create(&MessageDieDelayed_tid, NULL, MessageDieDelayed, (void *)message);
       }
       free(next_name);
@@ -564,8 +572,9 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
     {
       if (allow_actions) /* Предзагрузка не будет срабатывать на границе директорий - ну и гхыр с ней! */
       {
+        char *prev_node;
         TRACE("Finding previous directory\n");
-        char *prev_node=find_prev_node(panel); /* Получаем следующий каталог */
+        prev_node=find_prev_node(panel); /* Get prev directory */
         if (prev_node == NULL)
         {
           TRACE("JUMP BACKWARD FAILED!\n");
@@ -612,13 +621,14 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
       TRACE("Got first image, exiting\n");
       if (allow_actions)
       {
+        GtkWidget *message;
+        pthread_t MessageDieDelayed_tid;
         interface_is_locked=TRUE; // Чтобы не было двойного обновления при закрытии окна сообщения
         enable_refresh=FALSE;
         die_viewer_window(); /* Если действия разрешены */
         wait_for_draw();
         enable_refresh=TRUE;
-        GtkWidget *message=Message (INFORMATION,FIRST_FILE_REACHED_EXIT);
-        pthread_t MessageDieDelayed_tid;
+        message=Message (INFORMATION,FIRST_FILE_REACHED_EXIT);
         pthread_create(&MessageDieDelayed_tid, NULL, MessageDieDelayed, (void *)message);
       }
       free(prev_name);
@@ -631,9 +641,10 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
 int is_picture(char *name) __attribute__((pure));
 int is_picture(char *name) /* Является ли изображением */
 {
+  size_t n;
   if (strlen(name)<4) return FALSE; // Если имя файла слишком короткое
 
-  size_t n = strlen(name) - 4; /* Позиция начала расширения */
+  n = strlen(name) - 4; /* File extension start position */
   if(strcasecmp((name+n), ".jpg") != 0 &&
     strcasecmp((name+n), "jpeg") != 0 &&
     strcasecmp((name+n), ".bmp") != 0 &&
@@ -649,9 +660,10 @@ int is_picture(char *name) /* Является ли изображением */
 int is_archive(char *name) __attribute__((pure));
 int is_archive(char *name) /* Является ли архивом */
 {
+  size_t n;
   if (strlen(name)<4) return FALSE; // Если имя файла слишком короткое
 
-  size_t n = strlen(name) - 4; /* Позиция начала расширения */
+  n = strlen(name) - 4; /* File extension start position */
   if(strcasecmp((name+n), ".rar") != 0 &&
     strcasecmp((name+n), ".cbr") != 0 &&
     strcasecmp((name+n), ".zip") != 0 &&
@@ -664,9 +676,10 @@ int is_archive(char *name) /* Является ли архивом */
 int is_text(char *name) __attribute__((pure));
 int is_text(char *name) /* Является ли текстом */
 {
+  size_t n;
   if (strlen(name)<4) return FALSE; // Если имя файла слишком короткое
 
-  size_t n = strlen(name) - 4; /* Позиция начала расширения */
+  n = strlen(name) - 4; /* File extension start position */
   if(strcasecmp((name+n), ".txt") != 0)
     return FALSE;
   else
@@ -680,9 +693,10 @@ int is_directory(char *name, struct_panel *panel) /* Является ли ка�
   GtkTreeModel *model = gtk_tree_view_get_model (panel->list);
   if (gtk_tree_model_get_iter_from_string (model, &iter, iter_string))
   {
+    char *file_size;
     free (iter_string);
     gtk_tree_model_get (model, &iter, SIZE_COLUMN , &tmp, -1);
-    char *file_size = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
+    file_size = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
     xfree(&tmp);
     
     if (strcmp(file_size, "dir ") == 0) /* каталог */
@@ -774,6 +788,7 @@ char *xconcat(const char *path,const char *filename)/* просто слияни
 
 char *xconcat_path_file(const char *path,const char *filename)
 {
+  char *buffer;
   if (path < (char *)2)
   {
     TRACE("Path passed to xconcat_path_file() is NULL!\n");
@@ -784,7 +799,6 @@ char *xconcat_path_file(const char *path,const char *filename)
    *      not adding '/' if path name already have it.
    */
 
-  char *buffer;
   if (!path)
     path = "";
   if (path[strlen(path)-1] == '/')

@@ -165,8 +165,9 @@ gboolean confirm_request(const char *title, const char *confirm_button, const ch
 void Qt_error_message(const char *message)
 {
   const char *name="/tmp/eView_error_message.txt";
+  FILE *file_descriptor;
   TRACE("writing %s to %s\n", message, name);
-  FILE *file_descriptor=fopen(name,"wt");
+  file_descriptor=fopen(name,"wt");
   if (!file_descriptor)
   {
     TRACE("UNABLE TO OPEN %s FILE FOR WRITING!\n", name);
@@ -260,11 +261,11 @@ void e_ink_refresh_part(void)
   #ifdef __amd64
   TRACE("Updating eINK (part)\n");
   #endif
-  wait_for_draw();
   pthread_t thread = { 0 };
   pthread_attr_t threadAttr;
   pthread_attr_init(&threadAttr);
   pthread_attr_setdetachstate(&threadAttr, PTHREAD_CREATE_DETACHED);
+  wait_for_draw();
   pthread_create(&thread, &threadAttr, epaperUpdatePart, NULL);
   pthread_attr_destroy(&threadAttr);
 }
@@ -287,11 +288,11 @@ void e_ink_refresh_full(void)
   #ifdef __amd64
   TRACE("Updating eINK (full)\n");
   #endif
-  wait_for_draw();
   pthread_t thread = { 0 };
   pthread_attr_t threadAttr;
   pthread_attr_init(&threadAttr);
   pthread_attr_setdetachstate(&threadAttr, PTHREAD_CREATE_DETACHED);
+  wait_for_draw();
   pthread_create(&thread, &threadAttr, epaperUpdateFull, NULL);
   pthread_attr_destroy(&threadAttr);
 }
@@ -657,13 +658,14 @@ gint which_keys_main (__attribute__((unused))GtkWidget *window, GdkEventKey *eve
 
 void select_file_by_name(const char * const name, const struct_panel * const panel)
 {
+  char *iter;
   if (name == NULL)
   {
     TRACE("Filename passed to select_file_by_name() is NULL!\n");
     return;
   }
   TRACE("Selecting file '%s'\n", name);
-  char *iter=iter_from_filename (name, panel);
+  iter=iter_from_filename (name, panel);
   move_selection(iter, panel);
   free(iter);
 }
@@ -694,8 +696,8 @@ void create_panel (struct_panel *panel)
 /* ****************** Standard window widget******************************** */
 GtkWidget *window_create(int x, int y, guint border, const char *title, int modal)
 {
-  TRACE("constructing window %dx%d\n",x,y);
   GtkWidget *new_window;
+  TRACE("constructing window %dx%d\n",x,y);
   /* get a handle to the screen for its measurements */
   new_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_default_size(GTK_WINDOW(new_window), x, y);

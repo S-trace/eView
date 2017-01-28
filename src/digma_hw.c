@@ -55,6 +55,9 @@ int epaper_update_helper(int fb, unsigned long int ioctl_call, void *mode)
 
 void epaperUpdate(__attribute__((unused)) unsigned long int ioctl_call, __attribute__((unused)) void *mode)
 {
+  #ifndef __amd64
+  int ioctl_result;
+  #endif //__amd64
   TRACE("Called void epaperUpdate()\n");
   if (enable_refresh == FALSE)
   {
@@ -64,7 +67,6 @@ void epaperUpdate(__attribute__((unused)) unsigned long int ioctl_call, __attrib
     return;
   }
   #ifndef __amd64
-  int ioctl_result;
   /* Иначе запись в видеопамять не успевает завершиться и получаем верхний левый угол новой картинки и нижний правый - прежней. */
   if (hw_platform != HW_PLATFORM_SIBRARY_GTK) (void)usleep(355000);
   ioctl_result=epaper_update_helper(framebuffer_descriptor, ioctl_call, mode);
@@ -125,6 +127,20 @@ int detect_refresh_type (void)
  */
 void *epaperUpdateFull(void *arg)
 {
+  int mode = 3;
+  struct fb_var_screeninfo vinfo;
+  struct mxcfb_update_data data = {
+    .update_region =
+        { .top = 0,
+          .left = 0,
+          .width = 0,
+          .height = 0
+        },
+        .update_mode = UPDATE_MODE_FULL,
+        //     .update_mode = UPDATE_MODE_PARTIAL,
+        .waveform_mode = WAVEFORM_MODE_AUTO,
+        .temp = TEMP_USE_AMBIENT
+  };
   (void)arg;
   TRACE("epaperUpdateFull()\n");  
   if (hardware_has_eink_mode_control)
@@ -133,24 +149,11 @@ void *epaperUpdateFull(void *arg)
     write_int_to_file(eink_mode_control_path, 0);
   }
 
-  struct fb_var_screeninfo vinfo;
   if (ioctl(framebuffer_descriptor, FBIOGET_VSCREENINFO, &vinfo) == -1) {
     TRACE("Error reading variable framebuffer information\n");
   }
-
-  struct mxcfb_update_data data = {
-    .update_region =
-    { .top = 0,
-      .left = 0,
-      .width = (int) vinfo.xres,
-      .height = (int) vinfo.yres
-    },
-    .update_mode = UPDATE_MODE_FULL,
-//     .update_mode = UPDATE_MODE_PARTIAL,
-    .waveform_mode = WAVEFORM_MODE_AUTO,
-    .temp = TEMP_USE_AMBIENT
-  };
-  int mode = 3;
+  data.update_region.width  = (int) vinfo.xres;
+  data.update_region.height = (int) vinfo.yres;
   if (refresh_type == REFRESH_NEW)
     epaperUpdate(EPAPER_UPDATE_DISPLAY_QT, &mode);
   else if (refresh_type == REFRESH_LEGACY)
@@ -176,6 +179,20 @@ void *epaperUpdateFull(void *arg)
  */
 void *epaperUpdateLocal(void *arg)
 {
+  int mode = 2;
+  struct fb_var_screeninfo vinfo;
+  struct mxcfb_update_data data = {
+    .update_region =
+        { .top = 0,
+          .left = 0,
+          .width = 0,
+          .height = 0
+        },
+        //     .update_mode = UPDATE_MODE_FULL,
+        .update_mode = UPDATE_MODE_PARTIAL,
+        .waveform_mode = WAVEFORM_MODE_AUTO,
+        .temp = TEMP_USE_AMBIENT
+  };
   (void)arg;
   TRACE("epaperUpdateLocal()\n");  
   if (hardware_has_eink_mode_control)
@@ -184,24 +201,12 @@ void *epaperUpdateLocal(void *arg)
     write_int_to_file(eink_mode_control_path, 2);
   }
 
-  struct fb_var_screeninfo vinfo;
   if (ioctl(framebuffer_descriptor, FBIOGET_VSCREENINFO, &vinfo) == -1) {
     TRACE("Error reading variable framebuffer information\n");
   }
+  data.update_region.width  = (int) vinfo.xres;
+  data.update_region.height = (int) vinfo.yres;
 
-  struct mxcfb_update_data data = {
-    .update_region =
-    { .top = 0,
-      .left = 0,
-      .width = (int) vinfo.xres,
-      .height = (int) vinfo.yres
-    },
-//     .update_mode = UPDATE_MODE_FULL,
-    .update_mode = UPDATE_MODE_PARTIAL,
-    .waveform_mode = WAVEFORM_MODE_AUTO,
-    .temp = TEMP_USE_AMBIENT
-  };
-  int mode = 2;
   if (refresh_type == REFRESH_NEW)
     epaperUpdate(EPAPER_UPDATE_DISPLAY_QT, &mode);
   else if (refresh_type == REFRESH_LEGACY)
@@ -227,6 +232,20 @@ void *epaperUpdateLocal(void *arg)
  */
 void *epaperUpdatePart(void *arg)
 {
+  int mode = 1;
+  struct fb_var_screeninfo vinfo;
+  struct mxcfb_update_data data = {
+    .update_region =
+        { .top = 0,
+          .left = 0,
+          .width = 0,
+          .height = 0
+        },
+        //     .update_mode = UPDATE_MODE_FULL,
+        .update_mode = UPDATE_MODE_PARTIAL,
+        .waveform_mode = WAVEFORM_MODE_AUTO,
+        .temp = TEMP_USE_AMBIENT
+  };
   (void)arg;
   TRACE("epaperUpdatePart()\n");  
 
@@ -236,24 +255,13 @@ void *epaperUpdatePart(void *arg)
     write_int_to_file(eink_mode_control_path, 5);
   }
 
-  struct fb_var_screeninfo vinfo;
   if (ioctl(framebuffer_descriptor, FBIOGET_VSCREENINFO, &vinfo) == -1) {
     TRACE("Error reading variable framebuffer information\n");
   }
 
-  struct mxcfb_update_data data = {
-    .update_region =
-    { .top = 0,
-      .left = 0,
-      .width = (int) vinfo.xres,
-      .height = (int) vinfo.yres
-    },
-//     .update_mode = UPDATE_MODE_FULL,
-    .update_mode = UPDATE_MODE_PARTIAL,
-    .waveform_mode = WAVEFORM_MODE_AUTO,
-    .temp = TEMP_USE_AMBIENT
-  };
-  int mode = 1;
+  data.update_region.width  = (int) vinfo.xres;
+  data.update_region.height = (int) vinfo.yres;
+
   if (refresh_type == REFRESH_NEW)
     epaperUpdate(EPAPER_UPDATE_DISPLAY_QT, &mode);
   else if (refresh_type == REFRESH_LEGACY)
@@ -446,8 +454,9 @@ void detect_hardware(void) /* Обнаружение оборудования и
 
 void write_int_to_file(const char *file, int value)
 {
+  FILE *file_descriptor;
   TRACE("writing %d to %s\n", value, file);
-  FILE *file_descriptor=fopen(file,"wt");
+  file_descriptor=fopen(file,"wt");
   if (!file_descriptor)
   {
     TRACE("UNABLE TO OPEN %s FILE FOR WRITING!\n", file);
@@ -462,8 +471,9 @@ void write_int_to_file(const char *file, int value)
 
 void write_string_to_file(const char *file, const char *value)
 {
+  FILE *file_descriptor;
   TRACE("writing %s to %s\n", value, file);
-  FILE *file_descriptor=fopen(file,"wt");
+  file_descriptor=fopen(file,"wt");
   if (!file_descriptor)
   {
     TRACE("UNABLE TO OPEN %s FILE FOR WRITING!\n", file);
@@ -516,18 +526,19 @@ void *suspend_hardware_helper(struct_panel *panel)
   TRACE("Suspending hardware\n");
   do
   {
-    time_t endTime;
+    time_t startTime, endTime;
     double duration;
     #ifdef debug
     if (LED_notify)
       set_led_state(LED_ON);
     #endif
     set_brightness(0);
-    time_t startTime = time(NULL);
+    startTime = time(NULL);
     if (hardware_has_APM)
     {
+      int apm_bios;
       TRACE("Using APM\n");
-      int apm_bios=open("/dev/apm_bios", O_RDWR);
+      apm_bios=open("/dev/apm_bios", O_RDWR);
       (void)(*apm_suspend) (apm_bios);
       (void)close(apm_bios);
     }

@@ -329,9 +329,12 @@ void reset_statistics() // Callback для кнопки статистики (с
 {
   if(confirm_request(RESET_VIEWED_PAGES, GTK_STOCK_OK, GTK_STOCK_CANCEL))
   {
+    char *name;
     TRACE("Resetting static!\n");
     write_config_int("viewed_pages", viewed_pages=0);
-    gtk_button_set_label(GTK_BUTTON(viewed), VIEWED_PAGES" 0");
+    asprintf (&name, "%s %d", VIEWED_PAGES, 0);
+    gtk_button_set_label(GTK_BUTTON(viewed), name);
+    free(name);
     wait_for_draw();
     if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
   }
@@ -712,7 +715,10 @@ void LED_notify_callback (void)
 
 void reset_configuration_callback(void) // Callback для кнопки сброса конфигов
 {
-  if(confirm_request(RESET_CONFIGURATION"?", GTK_STOCK_OK, GTK_STOCK_CANCEL))
+  char *name;
+  asprintf (&name, "%s%s", RESET_CONFIGURATION, "?");
+  if(confirm_request(name, GTK_STOCK_OK, GTK_STOCK_CANCEL))
+  free(name);
   {
     TRACE("Resetting configuration!\n");
     reset_config();
@@ -842,9 +848,10 @@ gint keys_in_options (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel
 
 void options_menu_create(void) //Создание меню опций в ФМ
 {
+  GtkWidget *menu_vbox;
   options_menu = gtk_dialog_new_with_buttons (SETTINGS, GTK_WINDOW(main_menu),
                                               GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT|GTK_DIALOG_NO_SEPARATOR, NULL);
-  GtkWidget *menu_vbox = gtk_vbox_new (FALSE, 0);
+  menu_vbox = gtk_vbox_new (FALSE, 0);
 
   back_button_fm_options = gtk_button_new_with_label (CLOSE_MENU);
   add_toggle_button_to_menu(back_button_fm_options, menu_vbox, options_destroy, keys_in_options, FALSE, active_panel);
@@ -901,10 +908,10 @@ void options_menu_create(void) //Создание меню опций в ФМ
   gtk_container_add (GTK_CONTAINER (LED_test_frame), led_test_scale);
   #endif
 
-  reset_configuration = gtk_button_new_with_label ("   "RESET_CONFIGURATION);
+  reset_configuration = gtk_button_new_with_label (RESET_CONFIGURATION);
   add_toggle_button_to_menu(reset_configuration, menu_vbox, reset_configuration_callback, keys_in_options, FALSE, active_panel);
 
-  about_program = gtk_button_new_with_label ("   "ABOUT_PROGRAM);
+  about_program = gtk_button_new_with_label (ABOUT_PROGRAM);
   add_toggle_button_to_menu(about_program, menu_vbox, about_program_callback, keys_in_options, FALSE, active_panel);
 
   gtk_container_add (GTK_CONTAINER (GTK_DIALOG(options_menu)->vbox), menu_vbox);
@@ -1008,10 +1015,11 @@ gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *pan
 
 void start_main_menu (struct_panel *panel)
 {
+  GtkWidget *menu_vbox;
   enable_refresh=FALSE;
   main_menu = gtk_dialog_new_with_buttons (MAIN_MENU, GTK_WINDOW(main_window),
                                            GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT|GTK_DIALOG_NO_SEPARATOR, NULL);
-  GtkWidget *menu_vbox = gtk_vbox_new (TRUE, 0);
+  menu_vbox = gtk_vbox_new (TRUE, 0);
 
   back_button = gtk_button_new_with_label (CLOSE_MENU);
   add_toggle_button_to_menu(back_button, menu_vbox, main_menu_destroy, keys_in_main_menu, FALSE, panel);

@@ -48,10 +48,10 @@
 #define SHOW_HIDDEN_FILES "Показывать скрытые файлы"
 #define SHOW_PANEL "Показывать время и заряд"
 #define LED_NOTIFY "Уведомления светодиодом"
-#define RESET_CONFIGURATION "Сбросить конфигурацию"
+#define RESET_CONFIGURATION "    Сбросить конфигурацию"
 #define BACKLIGHT "Подсветка"
 #define SLEEP_TIMEOUT "Таймаут сна"
-#define ABOUT_PROGRAM "О программе"
+#define ABOUT_PROGRAM "    О программе"
 #define ABOUT_PROGRAM_TEXT VERSION"\n\nОригинальная разработка Mini Gtk-file-manager:\nTito Ragusa (2002-2006) <tito-wolit@tiscali.it>\n\nНачальная разработка eView (до версии 0.44):\nNorin Maxim (2011)\n\nДоработка и усовершенствование eView (0.45++):\nSoul Trace (2013) <s-trace@list.ru>\nТестирование (0.63) и иконка - Userok(aka QbiX) (ddixlab.ru) "
 
 #define SETTINGS      "Настройки"
@@ -140,8 +140,8 @@
 #define LED_NOTIFY "LED notifications"
 #define BACKLIGHT "Backlight"
 #define SLEEP_TIMEOUT "Sleep timeout"
-#define RESET_CONFIGURATION "Reset configuration"
-#define ABOUT_PROGRAM "About program"
+#define RESET_CONFIGURATION "    Reset configuration"
+#define ABOUT_PROGRAM "    About program"
 #define ABOUT_PROGRAM_TEXT VERSION"\n\nOriginal Mini Gtk-file-manager developement:\nTito Ragusa (2002-2006) <tito-wolit@tiscali.it>\n\nOriginal eView developement (up to 0.44):\nNorin Maxim (2011)\n\neView updates and enhacements:\nSoul Trace (2013) <s-trace@list.ru>\nTesting (0.63) and icon - Userok(aka QbiX (ddixlab.ru)"
 
 #define SETTINGS "Settings"

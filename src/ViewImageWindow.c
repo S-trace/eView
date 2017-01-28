@@ -129,6 +129,7 @@ int check_image_settings(const image *const target)
 
 void copy_image_settings(image *target, image *source)
 {
+  int page_number;
   target->crop=source->crop;
   target->frame=source->frame;
   target->rotate=source->rotate;
@@ -139,21 +140,25 @@ void copy_image_settings(image *target, image *source)
   target->split_spreads=source->split_spreads;
   target->web_manga_mode=source->web_manga_mode;
   
-  for (int page_number = 0; page_number <= PAGE_RIGHT ; page_number++)
+  for (page_number = 0; page_number <= PAGE_RIGHT ; page_number++)
   {
+    int i;
     target->height[page_number]=source->height[page_number];
     target->width[page_number]=source->width[page_number];
     target->aspect_rate[page_number]=source->aspect_rate[page_number];
-    for (int i=FRAME_START; i<=FRAME_END; i++)
-      for (int j=0; j<FRAMES_MAX; j++)
+    for (i=FRAME_START; i<=FRAME_END; i++) {
+      int j;
+      for (j=0; j<FRAMES_MAX; j++)
         target->frame_map[page_number][i][j]=source->frame_map[page_number][i][j];
+    }
   }
 }
 
 void copy_image(image *target, image *source)
 {
+  int page_number;
   strncpy(target->name, source->name, PATHSIZE);
-  for (int page_number=0; page_number <= PAGE_RIGHT ; page_number++)
+  for (page_number=0; page_number <= PAGE_RIGHT ; page_number++)
     target->pixbuf[page_number]=source->pixbuf[page_number];
   target->valid=source->valid;
   copy_image_settings(target,source);
@@ -202,6 +207,8 @@ void reset_image(image *const target)
 
 gboolean load_image(const char *const filename, const struct_panel *const panel, const int enable_actions, image *const target) /* Загружаем и готовим к показу картинку */
 {
+  char *name=NULL, *extracted_file_name=NULL;
+  GError *error=NULL;
   /*Если функция вызвана с пустым именем для загрузки*/
   if (filename==NULL || filename[0]=='\0') return FALSE;
   if ((strcmp(target->name, filename) == 0) && (check_image_settings(target) == TRUE)) /*Если уже загружено нужное изображение с нужными настройками*/
@@ -263,7 +270,6 @@ gboolean load_image(const char *const filename, const struct_panel *const panel,
   }
 
   TRACE("Loading %s from file!\n", filename);
-  char *name=NULL, *extracted_file_name=NULL;
 
   if(caching_enable) // Записываем текущее содержимое цели в кэш
     swap_images(&cached, target);
@@ -274,7 +280,7 @@ gboolean load_image(const char *const filename, const struct_panel *const panel,
   strncpy(target->name,basename(name),PATHSIZE); // basename() - free() не требует
   target->name[PATHSIZE]='\0';
   free(name);
-  GError *error=NULL;
+
   if (panel->archive_depth > 0 && (suspended == FALSE))
   {
     char *archive_file_name;
@@ -369,6 +375,7 @@ int action_next_image(struct_panel *panel) {
   interface_is_locked=TRUE; /* Lock interface during long operation */
   if (rotate || web_manga_mode) /* Actions when picture exceeds display size */
   {
+    gdouble value;
     int display_size=0, image_size=0;
     GtkAdjustment *adjust=NULL;
     if (rotate)
@@ -384,7 +391,7 @@ int action_next_image(struct_panel *panel) {
       image_size=current.height[current_page];
     }
 
-    gdouble value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
+    value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
     if (value + display_size < image_size) /* If we have something to show below current display */
     {
       shift_val = shift (value, current.frames[current_page], current.frame_map[current_page], display_size);
@@ -478,6 +485,7 @@ int action_prev_image(struct_panel *panel) {
   interface_is_locked=TRUE; /* Lock interface during long operation */
   if (rotate || web_manga_mode) /* Actions when picture exceeds display size */
   {
+    gdouble value;
     int display_size=0;
     GtkAdjustment *adjust = NULL;
     if (rotate)
@@ -491,7 +499,7 @@ int action_prev_image(struct_panel *panel) {
       display_size=height_display;
     }
 
-    gdouble value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
+    value = gtk_adjustment_get_value (GTK_ADJUSTMENT(adjust));
     if (value > 0)
     {
       shift_val = shift_back (value, current.frames[current_page], current.frame_map[current_page], display_size) * -1;
@@ -611,9 +619,9 @@ void action_toggle_boost_contrast(struct_panel *panel) {
 static gboolean
 scrolled_window_click_handler( GtkWidget *widget, GdkEventMotion *event, struct_panel *panel )
 {
-  int x, y;
-  (void) widget;
+  int x, y, column, row;
   GdkModifierType state;
+  (void) widget;
 
   if (event->is_hint)
     gdk_window_get_pointer (event->window, &x, &y, &state);
@@ -624,8 +632,8 @@ scrolled_window_click_handler( GtkWidget *widget, GdkEventMotion *event, struct_
       state = event->state;
     }
 
-  int column = x / (width_display/3);
-  int row = y / (height_display/4);
+  column = x / (width_display/3);
+  row    = y / (height_display/4);
 
   TRACE("Got eventbox_handler, event=%p, x=%d, y=%d, state=%d, column=%d, row=%d\n", event, x, y, state, column, row);
 
@@ -728,8 +736,8 @@ void image_resize (image *target) /* изменение разрешения и 
 
   if (split_spreads) /*удвоение размера с поворотом */
   {
-    target->frames[PAGE_FULL] = target->frames[PAGE_LEFT] = target->frames[PAGE_RIGHT] = 0;
     int new_width, new_height;
+    target->frames[PAGE_FULL] = target->frames[PAGE_LEFT] = target->frames[PAGE_RIGHT] = 0;
     
     if (rotate)
     {
@@ -742,7 +750,8 @@ void image_resize (image *target) /* изменение разрешения и 
       create_page_subpixbufs(target);
       if (target->pages_count > 1) // Не выполняем поиск для всей страницы!
       {
-        for (int page_number=1; page_number <= target->pages_count; page_number++)
+        int page_number;
+        for (page_number=1; page_number <= target->pages_count; page_number++)
         {
           if (target->pixbuf[page_number] != NULL)
           {
