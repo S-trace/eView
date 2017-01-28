@@ -651,7 +651,7 @@ scrolled_window_click_handler( GtkWidget *widget, GdkEventMotion *event, struct_
 
 gint which_key_press (__attribute__((unused))GtkWidget *window, GdkEventKey *event, struct_panel *panel) /*реакция на кнопки */
 {
-  TRACE("Caught in viewer: %d\n",event->keyval);
+  TRACE("Caught in viewer: %ud\n",event->keyval);
   if (check_key_press(event->keyval, panel)) return TRUE;
   switch (event->keyval){
     case KEY_PGDOWN:/*GDK_Right */

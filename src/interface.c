@@ -476,6 +476,7 @@ gint keys_in_picture_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *
     default:
       if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
       e_ink_refresh_local ();
+      TRACE("%s:%d: %s(): Got unknown keycode %ud", __FILE__, __LINE__, __func__, event->keyval);
       return FALSE;
   }
 }
@@ -831,7 +832,10 @@ gint keys_in_options (GtkWidget *dialog, GdkEventKey *event, struct_panel *panel
       return FALSE;
 
     case KEY_OK:
+      return FALSE;
+
     default:
+      TRACE("%s:%d: %s(): Got unknown keycode %ud", __FILE__, __LINE__, __func__, event->keyval);
       return FALSE;
   }
 }
@@ -998,6 +1002,7 @@ gint keys_in_main_menu (GtkWidget *dialog, GdkEventKey *event, struct_panel *pan
       return FALSE;
 
     default:
+      TRACE("%s:%d: %s(): Got unknown keycode %ud", __FILE__, __LINE__, __func__, event->keyval);
       return FALSE;
   }
 }
