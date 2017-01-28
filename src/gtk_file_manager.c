@@ -657,6 +657,9 @@ int main (int argc, char **argv)
 {
   putenv (strdup("LC_ALL=C.UTF-8"));
   putenv (strdup("DISPLAY=:0"));
+  TRACE("Setting own pgid (was %d)\n", getpgid(0));
+  setpgid (0, 0);
+  TRACE("New pgid is %d\n", getpgid(0));
   GtkWidget *starting_message;
   signal(SIGSEGV, (__sighandler_t)sigsegv_handler);
   signal(SIGABRT, (__sighandler_t)sigsegv_handler);

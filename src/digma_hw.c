@@ -578,7 +578,7 @@ void *suspend_hardware_helper(struct_panel *panel)
 
 void suspend_hardware(struct_panel *panel)
 {
-	if(pthread_create(&suspend_helper_tid, NULL, (void * (*)(void *))suspend_hardware_helper, (void *)panel) != 0)
+  if(pthread_create(&suspend_helper_tid, NULL, (void * (*)(void *))suspend_hardware_helper, (void *)panel) != 0)
   {
     TRACE("Unable to start hardware sleep helper!\n");
   }
