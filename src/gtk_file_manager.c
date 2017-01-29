@@ -141,7 +141,11 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
     int n = 0;
     char *previous_path=xgetcwd(NULL);
     struct dirent  **namelist;
-    if (panel->path == NULL) return;
+    if (panel->path == NULL)
+    {
+      free(previous_path);
+      return;
+    }
     (void)chdir(panel->path);
     if ((n = scandir(panel->path, &namelist, 0, versionsort)) >= 0)
     {
