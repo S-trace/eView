@@ -28,9 +28,9 @@ void add_toggle_button_to_menu(GtkWidget *widget, GtkWidget *menu_vbox, void *cl
   gtk_button_set_relief (GTK_BUTTON(widget), GTK_RELIEF_NONE);
   gtk_button_set_alignment (GTK_BUTTON(widget), (gfloat)0.0, (gfloat)0.0);
   gtk_box_pack_start (GTK_BOX (menu_vbox), widget, TRUE, TRUE, 0);
-  (void)g_signal_connect (G_OBJECT (widget), "key_press_event", G_CALLBACK (keypress_callback), panel);
+  (void)g_signal_connect_swapped (G_OBJECT (widget), "key_press_event", G_CALLBACK (keypress_callback), panel);
   if (clicked_callback)
-    (void)g_signal_connect (G_OBJECT (widget), "clicked", G_CALLBACK (clicked_callback), NULL);
+    (void)g_signal_connect_swapped (G_OBJECT (widget), "clicked", G_CALLBACK (clicked_callback), panel);
 }
 
 
