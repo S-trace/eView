@@ -663,8 +663,8 @@ int main (int argc, char **argv)
   #ifndef __amd64
   GdkScreen *screen;
   #endif //__amd64
-  putenv (strdup("LC_ALL=C.UTF-8"));
-  putenv (strdup("DISPLAY=:0"));
+  setenv ("LC_ALL", "C.UTF-8", TRUE);
+  setenv ("DISPLAY", ":0", TRUE);
   TRACE("Setting own pgid (was %d)\n", getpgid(0));
   setpgid (0, 0);
   TRACE("New pgid is %d\n", getpgid(0));

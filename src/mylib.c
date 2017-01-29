@@ -300,6 +300,7 @@ char *find_prev_picture_name(struct_panel *panel)
     valid = gtk_tree_model_iter_next (model, &iter);
   }
   //   free(model); // Не надо - карается abort()ом
+  free(last_found_image);
   return NULL;
 }
 
@@ -608,6 +609,7 @@ char *prev_image (char *input_name, int allow_actions, struct_panel *panel) /*в
               enter_subdir(prev_node, panel);
             free(prev_node);
           }
+          free(prev_name);
           if (panel->files_num==0)
             return find_first_picture_name(panel);
           else

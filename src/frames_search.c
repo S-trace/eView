@@ -47,12 +47,11 @@ void mark_frames(image *target, int page, int frame_map[][FRAMES_MAX]) // Пом
 /*воозвращает количество кадров и сохраняет их соординаты в frame_map[][] */
 int frames_search (image *target, int page, int frame_map[][FRAMES_MAX])
 {
-  int f;
+  int f; /* флаг разрыва цикла */
   vertical_position = FRAME_SIZE;
   f_num = 0;
   height = target->height[page];
   width  = target->width[page];
-  f = 0; /*флаг разрыва цикла */
   f_count = 0;
   s_count = 0;
 
