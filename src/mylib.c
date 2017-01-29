@@ -694,12 +694,15 @@ int is_directory(char *name, struct_panel *panel) /* Является ли ка�
   if (gtk_tree_model_get_iter_from_string (model, &iter, iter_string))
   {
     char *file_size;
+    int res;
     free (iter_string);
     gtk_tree_model_get (model, &iter, SIZE_COLUMN , &tmp, -1);
     file_size = g_locale_from_utf8(tmp, -1, NULL, NULL, NULL);
     xfree(&tmp);
-    
-    if (strcmp(file_size, "dir ") == 0) /* каталог */
+    res = strcmp(file_size, "dir ");
+    g_free(file_size);
+
+    if (res == 0) /* каталог */
       return TRUE;
     else
       return FALSE;
