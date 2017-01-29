@@ -25,6 +25,7 @@ const char msg_memory_exhausted[] = "memory exhausted";
 
 void calculate_scaling_dimensions(int *new_width, int *new_height, const int image_height, const int image_width, const int display_height, const int display_width)
 {
+  // cppcheck-suppress "variableScope"
   double scale = 0, scale_width = 0, scale_height = 0;
   TRACE("calculate_scaling_dimensions called (image %dx%d, display %dx%d)\n", image_height, image_width, display_height, display_width);
   if (display_height > 0 && display_width > 0)
@@ -46,6 +47,7 @@ void calculate_scaling_dimensions(int *new_width, int *new_height, const int ima
   TRACE("new_width=%d, new_height=%d\n", *new_width, *new_height);
 }
 
+// cppcheck-suppress "unusedFunction"
 void get_system_sleep_timeout(void)
 {
   #ifdef __amd64
@@ -68,6 +70,7 @@ void get_system_sleep_timeout(void)
   TRACE("Sleep timeout is %s\n", system_sleep_timeout);
 }
 
+// cppcheck-suppress "unusedFunction"
 void set_system_sleep_timeout(const char *timeout)
 {
   if (timeout) {
@@ -82,6 +85,7 @@ void set_system_sleep_timeout(const char *timeout)
   }
 }
 
+// cppcheck-suppress "unusedFunction"
 void get_screensavers_list(void)
 {
   #ifdef __amd64
@@ -147,6 +151,7 @@ void start_panel (void) /* Перезапускаем struct_panel */
   return;
 }
 
+// cppcheck-suppress "unusedFunction"
 char *get_natural_size(long size) /* Возвращает размер строки в килобайтах или мегабайтах (округлённо) */
 {
   char *value;

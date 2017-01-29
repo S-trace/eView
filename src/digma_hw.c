@@ -313,6 +313,7 @@ int read_int_from_file(const char *name) /*Чтение числа из файл
   }
 }
 
+// cppcheck-suppress "unusedFunction"
 void detect_hardware(void) /* Обнаружение оборудования и его возможностей */
 {
   TRACE("Detecting hardware\n");

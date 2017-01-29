@@ -629,6 +629,7 @@ scrolled_window_click_handler( GtkWidget *widget, GdkEventMotion *event, struct_
     {
       x = event->x;
       y = event->y;
+      // cppcheck-suppress "unreadVariable"
       state = event->state;
     }
 

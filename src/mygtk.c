@@ -162,6 +162,7 @@ gboolean confirm_request(const char *title, const char *confirm_button, const ch
  *
  */
 
+// cppcheck-suppress "unusedFunction"
 void Qt_error_message(const char *message)
 {
   const char *name="/tmp/eView_error_message.txt";
@@ -670,6 +671,7 @@ void select_file_by_name(const char * const name, const struct_panel * const pan
   free(iter);
 }
 
+// cppcheck-suppress "unusedFunction"
 void create_panel (struct_panel *panel)
 {
   /*   GtkWidget *vbox = gtk_vbox_new (FALSE, 0); */
@@ -713,6 +715,7 @@ GtkWidget *window_create(int x, int y, guint border, const char *title, int moda
 }
 
 /**** Create a Multi column scrolled filename list ************************/
+// cppcheck-suppress "unusedFunction"
 void add_data_to_list(GtkTreeView *tree, const char *data_string, int n_columns, int autoscroll, const char *fs)
 {
   GtkTreeIter iter;

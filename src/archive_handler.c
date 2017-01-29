@@ -159,6 +159,7 @@ int get_archive_list(const char *archive, const char *list_file) /* Создан
   }
 }
 
+// cppcheck-suppress "unusedFunction"
 char **archive_get_files_list(struct_panel *panel, const char *cwd) /* Получение списка файлов в подкаталоге архива */
 {
   char *bff = NULL,*command = NULL, **names, *escaped;
@@ -185,6 +186,7 @@ char **archive_get_files_list(struct_panel *panel, const char *cwd) /* Полу�
   return names;
 }
 
+// cppcheck-suppress "unusedFunction"
 char **archive_get_directories_list(struct_panel *panel, const char *directory) /* Получение списка подкаталогов нижнего уровня в подкаталоге архива */
 {
   char *bff = NULL,*command = NULL, **names, *escaped;

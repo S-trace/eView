@@ -168,6 +168,7 @@ void write_archive_stack(const char *name, struct_panel *panel) /*Запись �
   }
 }
 
+// cppcheck-suppress "unusedFunction"
 void create_cfg (void)  /*создание файлов настроек по умолчанию */
 {
   char *current_dir=xgetcwd (cfg_directory);
@@ -255,6 +256,7 @@ void read_panel_configuration(struct_panel *panel)
   free (archive_stack_file);
 }
 
+// cppcheck-suppress "unusedFunction"
 void read_configuration (void)
 {
   char *current_dir=xgetcwd (cfg_directory);
