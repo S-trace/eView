@@ -58,11 +58,7 @@ cleanup:
 
 
 splint:
-	@for file in $(OBJ:.o=.c); do \
-		echo Checking $$file 1>&2 ; \
-		splint $(INCLUDE_DIRS) $(EXTRA_INCLUDE_DIRS) $(SPLINT_OPTIONS) $$file; \
-		echo Finished check for $$file 1>&2 ; \
-	done
+	splint $(INCLUDE_DIRS) $(EXTRA_INCLUDE_DIRS) $(SPLINT_OPTIONS) $(OBJ:.o=.c)
 
 cppcheck:
 	cppcheck $(INCLUDE_DIRS) $(EXTRA_INCLUDE_DIRS) $(CPPCHECK_OPTIONS) $(CPPCHECK_OPTIONS_ARM_DEBUG)     $(OBJ:.o=.c)
