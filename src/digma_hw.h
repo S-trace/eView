@@ -16,8 +16,8 @@
 #define EPAPER_UPDATE_PART  0x102         /** ???              */
 #define EPAPER_UPDATE_FULL  0x103         /** Fully update     */
 #define EPAPER_UPDATE_DISPLAY_QT  0x120d  /** Update all display */
-#define QT_REFRESH_DELAY  550000
-#define GTK_REFRESH_DELAY 400000
+#define QT_REFRESH_DELAY  550000000 /*0.55 seconds*/
+#define GTK_REFRESH_DELAY 400000000 /*0.4  seconds*/
 
 
 #define KEY_HOME   0xFFC5

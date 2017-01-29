@@ -189,13 +189,15 @@ gboolean MessageDie (gpointer Window)
   gtk_idle_remove (MessageDie_idle_call_handler); /* Удаляем вызов этой функции из очереди вызовов (иначе она будет вызываться вечно) */
   if (GTK_IS_WINDOW(Window))
   {
+    const struct timespec delay = {0, QT_REFRESH_DELAY};
     char *iter = iter_from_filename(active_panel->selected_name, active_panel);
     TRACE("Destroying message window\n");
     gtk_widget_destroy(Window);
     move_selection(iter, active_panel);
     free(iter);
     wait_for_draw();
-    if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
+    if (hw_platform == HW_PLATFORM_SIBRARY_QT)
+      nanosleep(&delay, NULL);
     if (interface_is_locked)
       interface_is_locked=FALSE;
     else
@@ -206,7 +208,8 @@ gboolean MessageDie (gpointer Window)
 
 void *MessageDieDelayed (void *window)
 {
-  (void)usleep(2000000); /* Спим 2 секунды */
+  const struct timespec delay = {2, 0};
+  nanosleep(&delay, NULL); // 2 seconds
   MessageDie_idle_call_handler=g_idle_add (MessageDie, GTK_WIDGET(window));
   return NULL;
 }
@@ -214,6 +217,7 @@ void *MessageDieDelayed (void *window)
 GtkWidget *Message (const char *const title, const char *const message)
 {
   GtkWidget *MessageWindow, *label;
+  const struct timespec delay = {2*QT_REFRESH_DELAY/1000000000, 2*QT_REFRESH_DELAY%1000000000};
   /*   interface_is_locked=TRUE; //Блокируем остальной интерфейс программы */
   /* Создаём виджеты */
   TRACE("Show message '%s', data: '%s'\n", title, message);
@@ -230,7 +234,8 @@ GtkWidget *Message (const char *const title, const char *const message)
   /* Добавляет ярлык и отображает всё что мы добавили к диалогу. */
   gtk_container_add (GTK_CONTAINER (GTK_DIALOG(MessageWindow)->vbox), label);
   gtk_widget_show_all (MessageWindow);
-  if (hw_platform == HW_PLATFORM_SIBRARY_GTK) usleep(GTK_REFRESH_DELAY*2);
+  if (hw_platform == HW_PLATFORM_SIBRARY_GTK)
+    nanosleep(&delay, NULL);
   e_ink_refresh_full();
   return MessageWindow;
 }
@@ -334,7 +339,10 @@ void enter_subdir(char *name, struct_panel *panel)/* Переход на уро�
   gtk_widget_queue_draw(GTK_WIDGET(panel->list)); /* Заставляем GTK перерисовать список каталогов */
   enable_refresh=TRUE;
   wait_for_draw();
-  if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT) {
+    const struct timespec delay = {0, QT_REFRESH_DELAY};
+    nanosleep(&delay, NULL);
+  }
   e_ink_refresh_full(); /*А иначе - грязь на экране */
 }
 
@@ -398,7 +406,10 @@ void after_dirlist_select(__attribute__((unused)) GtkWidget *const widget, struc
     wait_for_draw();
     gtk_widget_queue_draw(GTK_WIDGET(panel->list)); /* Заставляем GTK перерисовать список каталогов */
     wait_for_draw();
-    if (hw_platform == HW_PLATFORM_SIBRARY_GTK) usleep(GTK_REFRESH_DELAY);
+    if (hw_platform == HW_PLATFORM_SIBRARY_GTK) {
+      const struct timespec delay = {0, QT_REFRESH_DELAY};
+      nanosleep(&delay, NULL);
+    }
     e_ink_refresh_full();
     need_full_refresh=FALSE;
   }
@@ -471,7 +482,10 @@ void go_upper(struct_panel *panel) /* Переход на уровень вве�
   enable_refresh=TRUE;
   interface_is_locked=FALSE;
   wait_for_draw();
-  if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT) {
+    const struct timespec delay = {0, QT_REFRESH_DELAY};
+    nanosleep(&delay, NULL);
+  }
   e_ink_refresh_full();
 }
 
@@ -523,7 +537,10 @@ void actions(struct_panel *panel) /*выбор что делать по клик
         enable_refresh=FALSE;
         enter_archive(panel->selected_name, panel, TRUE); /* Вход в архив, если не в архиве */
         enable_refresh=TRUE;
-        if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
+        if (hw_platform == HW_PLATFORM_SIBRARY_QT) {
+          const struct timespec delay = {0, QT_REFRESH_DELAY};
+          nanosleep(&delay, NULL);
+        }
         e_ink_refresh_full();
       }
       else
@@ -531,7 +548,10 @@ void actions(struct_panel *panel) /*выбор что делать по клик
         char *subarchive=xconcat(panel->archive_cwd, panel->selected_name);
         enter_subarchive(subarchive, panel);
         free(subarchive);
-        if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep (QT_REFRESH_DELAY);
+        if (hw_platform == HW_PLATFORM_SIBRARY_QT) {
+          const struct timespec delay = {0, QT_REFRESH_DELAY};
+          nanosleep(&delay, NULL);
+        }
         e_ink_refresh_local();
       }
     }
@@ -844,6 +864,7 @@ gboolean enter_suspend(gpointer panel)
   gtk_idle_remove (idle_call_handler); /* Удаляем вызов этой функции из очереди вызовов (иначе она будет вызываться вечно) */
   if (suspended == FALSE)
   {
+    const struct timespec delay = {0, QT_REFRESH_DELAY/2};
     TRACE("Entering suspend\n");
     xsystem("dbus-send /PowerManager com.sibrary.Service.PowerManager.requestSuspend");
     TRACE("DBUS sent\n");
@@ -867,7 +888,7 @@ gboolean enter_suspend(gpointer panel)
     boost_contrast=saved_boost_contrast;
     web_manga_mode=saved_web_manga_mode;
     set_brightness(0);
-    usleep(QT_REFRESH_DELAY/2);
+    nanosleep(&delay, NULL);
     enable_refresh=TRUE;
     e_ink_refresh_full();
     preload_next_screensaver();

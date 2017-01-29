@@ -93,7 +93,10 @@ void die_viewer_window (void)
   if ((suppress_panel == TRUE) && (hw_platform == HW_PLATFORM_SIBRARY_GTK))
     start_panel();
   wait_for_draw();
-  if (hw_platform == HW_PLATFORM_SIBRARY_QT) usleep(QT_REFRESH_DELAY);
+  if (hw_platform == HW_PLATFORM_SIBRARY_QT) {
+    const struct timespec delay = {0, QT_REFRESH_DELAY};
+    nanosleep(&delay, NULL);
+  }
   if (silent == FALSE)
   {
     interface_is_locked=FALSE;
@@ -357,11 +360,14 @@ gboolean show_image(image *target, struct_panel *panel, int enable_actions, int 
   
   if (position != 0)
   {
+    struct timespec delay;
     wait_for_draw(); /* Ожидаем отрисовки всего */
-    if (hw_platform == HW_PLATFORM_SIBRARY_GTK) /* We need delay to allow gtk_image_set_from_pixbuf() to complete */
-      usleep(GTK_REFRESH_DELAY);
+    /* We need delay to allow gtk_image_set_from_pixbuf() to complete */
+    if (hw_platform == HW_PLATFORM_SIBRARY_GTK)
+      delay = (struct timespec){0, GTK_REFRESH_DELAY};
     else
-      usleep(QT_REFRESH_DELAY);
+      delay = (struct timespec){0, QT_REFRESH_DELAY};
+    nanosleep(&delay, NULL);
     wait_for_draw();  
     if (rotate) gtk_adjustment_set_value(gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW(scrolled_window)), position);
         if (web_manga_mode) gtk_adjustment_set_value(gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW(scrolled_window)), position);

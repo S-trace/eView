@@ -68,7 +68,10 @@ void epaperUpdate(__attribute__((unused)) unsigned long int ioctl_call, __attrib
   }
   #ifndef __amd64
   /* Иначе запись в видеопамять не успевает завершиться и получаем верхний левый угол новой картинки и нижний правый - прежней. */
-  if (hw_platform != HW_PLATFORM_SIBRARY_GTK) (void)usleep(355000);
+  if (hw_platform != HW_PLATFORM_SIBRARY_GTK) {
+    const struct timespec delay = {0, QT_REFRESH_DELAY};
+    nanosleep(&delay, NULL);
+  }
   ioctl_result=epaper_update_helper(framebuffer_descriptor, ioctl_call, mode);
   #ifdef debug
   if (ioctl_result != TRUE)
@@ -511,8 +514,9 @@ void set_led_state (int state)
 
 void kobo_enter_sleep(int deep_sleep) {
   if (hw_platform == HW_PLATFORM_KOBO) {
+    const struct timespec delay = {2, 0};
     write_int_to_file ("/sys/power/state-extended", deep_sleep == FALSE ? 0 : 1);
-    usleep (2000000);
+    nanosleep(&delay, NULL); // 2 seconds
     sync();
     write_string_to_file ("/sys/power/state","mem");
     write_int_to_file ("/sys/power/state-extended", 0);
@@ -529,6 +533,7 @@ void *suspend_hardware_helper(struct_panel *panel)
   {
     time_t startTime, endTime;
     double duration;
+    const struct timespec delay = {0, 100000000};
     #ifdef debug
     if (LED_notify)
       set_led_state(LED_ON);
@@ -580,7 +585,7 @@ void *suspend_hardware_helper(struct_panel *panel)
       TRACE("Too many failed attempts, break\n");
       break;
     }
-    (void)usleep(100000);
+    nanosleep(&delay, NULL); //0,1 seconds
   }
   while (TRUE);
   TRACE("Waking up device!\n");

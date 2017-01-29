@@ -53,7 +53,8 @@ void /*@null@*/  *sleep_thread(__attribute__((unused)) /*@unused@*/ void* arg)
   TRACE("Sleep timeout thread started (timer=%d)\n", sleep_timer);
   for (;;)
   {
-    (void)usleep(1000000); /* Спим 1 секунду */
+    const struct timespec delay = {1, 0};
+    nanosleep(&delay, NULL); /* 1 second */
     if (--sleep_timer <= 0)
     {
       if (sleep_timeout == 0)
@@ -428,7 +429,8 @@ void wait_for_x_server(void)
 {
   int timer=0;
   do {
-    usleep (200000);
+    const struct timespec delay = {0, 200000000};
+    nanosleep(&delay, NULL); /* 0.2 second */;
     if (++timer > 5000)
     {
       TRACE("Failed to start X server - timed out!\n");
@@ -482,6 +484,7 @@ void init (void)
   }
   else
   {
+    const struct timespec matchbox_delay = {2, 0};
     char *string, *message, *ROT = NULL;
 
     if (hw_platform == HW_PLATFORM_UNKNOWN)
@@ -526,6 +529,7 @@ void init (void)
 
     if (hw_platform == HW_PLATFORM_KOBO)
     {
+      const struct timespec delay = {0, 200000000};
       int pid=fork();
       if (!pid) /* Child process */
       {
@@ -536,7 +540,7 @@ void init (void)
         TRACE("execlp() call failed while trying to start Xorg");
         _exit(1); // Terminate child process
       }
-      usleep (200000); /* Some sleep to allow X server to go online */
+      nanosleep(&delay, NULL); /* 0,2 second - Some sleep to allow X server to go online */
       wait_for_x_server();
 
       pid=fork();
@@ -561,6 +565,7 @@ void init (void)
     }
     else /* HW_PLATFORM_SIBRARY_QT */
     {
+      const struct timespec X_delay = {0, 200000000};
       int pid=fork();
       if (!pid) /* Child process */
       {
@@ -571,13 +576,13 @@ void init (void)
         TRACE("execlp() call failed while trying to start Xfbdev");
         _exit(1);
       }
-      usleep (200000); /* Some sleep to allow X server to go online */
+      nanosleep(&X_delay, NULL); /* 0,2 second - Some sleep to allow X server to go online */
       wait_for_x_server();
     }
 
     // Запускаем window manager - без него окно с изображением отображается поверх файл-менеджера и вокруг проглядывают файлы. А ещё он нужен для корректной работы xrandr.
     xsystem("matchbox-window-manager -theme Sato -use_desktop_mode decorated &"); 
-    (void)usleep(2000000);
+    nanosleep(&matchbox_delay, NULL); /* 2 seconds */
     
     if (ROT) {
       TRACE("ROT=%s\n", ROT);
