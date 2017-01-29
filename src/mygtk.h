@@ -54,7 +54,7 @@ void e_ink_refresh_default(void);
 #define COLUMN_W (width_display * 83 / 100) /* Первая колонка в файлменеджере (для имён). 83 - ширина в процентах */
 #define COLUMN_W2 (width_display * 17 / 100)/* Вторая колонка в файлменеджере (для размеров). 17 - ширина в процентах */
 void *MessageDieDelayed (void *arg);
-int MessageDie (GtkWidget *Window);
+gboolean MessageDie (gpointer Window);
 GtkWidget *Message (const char *const title, const char *const message);
 extern int enable_refresh;/*Принудительно запретить обновлять экран в особых случаях */
 /* extern char focus_in_processed; // Количество обработанных событий получения фокуса */
@@ -65,7 +65,7 @@ gboolean confirm_request(const char *title, const char *confirm_button, const ch
 void create_panel (struct_panel *panel);
 char *get_current_iter (struct_panel *panel); /*возвращает итератор текущего файла из списка */
 void Qt_error_message(const char *message); /* Функция открывает на прошивках Qt сообщение об ошибке в стандартной читалке */
-void enter_suspend(struct_panel *panel); /* Показывает скринсейвер и усыпляет железо */
+gboolean enter_suspend(gpointer panel); /* Show screensaver and suspend hardware */
 int check_key_press(guint keyval, struct_panel *panel); /* Проработка нажатия кнопки питания при сне */
 void select_file_by_name(const char * const name, const struct_panel * const panel);
 extern int suspend_count;

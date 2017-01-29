@@ -63,7 +63,7 @@ void /*@null@*/  *sleep_thread(__attribute__((unused)) /*@unused@*/ void* arg)
       }
       TRACE("Sleep timeout reached, go sleep\n");
       sleep_timer=999999999; /* не дёргаемся по пустякам, когда надо - таймер сбросят */
-      idle_call_handler=g_idle_add ((GSourceFunc) enter_suspend, active_panel);
+      idle_call_handler=g_idle_add (enter_suspend, active_panel);
     }
   }
   TRACE("Sleep thread ended\n");

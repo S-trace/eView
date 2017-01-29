@@ -183,7 +183,7 @@ void Qt_error_message(const char *message)
   }
 }
 
-int MessageDie (GtkWidget *Window)
+gboolean MessageDie (gpointer Window)
 {
   gtk_idle_remove (MessageDie_idle_call_handler); /* Удаляем вызов этой функции из очереди вызовов (иначе она будет вызываться вечно) */
   if (GTK_IS_WINDOW(Window))
@@ -206,7 +206,7 @@ int MessageDie (GtkWidget *Window)
 void *MessageDieDelayed (void *window)
 {
   (void)usleep(2000000); /* Спим 2 секунды */
-  MessageDie_idle_call_handler=g_idle_add ((GSourceFunc) MessageDie, GTK_WIDGET(window));
+  MessageDie_idle_call_handler=g_idle_add (MessageDie, GTK_WIDGET(window));
   return NULL;
 }
 
@@ -730,7 +730,7 @@ void add_data_to_list(GtkTreeView *tree, const char *data_string, int n_columns,
     if (g_utf8_validate(data_string, -1, NULL) != TRUE) {
       if ((data = g_locale_to_utf8(data_string, -1, NULL, NULL, NULL))) {
         gtk_list_store_set(GTK_LIST_STORE(store), &iter, i, data, -1);
-        free(data);
+        g_free(data);
       }
     } else {
       gtk_list_store_set(GTK_LIST_STORE(store), &iter, i, data_string, -1);
@@ -827,7 +827,7 @@ GtkTreeView *string_list_create_on_table(size_t num,
   return tree;
 }
 
-void enter_suspend(struct_panel *panel)
+gboolean enter_suspend(gpointer panel)
 {
   int saved_crop=crop;
   int saved_rotate=rotate;
@@ -875,4 +875,5 @@ void enter_suspend(struct_panel *panel)
   {
     TRACE("eView is already suspended!\n");
   }
+  return TRUE;
 }

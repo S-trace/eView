@@ -345,7 +345,7 @@ char *find_next_node(struct_panel *panel, int reset_position) /* Поиск сл
     if (is_directory(current_position_name, panel) || is_archive(current_position_name))
       return (strdup(current_position_name));
     else
-      free(current_position_name);
+      g_free(current_position_name);
     valid = gtk_tree_model_iter_next (model, &iter);
   }
   if (strcmp(panel->path, "/") == 0) // Если мы достигли верха в структуре каталогов, и ниже нет ничего
@@ -398,7 +398,7 @@ char *find_prev_node(struct_panel *panel) /* Поиск следующей ди�
       current_row = panel->dirs_num + panel->files_num - 1; // Сбрасываем номер текущей строки
     }
     else
-      free(current_position_name);
+      g_free(current_position_name);
     valid = gtk_tree_model_get_iter_from_string (model, &iter, itoa(current_row--));
   }
   if (strcmp(panel->path, "/") == 0) // Если мы достигли верха в структуре каталогов, и выше нет ничего
