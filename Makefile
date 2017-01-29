@@ -58,7 +58,7 @@ cleanup:
 
 
 splint:
-	splint $(INCLUDE_DIRS) $(EXTRA_INCLUDE_DIRS) $(SPLINT_OPTIONS) $(OBJ:.o=.c)
+	splint $(INCLUDE_DIRS) $(EXTRA_INCLUDE_DIRS) $(SPLINT_OPTIONS) $(OBJ:.o=.c) >&2
 
 cppcheck:
 	cppcheck $(INCLUDE_DIRS) $(EXTRA_INCLUDE_DIRS) $(CPPCHECK_OPTIONS) $(CPPCHECK_OPTIONS_ARM_DEBUG)     $(OBJ:.o=.c)
