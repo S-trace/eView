@@ -7,15 +7,20 @@
 void adjust_contrast(image *target, int contrast, int page) // contrast (256 - normal)
 {
   guchar *imageData;
-  size_t i;
-  unsigned long long dataSize;
+  ssize_t i;
+  long long int dataSize;
   unsigned char buf[256];
-  unsigned long long int midBright = 0, midBright1 = 0, midBright2 = 0;
+  long long int midBright = 0, midBright1 = 0, midBright2 = 0;
 
   if (! GDK_IS_PIXBUF (target->pixbuf[page]))
     return;
   imageData = gdk_pixbuf_get_pixels (target->pixbuf[page]); // free() не требует!
-  dataSize = (unsigned)(gdk_pixbuf_get_rowstride (target->pixbuf[page])*(target->height[page]-1) + target->width[page] *((gdk_pixbuf_get_n_channels (target->pixbuf[page]) * gdk_pixbuf_get_bits_per_sample(target->pixbuf[page]) + 7) / 8) - 2);
+  // from gdk-pixbuf/gdk-pixbuf.c gdk_pixbuf_get_byte_length (const GdkPixbuf *pixbuf) implementation, coz Sibarary toolchain not have gdk_pixbuf_get_byte_length():
+  // (pixbuf->height - 1) * pixbuf->rowstride + pixbuf->width * ((pixbuf->n_channels * pixbuf->bits_per_sample + 7) / 8);
+  dataSize  = (target->height[page]-1) * gdk_pixbuf_get_rowstride (target->pixbuf[page]) + target->width[page] *((gdk_pixbuf_get_n_channels (target->pixbuf[page]) * gdk_pixbuf_get_bits_per_sample(target->pixbuf[page]) + 7) / 8);
+
+  if (dataSize <= 0)
+    return;
   
   for (i = 0; i < dataSize; )
   {
