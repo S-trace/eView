@@ -878,3 +878,14 @@ int mkpath(char *dir, mode_t mode)
 	
 	return mkdir(dir, mode);
 }
+
+/*
+ * strverscmp() wrapper for using it with qsort()
+ * It is necessary because qsort() pass pointers to strings, which needs to be dereferenced before strverscmp() will be called
+ */
+int strverscmp_qsort_wrapper(void *a, void *b) 
+{
+	const char **ia = (const char **)a;
+	const char **ib = (const char **)b;
+	return strverscmp(*ia, *ib);
+}

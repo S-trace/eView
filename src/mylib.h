@@ -55,3 +55,10 @@ int is_directory(char *name, struct_panel *panel); /* Является ли ка
  * Origin; http://stackoverflow.com/questions/2336242/recursive-mkdir-system-call-on-unix
  */
 int mkpath(char *dir, mode_t mode);
+
+
+/*
+ * strverscmp() wrapper for using it with qsort()
+ * It is necessary because qsort() pass pointers to strings, which needs to be dereferenced before strverscmp() will be called
+ */
+int strverscmp_qsort_wrapper(void *a, void *b);
