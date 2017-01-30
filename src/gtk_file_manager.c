@@ -34,7 +34,6 @@
 #include "cfg.h"
 #include "digma_hw.h"
 #include "ViewImageWindow.h"
-#include "debug_msg_win.h"
 #include "archive_handler.h"
 #include "translations.h"
 #include "interface.h"

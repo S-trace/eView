@@ -1,4 +1,3 @@
-/* #include "debug_msg_win.h" */
 void write_config_int(const char *name, int value);
 void write_config_string(const char *name, const char *value);
 void create_cfg (void);

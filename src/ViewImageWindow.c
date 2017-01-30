@@ -18,7 +18,6 @@
 #include "crop.h"
 #include "cfg.h"
 #include "contrast.h"
-/* #include "debug_msg_win.h" */
 #include "frames_search.h"
 #include "shift.h"
 #include "archive_handler.h"
