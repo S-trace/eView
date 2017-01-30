@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <libgen.h> 
 
 #include "gtk_file_manager.h"
 #include "mylib.h"
@@ -855,4 +856,25 @@ void preload_next_screensaver(void)
   keepaspect=saved_keepaspect;
   suspended=saved_suspended;
   boost_contrast=saved_boost_contrast;
+}
+
+/*
+ * Recursive mkdir() call (like bash's mkdir -p do)
+ * Origin; http://stackoverflow.com/questions/2336242/recursive-mkdir-system-call-on-unix
+ */
+int mkpath(char *dir, mode_t mode)
+{
+	struct stat sb;
+	
+	if (!dir) {
+		errno = EINVAL;
+		return 1;
+	}
+	
+	if (!stat(dir, &sb))
+		return 0;
+	
+	mkpath(dirname(strdupa(dir)), mode);
+	
+	return mkdir(dir, mode);
 }

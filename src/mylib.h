@@ -49,3 +49,4 @@ char *get_natural_time(int time); /* Возвращает строку в фор
 void read_string(const char *name, char **destination);
 void preload_next_screensaver(void);
 int is_directory(char *name, struct_panel *panel); /* Является ли каталогом */
+int mkpath(char *dir, mode_t mode); // Recursive mkdir() call (like bash's mkdir -p do)
