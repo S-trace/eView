@@ -724,19 +724,15 @@ void image_resize (image *target) /* изменение разрешения и 
 
   if (crop)
   {
-    find_crop_image_coords (target, PAGE_FULL);
-    if (return_crop_coord(0) != -1)
+    int coords[4];
+    if (find_crop_image_coords (target->pixbuf[PAGE_FULL], coords))
     {
-      int x = return_crop_coord(0);
-      int y = return_crop_coord(1);
-      int w = return_crop_coord(2);
-      int h = return_crop_coord(3);
-
-      pixbuf_key = gdk_pixbuf_new_subpixbuf(target->pixbuf[PAGE_FULL], x, y, w, h);
-      if (! pixbuf_check(pixbuf_key, PIXBUF_CROPPING_FAILED)) return;
-      TRACE("pixbuf %p created by gdk_pixbuf_new_subpixbuf() (crop margins), width=%d, height=%d\n",pixbuf_key, gdk_pixbuf_get_width(pixbuf_key), gdk_pixbuf_get_height(pixbuf_key));
-      pixbuf_unref(target->pixbuf[PAGE_FULL]);
-      target->pixbuf[PAGE_FULL]=pixbuf_key;
+      pixbuf_key = gdk_pixbuf_new_subpixbuf(target->pixbuf[PAGE_FULL], coords[0], coords[1], coords[2], coords[3]);
+      if (pixbuf_check(pixbuf_key, PIXBUF_CROPPING_FAILED)) {
+        TRACE("pixbuf %p created by gdk_pixbuf_new_subpixbuf() (crop margins), width=%d, height=%d\n", pixbuf_key, gdk_pixbuf_get_width(pixbuf_key), gdk_pixbuf_get_height(pixbuf_key));
+        pixbuf_unref(target->pixbuf[PAGE_FULL]);
+        target->pixbuf[PAGE_FULL]=pixbuf_key;
+      }
       update_image_dimentions(target);
     }
   }

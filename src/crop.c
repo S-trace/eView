@@ -1,369 +1,342 @@
-/* Norin Maxim, 2011, Distributed under GPLv2 Terms
- *CROP FUNCTION*/
-/*на входе pixbuf на выходе координаты для обрезки */
+/* Norin Maxim, 2011, Distributed under GPLv2 Terms */
+/* Rewritten by S-trace <S-trace@list.ru>, 2017, Distributed under GPLv2 Terms */
+
+>>>>>>> d9f3fc3... [CROP] Rewrite crop.c to eliminate global variables
 #include <gtk/gtk.h>
-#include "gtk_file_manager.h" /* Инклюдить первой среди своих, ибо typedef panel! */
-#include "ViewImageWindow.h"
 #include "crop.h"
-#include "mylib.h" /* xfree() */
+#include "gtk_file_manager.h" // typedef panel
+#include "mylib.h" // TRACE
 
-static int x_crop;		/* координаты для вырезания из target->pixbuf */
-static int y_crop;
-static int width_crop;
-static int height_crop;
-static int coord_crop[4];
-static int rowstride, n_channels;
-static guchar *pixels, *current_pixel;
+static int find_top_coord (GdkPixbuf *pixbuf) {
+  guchar *pixels, *current_pixel, border_color;
+  int x, y, width, height, rowstride, n_channels;
+  int black = 0; // black pixels count
+  int white = 0; // white pixels count
+  int pcm   = 0; // count random color pixel
+  int prm   = 0; // count any random pixel
+  int x_tmp = 0; // count for PIXEL_RESET_COUNT
 
-void find_crop_image_coords(const image *target, int page)
-{
-  x_crop = 0;
-  y_crop = 0;
-  width_crop = target->width[page];
-  height_crop = target->height[page];
-
-  n_channels = gdk_pixbuf_get_n_channels (target->pixbuf[page]);
-  rowstride = gdk_pixbuf_get_rowstride (target->pixbuf[page]);
-  pixels = gdk_pixbuf_get_pixels (target->pixbuf[page]);
-
-  find_x_crop (target->height[page]);                                 /*поиск координат левого бордюра */
-  find_y_crop (target->width[page]);  		                /*верхнего */
-  find_width_crop (target->width[page], target->height[page]);		/*правого */
-  find_height_crop (target->width[page], target->height[page]);		/*нижнего */
-  coord_crop[0] = x_crop;
-  coord_crop[1] = y_crop;
-  coord_crop[2] = width_crop - x_crop;
-  coord_crop[3] = height_crop - y_crop;
-  if (x_crop==0 && y_crop==0 && width_crop==target->width[page] && height_crop==target->height[page]){
-    coord_crop[0] = -1;
-    /*          g_print ("возврат без изменений\n"); */
-  }
-}
-
-/*############################################################################# */
-/*###############################left border################################### */
-/*############################################################################# */
-void find_x_crop (int height)
-{
-  int x, y, b_color, w_color;
-  int pcm = 0;/*count random color pixel */
-  int prm = 0;/*count any random pixel */
-  int xy_tmp = 1;/*count for  PIXEL_RESET_COUNT */
-
-  b_color = 0;
-  w_color = 0;
-  x = 0;/*width //y = height; */
-  /*////////////////////////////////определение цвета бордюра, черный или белый */
-  for  (y=0; y<height-1; y++) {
-    int red, green, blue;
-    current_pixel = pixels + y * rowstride + x * n_channels;
+  width      = gdk_pixbuf_get_width  (pixbuf);
+  height     = gdk_pixbuf_get_height (pixbuf);
+  rowstride  = gdk_pixbuf_get_rowstride (pixbuf);
+  n_channels = gdk_pixbuf_get_n_channels (pixbuf);
+  pixels     = gdk_pixbuf_get_pixels (pixbuf);
+  
+  y = 0; // We are scanning 0th row
+  for  (x=0; x < width-1; ++x) { // Determine border color
+    guchar red, green, blue;
+    current_pixel = pixels + y*rowstride + x*n_channels;
     red   = current_pixel[0];
     green = current_pixel[1];
     blue  = current_pixel[2];
-    /*цветная или нет */
-    if (red != green || red != blue || green != blue) {
-      pcm++;
-      if (pcm > PIXEL_COLOR_MAX){
-        x_crop = 0;/*color pixel */
-        return;
-      }
-    }
-    if (red < BLACK && green<BLACK && blue < BLACK) b_color++;
-    if (red > WHITE && green>WHITE && blue >WHITE) w_color++;
-  }
-  if (height - (b_color + w_color)> (height/100)*GREY) {
-    x_crop = 0;
-    return;
+
+    /* Are there many colored pixels on the border? */
+    if (red != green || red != blue || green != blue)
+      if (++pcm > width*PIXEL_COLOR_MAX/100)
+        return 0;
+
+    if (red < BLACK && green<BLACK && blue < BLACK) ++black;
+    if (red > WHITE && green>WHITE && blue > WHITE) ++white;
   }
 
-  if (b_color <= w_color)
-    w_color= 1;
+  if (height-white < height*GREY/100 && height-black < height*GREY/100 )
+    return 0;
+
+  if (black > white)
+    border_color = BLACK;
   else
-    w_color =0;
+    border_color = WHITE;
 
-  /*/////////////////////////////////////////определение толщины бордюра */
-  if (w_color == 1){
-    for (x=1; x<BORDER_SIZE; x++) {
-      for  (y=0; y<height-1; y++) {
-        current_pixel = pixels + y * rowstride + x * n_channels;
+  /* Determine border size */
+  if (border_color == WHITE) {
+    for (y=1; y < height; ++y) { // 0th row already was scanned
+      prm=0; // Reset counter every row
+      for (x=0; x<width; ++x) {
+        current_pixel = pixels + y*rowstride + x*n_channels;
         if (current_pixel[0] < WHITE) {
-          prm++;
-          if (y - xy_tmp > PIXEL_RESET_COUNT) prm = 0;
-          xy_tmp = y;
-          if (prm > PIXEL_RANDOM_MAX) {
-            x_crop = x;
-            return;
-          }
+          if (++prm > PIXEL_RANDOM_MAX)
+            return y;
+          if (x - x_tmp > PIXEL_RESET_COUNT)
+            prm = 0;
+          x_tmp = x;
         }
       }
     }
-    x_crop = x;
-    return;
-
+    return y;
   } else {
-
-    for (x=1; x<BORDER_SIZE; x++) {
-      for  (y=0; y<height-1; y++) {
-        current_pixel = pixels + y * rowstride + x * n_channels;
+    for (y=1; y < height; ++y) { // 0th row already was scanned
+      prm=0; // Reset counter every row
+      for (x=0; x<width; ++x) {
+        current_pixel = pixels + y*rowstride + x*n_channels;
         if (current_pixel[0] > BLACK) {
-          prm++;
-          if (x - xy_tmp > PIXEL_RESET_COUNT) prm = 0;
-          xy_tmp = x;
-          if (prm > PIXEL_RANDOM_MAX) {
-            x_crop = x;
-            return;
-          }
+          if (++prm > PIXEL_RANDOM_MAX)
+            return y;
+          if (x - x_tmp > PIXEL_RESET_COUNT)
+            prm = 0;
+          x_tmp = x;
         }
       }
     }
-    x_crop = x;
+    return y;
   }
 }
 
-/*############################################################################# */
-/*################################top border################################### */
-/*############################################################################# */
-void find_y_crop (int width)
-{
-  int x, y, b_color, w_color;
-  int pcm = 0;/*count random color pixel */
-  int prm = 0;/*count any random pixel */
-  int xy_tmp = 1;/*count for  PIXEL_RESET_COUNT */
+static int find_bottom_coord (GdkPixbuf *pixbuf) {
+  guchar *pixels, *current_pixel, border_color;
+  int x, y, width, height, rowstride, n_channels;
+  int black = 0; // black pixels count
+  int white = 0; // white pixels count
+  int pcm   = 0; // count random color pixel
+  int prm   = 0; // count any random pixel
+  int x_tmp = 0; // count for PIXEL_RESET_COUNT
 
-  b_color = 0;
-  w_color = 0;
-  y = 0;/*width //y = height; */
-  /*////////////////////////////////определение цвета бордюра, черный или белый */
-  for  (x=x_crop; x<width-1; x++) {
-    int red, green, blue;
-    current_pixel = pixels + y * rowstride + x * n_channels;
+  width      = gdk_pixbuf_get_width  (pixbuf);
+  height     = gdk_pixbuf_get_height (pixbuf);
+  rowstride  = gdk_pixbuf_get_rowstride (pixbuf);
+  n_channels = gdk_pixbuf_get_n_channels (pixbuf);
+  pixels     = gdk_pixbuf_get_pixels (pixbuf);
+  
+  y = height-1; // We are scanning last row
+  for  (x=0; x < width-1; ++x) { // Determine border color
+    guchar red, green, blue;
+    current_pixel = pixels + y*rowstride + x*n_channels;
     red   = current_pixel[0];
     green = current_pixel[1];
     blue  = current_pixel[2];
-    /*цветная или нет */
-    if (red != green || red != blue || green != blue) {
-      pcm++;
-      /*                        g_print ("pcm=%d\n", pcm); */
-      if (pcm > PIXEL_COLOR_MAX){
-        y_crop = 0;/*color pixel */
-        return;
-      }
-    }
-    if (red < BLACK && green<BLACK && blue < BLACK) b_color++;
-    if (red > WHITE && green>WHITE && blue >WHITE) w_color++;
-  }
-  if ((width-x_crop) - (b_color + w_color)> (width/100)*GREY) {
-    /*          g_print ("grey\n"); */
-    y_crop = 0;
-    return;
+
+    /* Are there many colored pixels on the border? */
+    if (red != green || red != blue || green != blue)
+      if (++pcm > width*PIXEL_COLOR_MAX/100)
+        return height;
+
+    if (red < BLACK && green<BLACK && blue < BLACK) ++black;
+    if (red > WHITE && green>WHITE && blue > WHITE) ++white;
   }
 
-  if (b_color <= w_color)
-    w_color= 1;
+  if (height-white < height*GREY/100 && height-black < height*GREY/100 )
+    return height;
+
+  if (black > white)
+    border_color = BLACK;
   else
-    w_color =0;
-  /*g_print ("%d\n", w_color); */
-  /*/////////////////////////////////////////определение толщины бордюра */
-  if (w_color == 1){
-    for (y=1; y<BORDER_SIZE; y++) {
-      for  (x=x_crop; x<width-1; x++) {
-        current_pixel = pixels + y * rowstride + x * n_channels;
+    border_color = WHITE;
+
+  /* Determine border size */
+  if (border_color == WHITE) {
+    for (y=height-2; y > 0; --y) { // Last row already was scanned
+      prm=0; // Reset counter every row
+      for (x=0; x<width; ++x) {
+        current_pixel = pixels + y*rowstride + x*n_channels;
         if (current_pixel[0] < WHITE) {
-          prm++;
-          if (x - xy_tmp > PIXEL_RESET_COUNT) prm = 0;
-          xy_tmp = x;
-          if (prm > PIXEL_RANDOM_MAX) {
-            y_crop = y;
-            return;
-          }
+          if (++prm > PIXEL_RANDOM_MAX)
+            return y;
+          if (x - x_tmp > PIXEL_RESET_COUNT)
+            prm = 0;
+          x_tmp = x;
         }
       }
     }
-    y_crop = y;
-    return;
-
+    return y;
   } else {
-
-    for (y=1; y<BORDER_SIZE; y++) {
-      for  (x=x_crop; x<width-1; x++) {
-        current_pixel = pixels + y * rowstride + x * n_channels;
+    for (y=height-2; y > 0; --y) { // Last row already was scanned
+      prm=0; // Reset counter every row
+      for (x=0; x<width; ++x) {
+        current_pixel = pixels + y*rowstride + x*n_channels;
         if (current_pixel[0] > BLACK) {
-          prm++;
-          if (x - xy_tmp > PIXEL_RESET_COUNT) prm = 0;
-          xy_tmp = x;
-          if (prm > PIXEL_RANDOM_MAX) {
-            y_crop = y;
-            return;
-          }
+          if (++prm > PIXEL_RANDOM_MAX)
+            return y;
+          if (x - x_tmp > PIXEL_RESET_COUNT)
+            prm = 0;
+          x_tmp = x;
         }
       }
     }
-    y_crop = y;
+    return y;
   }
 }
 
-/*############################################################################# */
-/*#################################right border################################ */
-/*############################################################################# */
-void find_width_crop (int width, int height)
-{
-  int x, y, b_color, w_color;
-  int pcm = 0;/*count random color pixel */
-  int prm = 0;/*count any random pixel */
-  int xy_tmp = 1;/*count for  PIXEL_RESET_COUNT */
+static int find_left_coord (GdkPixbuf *pixbuf, int top_coord, int bottom_coord) {
+  guchar *pixels, *current_pixel, border_color;
+  int x, y, width, height, rowstride, n_channels;
+  int black = 0; // black pixels count
+  int white = 0; // white pixels count
+  int pcm   = 0; // count random color pixel
+  int prm   = 0; // count any random pixel
+  int y_tmp = top_coord; // count for PIXEL_RESET_COUNT
 
-  b_color = 0;
-  w_color = 0;
-  x = width - 1;/*width //y = height; */
-  /*////////////////////////////////определение цвета бордюра, черный или белый */
-  for  (y=y_crop; y<height-1; y++) {
-    int red, green, blue;
-    current_pixel = pixels + y * rowstride + x * n_channels;
+  width      = gdk_pixbuf_get_width  (pixbuf);
+  height     = gdk_pixbuf_get_height (pixbuf);
+  rowstride  = gdk_pixbuf_get_rowstride (pixbuf);
+  n_channels = gdk_pixbuf_get_n_channels (pixbuf);
+  pixels     = gdk_pixbuf_get_pixels (pixbuf);
+  
+  x = 0; // We are scanning 0th column
+  for  (y=top_coord; y < bottom_coord; ++y) { // Determine border color
+    guchar red, green, blue;
+    current_pixel = pixels + y*rowstride + x*n_channels;
     red   = current_pixel[0];
     green = current_pixel[1];
     blue  = current_pixel[2];
-    /*цветная или нет */
-    if (red != green || red != blue || green != blue) {
-      pcm++;
-      if (pcm > PIXEL_COLOR_MAX){
-        width_crop = width;/*color pixel */
-        return;
-      }
-    }
-    if (red < BLACK && green<BLACK && blue < BLACK) b_color++;
-    if (red > WHITE && green>WHITE && blue >WHITE) w_color++;
-  }
-  if ((height-y_crop) - (b_color + w_color)> (height/100)*GREY) {
-    width_crop = width;
-    return;
+
+    /* Are there many colored pixels on the border? */
+    if (red != green || red != blue || green != blue)
+      if (++pcm > height*PIXEL_COLOR_MAX/100)
+        return 0;
+
+    if (red < BLACK && green<BLACK && blue < BLACK) ++black;
+    if (red > WHITE && green>WHITE && blue > WHITE) ++white;
   }
 
-  if (b_color <= w_color)
-    w_color= 1;
+  if (height-white < height*GREY/100 && height-black < height*GREY/100 )
+    return 0;
+
+  if (black > white)
+    border_color = BLACK;
   else
-    w_color =0;
-  /*g_print ("%d\n", w_color); */
-  /*/////////////////////////////////////////определение толщины бордюра */
-  if (w_color == 1){
-    for (x=width - 1; x > width - BORDER_SIZE; x--) {
-      for  (y=y_crop; y<height-1; y++) {
-        current_pixel = pixels + y * rowstride + x * n_channels;
+    border_color = WHITE;
+
+  /* Determine border size */
+  if (border_color == WHITE) {
+    for (x=1; x < width; ++x) { // 0th column already was scanned
+      prm=0; // Reset counter every column
+      for (y=top_coord; y < bottom_coord; ++y) {
+        current_pixel = pixels + y*rowstride + x*n_channels;
         if (current_pixel[0] < WHITE) {
-          prm++;
-          if (y - xy_tmp > PIXEL_RESET_COUNT) prm = 0;
-          xy_tmp = y;
-          if (prm > PIXEL_RANDOM_MAX) {
-            width_crop = x;
-            return;
-          }
+          if (++prm > PIXEL_RANDOM_MAX)
+            return x;
+          if (y - y_tmp > PIXEL_RESET_COUNT)
+            prm = 0;
+          y_tmp = y;
         }
       }
     }
-    width_crop = x;
-    return;
-
+    return x;
   } else {
-
-    for (x=width - 1; x > width - BORDER_SIZE; x--) {
-      for  (y=y_crop; y<height-1; y++) {
-        current_pixel = pixels + y * rowstride + x * n_channels;
+    for (x=1; x < width; ++x) { // 0th column already was scanned
+      prm=0; // Reset counter every column
+      for (y=top_coord; y < bottom_coord; ++y) {
+        current_pixel = pixels + y*rowstride + x*n_channels;
         if (current_pixel[0] > BLACK) {
-          prm++;
-          if (x - xy_tmp > PIXEL_RESET_COUNT) prm = 0;
-          xy_tmp = x;
-          if (prm > PIXEL_RANDOM_MAX) {
-            width_crop = x;
-            return;
-          }
+          if (++prm > PIXEL_RANDOM_MAX)
+            return x;
+          if (y - y_tmp > PIXEL_RESET_COUNT)
+            prm = 0;
+          y_tmp = y;
         }
       }
     }
-    width_crop = x;
+    return x;
   }
 }
 
-/*############################################################################# */
-/*###############################buttom border################################# */
-/*############################################################################# */
-void find_height_crop (int width, int height)
-{
-  int x, y, b_color, w_color;
-  int pcm = 0;/*count random color pixel */
-  int prm = 0;/*count any random pixel */
-  int xy_tmp = x_crop;/*count for  PIXEL_RESET_COUNT */
+static int find_right_coord (GdkPixbuf *pixbuf, int top_coord, int bottom_coord) {
+  guchar *pixels, *current_pixel, border_color;
+  int x, y, width, height, rowstride, n_channels;
+  int black = 0; // black pixels count
+  int white = 0; // white pixels count
+  int pcm   = 0; // count random color pixel
+  int prm   = 0; // count any random pixel
+  int y_tmp = top_coord; // count for PIXEL_RESET_COUNT
 
-  b_color = 0;
-  w_color = 0;
-  y = height - 1;
-  /*////////////////////////////////определение цвета бордюра, черный или белый */
-  for  (x=x_crop; x<width_crop -1; x++) {
-    int red, green, blue;
-    current_pixel = pixels + y * rowstride + x * n_channels;
+  width      = gdk_pixbuf_get_width  (pixbuf);
+  height     = gdk_pixbuf_get_height (pixbuf);
+  rowstride  = gdk_pixbuf_get_rowstride (pixbuf);
+  n_channels = gdk_pixbuf_get_n_channels (pixbuf);
+  pixels     = gdk_pixbuf_get_pixels (pixbuf);
+  
+  x = width-1; // We are scanning last column
+  for  (y=top_coord; y < bottom_coord; ++y) { // Determine border color
+    guchar red, green, blue;
+    current_pixel = pixels + y*rowstride + x*n_channels;
     red   = current_pixel[0];
     green = current_pixel[1];
     blue  = current_pixel[2];
-    /*цветная или нет */
-    if (red != green || red != blue || green != blue) {
-      pcm++;
 
-      if (pcm > PIXEL_COLOR_MAX){
-        height_crop = height;/*color pixel */
-        return;
-      }
-    }
-    if (red < BLACK && green<BLACK && blue < BLACK) b_color++;
-    if (red > WHITE && green>WHITE && blue >WHITE) w_color++;
+    /* Are there many colored pixels on the border? */
+    if (red != green || red != blue || green != blue)
+      if (++pcm > height*PIXEL_COLOR_MAX/100)
+        return width;
+
+    if (red < BLACK && green<BLACK && blue < BLACK) ++black;
+    if (red > WHITE && green>WHITE && blue > WHITE) ++white;
   }
-  if ((width_crop-x_crop) - (b_color + w_color)> (width/100)*GREY) {
-    height_crop = height;
-    return;
-  }
-  if (b_color <= w_color)
-    w_color= 1;
+
+  if (height-white < height*GREY/100 && height-black < height*GREY/100 )
+    return width;
+
+  if (black > white)
+    border_color = BLACK;
   else
-    w_color =0;
+    border_color = WHITE;
 
-  /*/////////////////////////////////////////определение толщины бордюра */
-  if (w_color == 1){
-    for (y= height - 1; y > height - BORDER_SIZE; y--) {
-      for  (x=x_crop; x<width_crop-1; x++) {
-        current_pixel = pixels + y * rowstride + x * n_channels;
+  /* Determine border size */
+  if (border_color == WHITE) {
+    for (x=width-2; x > 0; --x) { // Last column already was scanned
+      prm=0; // Reset counter every column
+      for (y=top_coord; y < bottom_coord; ++y) {
+        current_pixel = pixels + y*rowstride + x*n_channels;
         if (current_pixel[0] < WHITE) {
-          prm++;
-          if (x - xy_tmp > PIXEL_RESET_COUNT) prm = 0;
-          xy_tmp = x;
-          if (prm > PIXEL_RANDOM_MAX) {
-            height_crop = y;
-            return;
-          }
+          if (++prm > PIXEL_RANDOM_MAX)
+            return x;
+          if (y - y_tmp > PIXEL_RESET_COUNT)
+            prm = 0;
+          y_tmp = y;
         }
       }
     }
-    height_crop = y;
-    return;
-
+    return x;
   } else {
-
-    for (y= height - 1; y > height - BORDER_SIZE; y--) {
-      for  (x=x_crop; x<width_crop-1; x++) {
-        current_pixel = pixels + y * rowstride + x * n_channels;
+    for (x=width-2; x > 0; --x) { // Last column already was scanned
+      prm=0; // Reset counter every column
+      for (y=top_coord; y < bottom_coord; ++y) {
+        current_pixel = pixels + y*rowstride + x*n_channels;
         if (current_pixel[0] > BLACK) {
-          prm++;
-          if (x - xy_tmp > PIXEL_RESET_COUNT) prm = 0;
-          xy_tmp = x;
-          if (prm > PIXEL_RANDOM_MAX) {
-            height_crop = y;
-            return;
-          }
+          if (++prm > PIXEL_RANDOM_MAX)
+            return x;
+          if (y - y_tmp > PIXEL_RESET_COUNT)
+            prm = 0;
+          y_tmp = y;
         }
       }
     }
-    height_crop = y;
+    return x;
   }
 }
 
-int return_crop_coord (int i) __attribute__((pure));
-int return_crop_coord (int i)
+/********************************************************************************
+ * input: GdkPixbuf *pixbuf                                                     *
+ * output: int coords[4] - cropped image coordinates in format x y width height *
+ * return: TRUE if cropping is necessary, FALSE otherwise                       *
+ ********************************************************************************/
+int find_crop_image_coords(GdkPixbuf *pixbuf, int coords[4])
 {
-  return coord_crop[i];
+  int left, top, right, bottom, width, height;
+  height = gdk_pixbuf_get_height (pixbuf);
+  width  = gdk_pixbuf_get_width  (pixbuf);
+  
+  coords[0] = 0;
+  coords[1] = 0;
+  coords[2] = width;
+  coords[3] = height;
+  
+  top    = find_top_coord    (pixbuf);
+  if (top == height) return FALSE;
+  
+  bottom = find_bottom_coord (pixbuf);
+  if (bottom == 0) return FALSE;
+  
+  left   = find_left_coord   (pixbuf, top, bottom);
+  if (left == width) return FALSE;
+  
+  right  = find_right_coord  (pixbuf, top, bottom);
+  if (right == 0) return FALSE;
+  
+  TRACE("left=%d, top=%d, right=%d, bottom=%d\n", left, top, right, bottom);
+
+  coords[0] = left;
+  coords[1] = top;
+  coords[2] = right  - left;
+  coords[3] = bottom - top;
+  TRACE("x=%d, y=%d, w=%d, h=%d\n", coords[0], coords[1], coords[2], coords[3]);
+  return TRUE;
 }

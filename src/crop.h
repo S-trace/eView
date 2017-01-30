@@ -1,15 +1,13 @@
-#define BORDER_SIZE 512 /*предельная глубина бордюра в пикселах*/
-#define PIXEL_COLOR_MAX 5 /*максимум случайных цветных пикселей при опр.борд*/
-#define PIXEL_RANDOM_MAX 4/*максимум любых случайных пикселов в зоне бордюра*/
-#define PIXEL_RESET_COUNT 100/*через сколько "нормальных" пикселов подряд сбросится счетчик pixel_random_max*/
-#define WHITE 150 /*белым цветом будет считатся от WHITE до 255*/
-#define BLACK 40 /*черным цветом будет считатся от 0 до BLACK*/
-#define GREY 10 /*максимальный процент наличия других тонов черно-белого при
-определении цвета бордюра */
+#define PIXEL_COLOR_MAX 5  /* Percentage of allowed colour pixels in border zone */
+#define PIXEL_RANDOM_MAX 5 /* Max consecutive random pixels in border zone */
+#define PIXEL_RESET_COUNT 100 /* Count of border pixels to reset random pixels counter */
+#define WHITE (guchar)150 /* White is color in range WHITE...255 */
+#define BLACK (guchar)40  /* Black is color in range 0...BLACK */
+#define GREY 10   /* Max Percentage of non-black and non-white pixels in border zone for analysis */
 
-void find_x_crop (int height);
-void find_y_crop (int width);
-void find_width_crop (int width, int height);
-void find_height_crop (int width, int height);
-void find_crop_image_coords(const image *target, int page);
-int return_crop_coord (int i) __attribute__((pure));
+/********************************************************************************
+ * input: GdkPixbuf *pixbuf                                                     *
+ * output: int coords[4] - cropped image coordinates in format x y width height *
+ * return: TRUE if cropping is necessary, FALSE otherwise                       *
+ ********************************************************************************/
+int find_crop_image_coords(GdkPixbuf *pixbuf, int coords[4]);
