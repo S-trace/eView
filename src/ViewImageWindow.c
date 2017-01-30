@@ -746,9 +746,11 @@ void image_resize (image *target) /* изменение разрешения и 
     {
       calculate_scaling_dimensions(&new_width, &new_height, target->height[PAGE_FULL], target->width[PAGE_FULL], 0, height_display * target->pages_count);
       pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf[PAGE_FULL], new_width, new_height, scaling_quality);
-      if (! pixbuf_check(pixbuf_key, PIXBUF_SCALING_FAILED)) return;
-      pixbuf_unref(target->pixbuf[PAGE_FULL]);
-      target->pixbuf[PAGE_FULL]=pixbuf_key;
+      if (pixbuf_check(pixbuf_key, PIXBUF_SCALING_FAILED))
+      {
+        pixbuf_unref(target->pixbuf[PAGE_FULL]);
+        target->pixbuf[PAGE_FULL]=pixbuf_key;
+      }
       update_image_dimentions(target);
       create_page_subpixbufs(target);
       if (target->pages_count > 1) // Не выполняем поиск для всей страницы!
@@ -770,21 +772,22 @@ void image_resize (image *target) /* изменение разрешения и 
       }
       
       pixbuf_key = gdk_pixbuf_rotate_simple (target->pixbuf[PAGE_FULL], GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
-      if (! pixbuf_check(pixbuf_key, PIXBUF_ROTATING_FAILED)) return;
-      pixbuf_unref(target->pixbuf[PAGE_FULL]);
-      target->pixbuf[PAGE_FULL]=pixbuf_key;
-      update_image_dimentions(target);
-      
-      if (target->pages_count > 1) // Переделываем субпиксбуфы c учётом поворота
+      if (pixbuf_check(pixbuf_key, PIXBUF_ROTATING_FAILED))
       {
-        pixbuf_unref(target->pixbuf[PAGE_LEFT]);
-        pixbuf_unref(target->pixbuf[PAGE_RIGHT]);
-        target->pixbuf[PAGE_LEFT]=gdk_pixbuf_new_subpixbuf(target->pixbuf[PAGE_FULL], 0, target->height[PAGE_FULL]/2, target->width[PAGE_FULL], target->height[PAGE_FULL]-target->height[PAGE_FULL]/2);
-        target->pixbuf[PAGE_RIGHT]=gdk_pixbuf_new_subpixbuf(target->pixbuf[PAGE_FULL], 0, 0, target->width[PAGE_FULL], target->height[PAGE_FULL]/2);
+        pixbuf_unref(target->pixbuf[PAGE_FULL]);
+        target->pixbuf[PAGE_FULL]=pixbuf_key;
         update_image_dimentions(target);
-        if (! pixbuf_check(target->pixbuf[PAGE_LEFT], SUBPIXBUF_CREATING_FAILED)) return;
-        if (! pixbuf_check(target->pixbuf[PAGE_RIGHT], SUBPIXBUF_CREATING_FAILED)) return;
         
+        if (target->pages_count > 1) // Переделываем субпиксбуфы c учётом поворота
+        {
+          pixbuf_unref(target->pixbuf[PAGE_LEFT]);
+          pixbuf_unref(target->pixbuf[PAGE_RIGHT]);
+          target->pixbuf[PAGE_LEFT]=gdk_pixbuf_new_subpixbuf(target->pixbuf[PAGE_FULL], 0, target->height[PAGE_FULL]/2, target->width[PAGE_FULL], target->height[PAGE_FULL]-target->height[PAGE_FULL]/2);
+          target->pixbuf[PAGE_RIGHT]=gdk_pixbuf_new_subpixbuf(target->pixbuf[PAGE_FULL], 0, 0, target->width[PAGE_FULL], target->height[PAGE_FULL]/2);
+          update_image_dimentions(target);
+          if (! pixbuf_check(target->pixbuf[PAGE_LEFT],  SUBPIXBUF_CREATING_FAILED)) return;
+          if (! pixbuf_check(target->pixbuf[PAGE_RIGHT], SUBPIXBUF_CREATING_FAILED)) return;
+        }
       }      
       return;
     }
@@ -796,9 +799,11 @@ void image_resize (image *target) /* изменение разрешения и 
     else // Скалируем с удвоением размера экрана (не сохраняем аспект)
       pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf[PAGE_FULL], width_display * target->pages_count, height_display, scaling_quality);
 
-    if (! pixbuf_check(pixbuf_key, PIXBUF_SCALING_FAILED)) return;
-    pixbuf_unref(target->pixbuf[PAGE_FULL]);
-    target->pixbuf[PAGE_FULL]=pixbuf_key;
+    if (pixbuf_check(pixbuf_key, PIXBUF_SCALING_FAILED))
+    {
+      pixbuf_unref(target->pixbuf[PAGE_FULL]);
+      target->pixbuf[PAGE_FULL]=pixbuf_key;
+    }
     update_image_dimentions(target);
     create_page_subpixbufs(target);
     update_image_dimentions(target);
@@ -814,18 +819,22 @@ void image_resize (image *target) /* изменение разрешения и 
       calculate_scaling_dimensions(&new_width, &new_height, target->height[PAGE_FULL], target->width[PAGE_FULL], 0, width_display);
 
     pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf[PAGE_FULL], new_width, new_height, scaling_quality);
-    if (! pixbuf_check(pixbuf_key, PIXBUF_SCALING_FAILED)) return;
-    pixbuf_unref(target->pixbuf[PAGE_FULL]);
-    target->pixbuf[PAGE_FULL]=pixbuf_key;
+    if (pixbuf_check(pixbuf_key, PIXBUF_SCALING_FAILED))
+    {
+      pixbuf_unref(target->pixbuf[PAGE_FULL]);
+      target->pixbuf[PAGE_FULL]=pixbuf_key;
+    }
     update_image_dimentions(target);
     target->frames[PAGE_FULL] = frames_search(target, PAGE_FULL, target->frame_map[PAGE_FULL]);
     TRACE("Found %d frames on page %d\n", target->frames[PAGE_FULL], PAGE_FULL);
     if (rotate)
     {
       pixbuf_key = gdk_pixbuf_rotate_simple (target->pixbuf[PAGE_FULL], GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
-      if (! pixbuf_check(pixbuf_key, PIXBUF_ROTATING_FAILED)) return;
-      pixbuf_unref(target->pixbuf[PAGE_FULL]);
-      target->pixbuf[PAGE_FULL]=pixbuf_key;
+      if (pixbuf_check(pixbuf_key, PIXBUF_ROTATING_FAILED))
+      {
+        pixbuf_unref(target->pixbuf[PAGE_FULL]);
+        target->pixbuf[PAGE_FULL]=pixbuf_key;
+      }
       update_image_dimentions(target);
     }
     return;
@@ -835,9 +844,11 @@ void image_resize (image *target) /* изменение разрешения и 
   if (target->width[PAGE_FULL] > target->height[PAGE_FULL])
   {
     pixbuf_key = gdk_pixbuf_rotate_simple (target->pixbuf[PAGE_FULL], GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
-    if (! pixbuf_check(pixbuf_key, PIXBUF_ROTATING_FAILED)) return;
-    pixbuf_unref(target->pixbuf[PAGE_FULL]);
-    target->pixbuf[PAGE_FULL] = pixbuf_key;
+    if (pixbuf_check(pixbuf_key, PIXBUF_ROTATING_FAILED))
+    {
+      pixbuf_unref(target->pixbuf[PAGE_FULL]);
+      target->pixbuf[PAGE_FULL] = pixbuf_key;
+    }
     update_image_dimentions(target);
   }
 
@@ -854,9 +865,11 @@ void image_resize (image *target) /* изменение разрешения и 
     TRACE("aspect not preserved\n");
     pixbuf_key = gdk_pixbuf_scale_simple (target->pixbuf[PAGE_FULL], width_display, height_display, scaling_quality);
   }
-  if (! pixbuf_check(pixbuf_key, PIXBUF_SCALING_FAILED)) return;
-  pixbuf_unref(target->pixbuf[PAGE_FULL]);
-  target->pixbuf[PAGE_FULL] = pixbuf_key;
+  if (pixbuf_check(pixbuf_key, PIXBUF_SCALING_FAILED))
+  {
+    pixbuf_unref(target->pixbuf[PAGE_FULL]);
+    target->pixbuf[PAGE_FULL] = pixbuf_key;
+  }
   update_image_dimentions(target);
   return;
 }
