@@ -5,6 +5,12 @@
 #include <gtk/gtk.h>
 #include <string.h>
 #include <stdlib.h>
+#include <archive.h>
+#include <archive_entry.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <libgen.h>
 
 #include "gtk_file_manager.h"
 #include "mylib.h"
@@ -211,27 +217,75 @@ char **archive_get_directories_list(struct_panel *panel, const char *directory) 
   return names;
 }
 
-void archive_extract_file(const char *archive, const char *file, const char *to)
+/*
+ * Extract file to target_directory from archive
+ * Input:
+ * archive: Path to archive file (absolute or relative)
+ * file: Full path to file in archive (without leading /)
+ * target_directory: Path where file will be extracted with archived path
+ */
+void archive_extract_file(const char* archive, const char* file, const char* target_directory)
 {
-  const char *archiver;
-  char *command = NULL, *name=NULL;
-  switch (file_type_of(archive)) {
-    case ZIP_FILE:
-      archiver="unzip -o ";
-      name=escape(file);
-      break;
-    case RAR_FILE:
-      archiver="unrar x -y -kb ";
-      name=strdup(file);
-      break;
-    default:
-      TRACE("Unknown file type:%s\n", archive);
-      return;
-  }
-  asprintf(&command, "%s \"%s\" \"%s\" -d \"%s\"", archiver, archive, name, to);
-  xsystem(command);
-  xfree(&command);
-  free(name);
+	int res;
+	int target_fd;
+	ssize_t size;
+	size_t buffsize=16384;
+	char buff[buffsize], *target_full_path=NULL, *target_dir=NULL, *td_bak=NULL;
+	struct archive_entry *entry;
+	struct archive *a;
+	TRACE("%s caled with %s %s %s\n", __func__, archive, file, target_directory);
+
+	a = archive_read_new();
+	archive_read_support_filter_all(a);
+	archive_read_support_format_all(a);
+
+	res = archive_read_open_filename(a, archive, buffsize);
+	if (res != ARCHIVE_OK) {
+		TRACE("Unable to open archive '%s'\n", archive);
+		goto out_archive_read;
+	}
+
+	do {
+		if (archive_read_next_header(a, &entry) != ARCHIVE_OK) {
+			TRACE("Archive parsing failed or no such file in archive, exiting\n");
+			goto out_archive_read;
+		}
+	} while (strncmp(archive_entry_pathname(entry), file, strlen(file)) != 0);
+
+	target_full_path=xconcat_path_file(target_directory, file);
+	target_dir=xconcat_path_file(target_directory, file);
+	td_bak=target_dir;
+	target_dir=dirname(target_dir);
+	if (!mkpath(target_dir, S_IRWXU))
+		TRACE("mkdir '%s' failed (%s)\n", target_dir, strerror(errno));
+	else
+		TRACE("mkdir '%s' done!\n", target_dir);
+	target_fd=open(target_full_path, O_CREAT | O_WRONLY, S_IRUSR|S_IWUSR);
+	if (target_fd < 0 ) {
+		TRACE("can't open target file '%s' (%s)\n", target_full_path, strerror(errno));
+		goto out_strings;
+	}
+
+	for (;;) {
+		size = archive_read_data(a, buff, buffsize);
+		if (size < 0) {
+			TRACE("Something was wrong while extracting file!\n");
+			goto out_strings;
+		}
+		if (size == 0) {
+			TRACE("File extracted completely\n");
+			break;
+		}
+		write(target_fd, buff, (size_t)size);
+	}
+	close(target_fd);
+
+	out_strings:
+	free (target_full_path);
+	free (td_bak);
+	out_archive_read:
+	archive_read_free(a);
+	return;
 }
 
 int enter_archive(const char *name, struct_panel *panel, int update_config)
