@@ -194,21 +194,13 @@ void set_image_settings(image *target)
 void reset_image(image *const target)
 {
   TRACE("Resetting image %p\n", target);
-  target->name[0] = '\0';
-  pixbuf_unref(target->pixbuf[PAGE_FULL]);
-  target->width[PAGE_FULL]=target->height[PAGE_FULL]=0;
-  target->aspect_rate[PAGE_FULL]=(double)0;
   if (target->pages_count > 1)
   {
     pixbuf_unref(target->pixbuf[PAGE_LEFT]);
-    target->width[PAGE_FULL]=target->height[PAGE_LEFT]=0;
-    target->aspect_rate[PAGE_LEFT]=(double)0;
-
     pixbuf_unref(target->pixbuf[PAGE_RIGHT]);
-    target->width[PAGE_FULL]=target->height[PAGE_RIGHT]=0;
-    target->aspect_rate[PAGE_RIGHT]=(double)0;
   }
-  target->pages_count=target->valid=target->keepaspect=target->rotate=target->frame=target->crop=0; /* Сбрасываем всё остальное в структуре */
+  pixbuf_unref(target->pixbuf[PAGE_FULL]);
+  memset(target, 0, sizeof(*target));
 }
 
 gboolean load_image(const char *const filename, const struct_panel *const panel, const int enable_actions, image *const target) /* Загружаем и готовим к показу картинку */
