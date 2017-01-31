@@ -213,7 +213,6 @@ void create_cfg (void)  /*создание файлов настроек по у
   write_config_string("top_panel.selected_name", top_panel.selected_name=strdup("../"));
   write_config_string("top_panel.archive_cwd", top_panel.archive_cwd=strdup(""));
   write_config_string("top_panel.last_name", top_panel.last_name=strdup(""));
-  write_config_string("top_panel.archive_list", top_panel.archive_list=strdup("/tmp/top.archive_list"));
   strcpy(top_panel.archive_stack[0],"filesystem");
   strcpy(top_panel.archive_stack[1],"");
   write_archive_stack("top_panel.archive_stack", &top_panel);
@@ -222,7 +221,6 @@ void create_cfg (void)  /*создание файлов настроек по у
   write_config_string("bottom_panel.selected_name", bottom_panel.selected_name=strdup("../"));
   write_config_string("bottom_panel.archive_cwd", bottom_panel.archive_cwd=strdup(""));
   write_config_string("bottom_panel.last_name", bottom_panel.last_name=strdup(""));
-  write_config_string("bottom_panel.archive_list", bottom_panel.archive_list=strdup("/tmp/bottom.archive_list"));
   strcpy(bottom_panel.archive_stack[0],"filesystem");
   strcpy(bottom_panel.archive_stack[1],"");
   write_archive_stack("bottom_panel.archive_stack", &bottom_panel);
@@ -232,7 +230,7 @@ void create_cfg (void)  /*создание файлов настроек по у
 void read_panel_configuration(struct_panel *panel)
 {
   const char *name_prefix;
-  char *path_file, *selected_name_file, *archive_cwd_file, *archive_list_file, *last_name_file, *archive_stack_file;
+  char *path_file, *selected_name_file, *archive_cwd_file, *last_name_file, *archive_stack_file;
   if (panel == &top_panel)
     name_prefix = "top";
   else
@@ -242,19 +240,16 @@ void read_panel_configuration(struct_panel *panel)
   path_file=xconcat(name_prefix, "_panel.path");
   selected_name_file=xconcat(name_prefix, "_panel.selected_name");
   archive_cwd_file=xconcat(name_prefix, "_panel.archive_cwd");
-  archive_list_file=xconcat(name_prefix, "_panel.archive_list");
   last_name_file=xconcat(name_prefix, "_panel.last_name");
   archive_stack_file=xconcat(name_prefix, "_panel.archive_stack");
   read_config_string(path_file, &panel->path);
   read_config_string(selected_name_file, &panel->selected_name);
   read_config_string(archive_cwd_file, &panel->archive_cwd);
-  read_config_string(archive_list_file, &panel->archive_list);
   read_config_string(last_name_file, &panel->last_name);
   read_archive_stack(archive_stack_file, panel);
   free (path_file);
   free (selected_name_file);
   free (archive_cwd_file);
-  free (archive_list_file);
   free (last_name_file);
   free (archive_stack_file);
 }

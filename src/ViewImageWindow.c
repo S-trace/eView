@@ -21,6 +21,7 @@
 #include "frames_search.h"
 #include "shift.h"
 #include "archive_handler.h"
+#include "archive_routines.h"
 #include "translations.h"
 #include "interface.h"
 

@@ -1,6 +1,6 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+
 /* modification by Norin Maxim, 2011, Soul Trace, 2013, Based on  Mini Gtk-file-manager Copyright (C) 2002-2006
  * # * by Tito Ragusa <tito-wolit@tiscali.it>
  * # Distributed under GPLv2 Terms
@@ -856,36 +856,4 @@ void preload_next_screensaver(void)
   keepaspect=saved_keepaspect;
   suspended=saved_suspended;
   boost_contrast=saved_boost_contrast;
-}
-
-/*
- * Recursive mkdir() call (like bash's mkdir -p do)
- * Origin; http://stackoverflow.com/questions/2336242/recursive-mkdir-system-call-on-unix
- */
-int mkpath(char *dir, mode_t mode)
-{
-	struct stat sb;
-	
-	if (!dir) {
-		errno = EINVAL;
-		return 1;
-	}
-	
-	if (!stat(dir, &sb))
-		return 0;
-	
-	mkpath(dirname(strdupa(dir)), mode);
-	
-	return mkdir(dir, mode);
-}
-
-/*
- * strverscmp() wrapper for using it with qsort()
- * It is necessary because qsort() pass pointers to strings, which needs to be dereferenced before strverscmp() will be called
- */
-int strverscmp_qsort_wrapper(void *a, void *b) 
-{
-	const char **ia = (const char **)a;
-	const char **ib = (const char **)b;
-	return strverscmp(*ia, *ib);
 }

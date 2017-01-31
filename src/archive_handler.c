@@ -18,6 +18,8 @@
 #include "mygtk.h"
 #include "os-specific.h"
 #include "translations.h"
+#include "archive_handler.h"
+#include "archive_routines.h"
 char *archive_cwd_prev; /* Предыдущий текущий каталог в архиве */
 
 enum
@@ -124,195 +126,6 @@ int file_type_of(const char *fname)
   return -1;
 }
 
-/*
- * Get sorted archive content list to list_file
- * Input:
- * archive: Path to archive file (absolute or relative)
- * list_file: Path to list (absolute or relative)
- */
-static int get_archive_list(const char *archive, const char *list_file)
-{
-	int res;
-	size_t bytes_in_list = 0, records_in_list = 0;
-	char **listarr = NULL;
-	FILE *list;
-	size_t buffsize=16384;
-	struct archive_entry *entry;
-	size_t i=0;
-	TRACE("%s caled with %s %s\n", __func__, archive, list_file);
-	
-	struct archive *a = archive_read_new();
-	archive_read_support_filter_all(a);
-	archive_read_support_format_all(a);
-	
-	res = archive_read_open_filename(a, archive, buffsize);
-	if (res != ARCHIVE_OK) {
-		TRACE("Unable to open archive '%s'\n", archive);
-		goto out_archive_read;
-	}
-	
-	list=fopen(list_file, "w");
-	if (!list) {
-		TRACE("can't open target file '%s' (%s)\n", list_file, strerror(errno));
-		goto out_archive_read;
-	}
-	do {
-		res = archive_read_next_header(a, &entry);
-		if (res == ARCHIVE_EOF )
-			break;
-		if (res != ARCHIVE_OK)
-			goto out_close_list;
-		bytes_in_list += sizeof(*listarr);
-		listarr = realloc(listarr, bytes_in_list);
-		const char *pathname = archive_entry_pathname(entry);
-		if (archive_entry_filetype(entry) == AE_IFDIR && pathname[strlen(pathname)-1] != '/'){
-			listarr[records_in_list] = malloc(sizeof(**listarr)*strlen(pathname)+1);
-			strcpy(listarr[records_in_list], pathname);
-			strcat(listarr[records_in_list], "/");
-		} else {
-			listarr[records_in_list] = strdup(pathname);
-		}
-		++records_in_list;
-	} while (TRUE);
-
-	qsort(listarr, bytes_in_list/sizeof(*listarr), sizeof(*listarr), (__compar_fn_t)strverscmp_qsort_wrapper);
-
-	for(i=0; i<records_in_list; ++i) {
-		fputs(listarr[i], list);
-		fputc('\n', list);
-		free(listarr[i]);
-	}
-	fclose(list);
-	archive_read_free(a);
-	return TRUE;
-	
-	out_close_list:
-	fclose(list);
-	out_archive_read:
-	archive_read_free(a);
-	return FALSE;
-}
-
-// cppcheck-suppress "unusedFunction"
-char **archive_get_files_list(struct_panel *panel, const char *cwd) /* Получение списка файлов в подкаталоге архива */
-{
-  char *bff = NULL,*command = NULL, **names, *escaped;
-  escaped=escape(cwd);
-  if ((asprintf(&command, "grep '^%s[^/]\\+$' %s > /tmp/files.list", escaped, panel->archive_list) == -1) || command == NULL)
-  {
-    TRACE("asprintf() failed in archive_get_files_list (no memory?)\n");
-    shutdown(FALSE);
-  }
-  else /* Получаем список каталогов и файлов в каноничном формате (каталоги должны завершаться слэшем) */
-    xsystem(command);
-  free(escaped);
-  xfree(&command);
-  if (g_file_test("/tmp/files.list", G_FILE_TEST_EXISTS) == FALSE) /* Если файл со списком не существует */
-  {
-    TRACE("Cannot open /tmp/files.list\n");
-    xfree(&bff); /* Освобождаем временный буфер для содержимого файла */
-    return NULL;
-  }
-  (void)g_file_get_contents("/tmp/files.list", &bff, NULL, NULL); /* Считываем весь файл во временный буфер */
-  (void)remove ("/tmp/files.list"); /* И удаляем его */
-  names = g_strsplit(bff, "\n", 0); /* Разделяем считанный файл по строкам */
-  g_free(bff); /* Освобождаем временный буфер */
-  return names;
-}
-
-// cppcheck-suppress "unusedFunction"
-char **archive_get_directories_list(struct_panel *panel, const char *directory) /* Получение списка подкаталогов нижнего уровня в подкаталоге архива */
-{
-  char *bff = NULL,*command = NULL, **names, *escaped;
-  escaped=escape(directory);
-  asprintf(&command, "grep '^%s[^/]*/$' %s | uniq > /tmp/dirs.list ", escaped, panel->archive_list);
-  free(escaped);
-  xsystem(command);
-  xfree(&command);
-  if (g_file_test("/tmp/dirs.list", G_FILE_TEST_EXISTS) != TRUE) /* Если файл со списком не существует */
-  {
-    TRACE("Cannot open /tmp/dirs.list\n");
-    g_free(bff); /* Освобождаем временный буфер для содержимого файла */
-    return NULL;
-  }
-  (void)g_file_get_contents("/tmp/dirs.list", &bff, NULL, NULL); /* Считываем весь файл во временный буфер */
-  (void)remove ("/tmp/dirs.list"); /* И удаляем его */
-  names = g_strsplit(bff, "\n", 0); /* Разделяем считанный файл по строкам */
-  g_free(bff); /* Освобождаем временный буфер */
-  return names;
-}
-
-/*
- * Extract file to target_directory from archive
- * Input:
- * archive: Path to archive file (absolute or relative)
- * file: Full path to file in archive (without leading /)
- * target_directory: Path where file will be extracted with archived path
- */
-void archive_extract_file(const char* archive, const char* file, const char* target_directory)
-{
-	int res;
-	int target_fd;
-	ssize_t size;
-	size_t buffsize=16384;
-	char buff[buffsize], *target_full_path=NULL, *target_dir=NULL, *td_bak=NULL;
-	struct archive_entry *entry;
-	struct archive *a;
-	TRACE("%s caled with %s %s %s\n", __func__, archive, file, target_directory);
-
-	a = archive_read_new();
-	archive_read_support_filter_all(a);
-	archive_read_support_format_all(a);
-
-	res = archive_read_open_filename(a, archive, buffsize);
-	if (res != ARCHIVE_OK) {
-		TRACE("Unable to open archive '%s'\n", archive);
-		goto out_archive_read;
-	}
-
-	do {
-		if (archive_read_next_header(a, &entry) != ARCHIVE_OK) {
-			TRACE("Archive parsing failed or no such file in archive, exiting\n");
-			goto out_archive_read;
-		}
-	} while (strncmp(archive_entry_pathname(entry), file, strlen(file)) != 0);
-
-	target_full_path=xconcat_path_file(target_directory, file);
-	target_dir=xconcat_path_file(target_directory, file);
-	td_bak=target_dir;
-	target_dir=dirname(target_dir);
-	if (!mkpath(target_dir, S_IRWXU))
-		TRACE("mkdir '%s' failed (%s)\n", target_dir, strerror(errno));
-	else
-		TRACE("mkdir '%s' done!\n", target_dir);
-	target_fd=open(target_full_path, O_CREAT | O_WRONLY, S_IRUSR|S_IWUSR);
-	if (target_fd < 0 ) {
-		TRACE("can't open target file '%s' (%s)\n", target_full_path, strerror(errno));
-		goto out_strings;
-	}
-
-	for (;;) {
-		size = archive_read_data(a, buff, buffsize);
-		if (size < 0) {
-			TRACE("Something was wrong while extracting file!\n");
-			goto out_strings;
-		}
-		if (size == 0) {
-			TRACE("File extracted completely\n");
-			break;
-		}
-		write(target_fd, buff, (size_t)size);
-	}
-	close(target_fd);
-
-	out_strings:
-	free (target_full_path);
-	free (td_bak);
-	out_archive_read:
-	archive_read_free(a);
-	return;
-}
-
 int enter_archive(const char *name, struct_panel *panel, int update_config)
 {
   char *saved_work_dir=xgetcwd(NULL);
@@ -335,7 +148,7 @@ int enter_archive(const char *name, struct_panel *panel, int update_config)
     return FALSE;
   }
   
-  if (get_archive_list(name, panel->archive_list))
+  if (archive_supported(name))
   {
     char *text;
     if(update_config)
@@ -381,7 +194,7 @@ void leave_archive(struct_panel *panel)
   panel->archive_depth=panel->archive_depth-1;
   if (panel->archive_depth > 0) /* Если мы ешё не достигли ФС */
   {
-    (void)remove(panel->archive_list);
+    archive_list_free(panel->archive_list);
     (void)remove(panel->archive_stack[panel->archive_depth+1]); /* То удаляем архив который покинули - он был вложеным! */
     enter_archive(panel->archive_stack[panel->archive_depth], panel, FALSE);
   }

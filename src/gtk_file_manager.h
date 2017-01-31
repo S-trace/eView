@@ -64,7 +64,7 @@ typedef struct {
   char *selected_iter; /* Итератор (номер в строковом виде) выбранного объекта */
   char *last_name; /* Последний просмотренный файл в панели */
   char *archive_cwd; /* Текущий каталог в архиве */
-  char *archive_list; /* имя файла со списком архива (для возможности входа в разные архивы с разных панелей) */
+  char **archive_list; /* Archive list allocated by archive_list_get() */
   char archive_stack[MAX_ARCHIVE_DEPTH][PATHSIZE+1]; /* Стек архивов в панели */
   int files_num; /* Количество файлов в каталоге на панели */
   int dirs_num; /* Количество подкаталогов в каталоге на панели */

@@ -21,6 +21,7 @@
 #include "os-specific.h"
 #include "translations.h"
 #include "archive_handler.h"
+#include "archive_routines.h"
 #include "interface.h"
 
 int enable_refresh=1;

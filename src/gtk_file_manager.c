@@ -35,6 +35,7 @@
 #include "digma_hw.h"
 #include "ViewImageWindow.h"
 #include "archive_handler.h"
+#include "archive_routines.h"
 #include "translations.h"
 #include "interface.h"
 
@@ -90,7 +91,7 @@ void /*@null@*/  *sleep_thread(__attribute__((unused)) /*@unused@*/ void* arg)
 
 void list_fd(struct_panel *panel) /*добавление списка имен каталогов, файлов и их размеров в панель struct_panel */
 {
-  int i = 0;
+  int i;
   panel->files_num=0;
   panel->dirs_num=0;
   if (panel->archive_depth > 0) /* Поведение в архиве */
@@ -99,44 +100,39 @@ void list_fd(struct_panel *panel) /*добавление списка имен �
     char **namelist, *text;
     add_data_to_list(panel->list, back, 1, NO_AUTOSCROLL, "dir ");
     panel->dirs_num++;
-    namelist=archive_get_directories_list(panel, panel->archive_cwd);
-    if ( namelist[0] != NULL)
+    if(!panel->archive_list)
+	    panel->archive_list=archive_list_get(panel->archive_stack[panel->archive_depth]); // Populate panel->archive_list on demand
+    namelist=archive_list_filter(panel->archive_list, panel->archive_cwd, AE_IFDIR);
+    i=0;
+    while(namelist && namelist[i] && GTK_IS_WIDGET(main_window))
     {
-      while( namelist[i] != 0 && namelist[i][0] != '\0' && GTK_IS_WIDGET(main_window) )
-      {
-        char *full_name, *text_basename;
-        if ((show_hidden_files == FALSE) && namelist[i][0] == '.') {continue;}
-        panel->dirs_num++;
-        text=strdup(namelist[i]);
-        trim_line(text); /* Ампутируем последний слэш */
-        text_basename=basename(text);
-        full_name=xconcat(text_basename,"/");
-        free(text);
-        TRACE("Adding %d archive file '%s'\n", i, full_name);
-        add_data_to_list(panel->list, full_name, 1, NO_AUTOSCROLL, "dir ");
-        xfree(&namelist[i]);
-        free(full_name);
-        i++;
-      }
+      char *full_name, *text_basename;
+      if ((show_hidden_files == FALSE) && namelist[i][0] == '.')
+	      continue;
+      ++panel->dirs_num;
+      text=strdup(namelist[i]);
+      text_basename=basename(text);
+      full_name=xconcat(text_basename,"/");
+      free(text);
+      TRACE("Adding %d archive dir '%s'\n", i, full_name);
+      add_data_to_list(panel->list, full_name, 1, NO_AUTOSCROLL, "dir ");
+      free(full_name);
+      ++i;
     }
-    free(namelist);
+    archive_list_free(namelist);
 
-    namelist=archive_get_files_list(panel, panel->archive_cwd);
-    if ( namelist[0] != NULL)
+    namelist=archive_list_filter(panel->archive_list, panel->archive_cwd, AE_IFREG);
+    i=0;
+    while(namelist && namelist[i] && GTK_IS_WIDGET(main_window))
     {
-      i=0; /* Сбрасываем счётчик, иначе карается сегфолтом! */
-      while(namelist[i][0] != '\0' && GTK_IS_WIDGET(main_window) ) /* Пока имя файла не вырождается в пустую строку (грёбаный греп с его повадками!) */
-      {
-        if ((show_hidden_files == FALSE) && namelist[i][0] == '.') {continue;}
-        text=basename(namelist[i]);
-        add_data_to_list(panel->list, text, 1, NO_AUTOSCROLL, "file ");
-        panel->files_num++;
-        xfree (&namelist[i]);
-        //         free(text); // basename() - free() противопоказан!
-        i++;
-      }
+      if ((show_hidden_files == FALSE) && namelist[i][0] == '.') {continue;}
+      text=basename(namelist[i]);
+      TRACE("Adding %d archive file %s\n", i, text);
+      add_data_to_list(panel->list, text, 1, NO_AUTOSCROLL, "file ");
+      panel->files_num++;
+      ++i;
     }
-    free(namelist);
+    archive_list_free(namelist);
   }
   else /* Поведение в ФС */
   {
@@ -623,8 +619,8 @@ void shutdown(int exit_code)
   TRACE("Shutting down eView\n");
   if (top_panel.selected_name != NULL) write_config_string("top_panel.selected_name", top_panel.selected_name);
   if (bottom_panel.selected_name != NULL) write_config_string("bottom_panel.selected_name", bottom_panel.selected_name);
-  (void)remove(top_panel.archive_list);
-  (void)remove(bottom_panel.archive_list);
+  archive_list_free(top_panel.archive_list);
+  archive_list_free(bottom_panel.archive_list);
   set_brightness(previous_backlight_level);
   gtk_main_quit();
   switch (hw_platform)
