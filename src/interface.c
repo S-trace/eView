@@ -355,7 +355,8 @@ void boost_contrast_callback (void) // Callback для галки качеств
     need_refresh=TRUE;
   else
   {
-    adjust_contrast (&current, 512, PAGE_FULL);
+    pixbuf_adjust_contrast (current.pixbuf[PAGE_FULL], 512); // Increase contrast twice (256*2)
+    current.boost_contrast = TRUE;
     gtk_widget_queue_draw(GTK_WIDGET(gimage)); /* Заставляем GTK перерисовать картинку */
   }
   e_ink_refresh_local ();

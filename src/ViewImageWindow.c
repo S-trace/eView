@@ -317,8 +317,10 @@ gboolean load_image(const char *const filename, const struct_panel *const panel,
     free (extracted_file_name);
   }
   image_resize (target);
-  if (boost_contrast) // Увеличиваем контраст в два раза
-    adjust_contrast (target, 512, PAGE_FULL);
+  if (boost_contrast) {
+    pixbuf_adjust_contrast (target->pixbuf[PAGE_FULL], 512);  // Increase contrast twice (256*2)
+    current.boost_contrast = TRUE;
+  }
   return TRUE;
 }
 
@@ -611,7 +613,8 @@ void action_toggle_boost_contrast(struct_panel *panel) {
   }
   else
   {
-    adjust_contrast (&current, 512, PAGE_FULL);
+    pixbuf_adjust_contrast (current.pixbuf[PAGE_FULL], 512); // Increase contrast twice (256*2)
+    current.boost_contrast = TRUE;
     gtk_widget_queue_draw(GTK_WIDGET(gimage)); /* Force GTK to redraw image */
   }
   e_ink_refresh_full();
