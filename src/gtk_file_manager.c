@@ -7,6 +7,7 @@
 
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
+#include <sys/reboot.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -498,7 +499,9 @@ void init (void)
     else if (hw_platform == HW_PLATFORM_KOBO)
     {
       TRACE("X is down and we are on KOBO\n");
+#ifndef debug
       kobo_disable_wlan();
+#endif //debug
     }
 
     if (access("/etc/GTK_parts.version", F_OK))
@@ -631,8 +634,13 @@ void shutdown(int exit_code)
       set_system_sleep_timeout(system_sleep_timeout);
       break;
     case HW_PLATFORM_KOBO:
+#ifdef debug
       TRACE("Shutting down Xorg\n");
       xsystem("killall Xorg");
+#else
+      TRACE("Rebooting device\n");
+      reboot(RB_AUTOBOOT);
+#endif //debug
       break;
     default:
       break;
