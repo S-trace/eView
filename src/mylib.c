@@ -79,8 +79,11 @@ void set_system_sleep_timeout(const char *timeout)
 {
   if (timeout) {
     char *command;
+    int result;
     asprintf(&command,"dbus-send --print-reply --type=method_call --dest=com.sibrary.BoeyeServer /PowerManager com.sibrary.Service.PowerManager.setSuspendTime int32:%s", timeout);
-    xsystem(command);
+    result = system(command);
+    TRACE("%s returned %d", command, result);
+    (void) result;
     free(command);
   }
   else
