@@ -395,6 +395,20 @@ void detect_hardware(void) /* Обнаружение оборудования и
     }
   }
 
+  if (hardware_has_LED == FALSE) /* Kobo Aura H2O */
+  {
+    hardware_has_LED=check_for_file ("/sys/class/leds/pmic_ledsg/brightness");
+    if (hardware_has_LED)
+    {
+      LED_path="/sys/class/leds/pmic_ledsg/brightness";
+      LED_state[LED_ON]=255;
+      LED_state[LED_OFF]=0;
+      LED_state[LED_BLINK_SLOW]=255; // Not supported
+      LED_state[LED_BLINK_FAST]=255; // Not supported
+      TRACE("Found LED control at file %s\n", LED_path);
+    }
+  }
+
   if (hardware_has_APM == FALSE)
   {
     hardware_has_APM=check_for_file ("/dev/apm_bios");
