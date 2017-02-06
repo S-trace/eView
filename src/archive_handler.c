@@ -22,20 +22,6 @@
 #include "archive_routines.h"
 char *archive_cwd_prev; /* Предыдущий текущий каталог в архиве */
 
-enum
-{
-  RAR_FILE,
-  ZIP_FILE,
-  ARCH_TYPES
-};
-
-typedef struct {
-  int     offs;           /* Offset to the signature   */
-  size_t len;             /* Signature length          */
-  int type;               /* One of ZIP_FILE, RAR_FILE */
-  const char *sign;       /* Signature to compare to   */
-} magic_sign;
-
 char *detect_subarchive_prefix(void)
 {
   if (access("/media/data/", R_OK))
@@ -48,82 +34,6 @@ char *detect_subarchive_prefix(void)
     TRACE("Using /media/data/ as subarchive extracting prefix\n");
     return (strdup("/media/data/"));
   }
-}
-
-char *escape(const char *input) /* Экранирование нежелательных символов для грепа (прежде всего квадратных скобок) */
-{
-  char  *escaped;
-  if (input==NULL)
-  {
-    TRACE("escape() called with NULL string!\n");
-    return (strdup(""));
-  }
-  escaped = (char *)malloc(2*strlen(input) + 1); /* Аллоцируем память */
-  if (escaped==NULL)
-  {
-    #ifdef debug
-    if (errno==ENOMEM)
-      TRACE("Failed to allocate memory in escape() - no memory!\n");
-    else
-      TRACE("Failed to allocate memory in escape() - something BAD happened!\n");
-    #endif
-    shutdown(FALSE);
-  }
-  else
-  {
-    size_t idx;
-    int i=0;
-    for (idx = 0; idx < strlen(input); idx++) {
-      switch (input[idx])
-      { /* Для нежелательных символов */
-        case '[': case ']':
-        case '{': case '}':
-        case '"':
-          escaped[i++] = '\\'; /* Вставляем перед ними backslash */
-          break;
-        default:
-          break;
-      };
-      escaped[i++] = input[idx]; /* И копируем собственно символ */
-    }
-    escaped[i] = '\0'; /* Терминируем строку */
-    TRACE("ESCAPED = '%s'\n", escaped);
-    return escaped;
-  }
-  return strdup("");
-}
-
-magic_sign magic[ARCH_TYPES] = {
-  { 0, 4, ZIP_FILE, "PK\003\004"}, /* Classic ZIP files */
-  { 0, 4, RAR_FILE, "Rar!"      }, /* RAR archives      */
-};
-
-int file_type_of(const char *fname)
-{
-  FILE *f;
-  char sign[20];
-  int nr;
-
-  f = fopen(fname, "rb");
-  if (!f) return -1;
-
-  for (nr = 0; nr < ARCH_TYPES; nr++) {
-    if ((fseek(f, magic[nr].offs, SEEK_SET) == -1) || fread(sign, 1, magic[nr].len, f) != magic[nr].len)
-      break;
-
-    /* If the read went well, we need to compare the characters */
-    /* strstr works here, but only if no \0's are in the string */
-    /* and if we first terminate the string read too */
-    sign[magic[nr].len] = '\0';
-    if (strcmp(sign, magic[nr].sign) == 0)
-    {
-      (void)fclose(f);
-      return magic[nr].type;
-    }
-  }
-  (void)fclose(f);
-  Message(ERROR, UNKNOWN_OR_DAMAGED_ARCHIVE);
-  return -1;
 }
 
 int enter_archive(const char *name, struct_panel *panel, int update_config)
