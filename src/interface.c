@@ -593,6 +593,7 @@ void start_picture_menu (struct_panel *panel, GtkWidget *win) // Создаём 
   overlap_frame = gtk_frame_new (OVERLAP_VALUE);
   gtk_box_pack_start (GTK_BOX (menu_vbox), overlap_frame, FALSE, TRUE, 0);
   overlap_scale = gtk_hscale_new_with_range (0, 50, 1);
+  gtk_range_set_increments (GTK_RANGE(overlap_scale), (gdouble)1, (gdouble)1);
   gtk_range_set_value (GTK_RANGE(overlap_scale), (gdouble) overlap);
   g_signal_connect(overlap_scale, "value-changed", G_CALLBACK(overlap_changed), NULL);
   g_signal_connect(overlap_scale, "key_press_event", G_CALLBACK(keys_in_picture_menu), NULL);
@@ -956,6 +957,7 @@ void options_menu_create(void) //Создание меню опций в ФМ
 
     gtk_box_pack_start (GTK_BOX (menu_vbox), backlight_frame, FALSE, TRUE, 0);
     backlight_scale = gtk_hscale_new_with_range ((gdouble)0, (gdouble)8, (gdouble)1);
+    gtk_range_set_increments (GTK_RANGE(backlight_scale), (gdouble)1, (gdouble)1);
     (void)g_signal_connect(backlight_scale, "value-changed", G_CALLBACK(backlight_changed), NULL);
     gtk_range_set_value (GTK_RANGE(backlight_scale), (gdouble) backlight);
     gtk_container_add (GTK_CONTAINER (backlight_frame), backlight_scale);
@@ -967,6 +969,7 @@ void options_menu_create(void) //Создание меню опций в ФМ
     GtkWidget *sleep_timeout_frame = gtk_frame_new (SLEEP_TIMEOUT);
     gtk_box_pack_start (GTK_BOX (menu_vbox), sleep_timeout_frame, FALSE, TRUE, 0);
     sleep_timeout_scale = gtk_hscale_new_with_range ((gdouble)0,(gdouble) 600,(gdouble) 5);
+    gtk_range_set_increments (GTK_RANGE(sleep_timeout_scale), (gdouble)5, (gdouble)5);
     gtk_range_set_value (GTK_RANGE(sleep_timeout_scale), (gdouble)sleep_timeout);
     (void)g_signal_connect (G_OBJECT (sleep_timeout_scale), "key_press_event", G_CALLBACK (keys_in_options), NULL);
     (void)g_signal_connect(sleep_timeout_scale, "value-changed", G_CALLBACK(sleep_timeout_changed), NULL);
@@ -977,6 +980,7 @@ void options_menu_create(void) //Создание меню опций в ФМ
   GtkWidget *LED_test_frame = gtk_frame_new ("LED_TEST");
   gtk_box_pack_start (GTK_BOX (menu_vbox), LED_test_frame, FALSE, TRUE, 0);
   GtkWidget *led_test_scale = gtk_hscale_new_with_range (0, 255, 1);
+  gtk_range_set_increments (GTK_RANGE(led_test_scale), (gdouble)1, (gdouble)1);
   g_signal_connect(led_test_scale, "value-changed", G_CALLBACK(led_changed), NULL);
   gtk_container_add (GTK_CONTAINER (LED_test_frame), led_test_scale);
   #endif
