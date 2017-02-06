@@ -32,8 +32,15 @@ int read_config_int(const char *name) /*Чтение числового пара
   {
     int value;
     char value_string[33];
-    (void)fgets(value_string,32,file_descriptor);
-    value=atoi(value_string);
+    if (fgets(value_string,32,file_descriptor))
+    {
+      value=atoi(value_string);
+    }
+    else
+    {
+      TRACE("Reading %s from %s failed\n", name, config_file_single);
+      value = 0;
+    }
     (void)fclose(file_descriptor);
     TRACE("Reading %s from %s (%d)\n", name, config_file_single, value);
     free(config_file_single);
@@ -55,7 +62,7 @@ void read_config_string(char *name, char **destination) /*Чтение стро�
   else
   {
     char temp[257];
-    if (fgets(temp, PATHSIZE, file_descriptor) == 0)
+    if (!fgets(temp, PATHSIZE, file_descriptor))
     {
       TRACE("Reading %s from %s failed\n", name, config_file_single);
       temp[0]='\0';
@@ -89,7 +96,11 @@ void read_archive_stack(const char *name, struct_panel *panel) /*Чтение с
     while((feof(file_descriptor) == FALSE) && i <= MAX_ARCHIVE_DEPTH )
     {
       TRACE("Reading %d element from '%s' (archive stack)\n", i, config_file_single);
-      (void)fgets(panel->archive_stack[i], PATHSIZE, file_descriptor);
+      if (!fgets(panel->archive_stack[i], PATHSIZE, file_descriptor))
+      {
+        TRACE("Reading %s from %s failed\n", name, config_file_single);
+        panel->archive_stack[i][0] = '\0';
+      }
       if (panel->archive_stack[i][0] == '\0')
       {
         TRACE("Readed empty line, break\n");
