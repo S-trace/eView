@@ -39,9 +39,9 @@
 #define PATHSIZE 256
 
 #ifdef debug
-#define TRACE(s, args...) do { printf(s, ## args); fflush(stdout); } while (0)
+#define TRACE(fmt, args... ) do { printf("%s:%d %s() " fmt , __FILE__, __LINE__, __func__, ##args); fflush(stdout); } while (0)
 #else
-#define TRACE(s, args...)
+#define TRACE( fmt, args... ) do {} while (0)
 #endif
 
 enum {
