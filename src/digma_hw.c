@@ -77,7 +77,7 @@ void epaperUpdate(__attribute__((unused)) unsigned long int ioctl_call, __attrib
   }
   ioctl_result=epaper_update_helper(framebuffer_descriptor, ioctl_call, mode);
   #ifdef debug
-  if (ioctl_result != TRUE)
+  if (ioctl_result != 0)
   {
     TRACE("Display refresh ioctl call FAILED %d (%s)\n", ioctl_result, strerror(ioctl_result));
     // GTK прошивка, обновление от Qt: 1 (Операция не позволяется)
@@ -102,9 +102,10 @@ int detect_refresh_type (void)
       .height = 1
     },
     .update_mode = UPDATE_MODE_FULL,
-//     .update_mode = UPDATE_MODE_PARTIAL,
+    .update_marker = 0,
     .waveform_mode = WAVEFORM_MODE_AUTO,
-    .temp = TEMP_USE_AMBIENT
+    .temp = TEMP_USE_AMBIENT,
+    .flags = 0
   };
   if (epaper_update_helper(framebuffer_descriptor, EPAPER_UPDATE_DISPLAY_QT, &mode) == 0)
   {
@@ -134,6 +135,7 @@ int detect_refresh_type (void)
 void *epaperUpdateFull(void *arg)
 {
   int mode = 3;
+  static int marker = 0;
   struct fb_var_screeninfo vinfo;
   struct mxcfb_update_data data = {
     .update_region =
@@ -142,10 +144,11 @@ void *epaperUpdateFull(void *arg)
           .width = 0,
           .height = 0
         },
-        .update_mode = UPDATE_MODE_FULL,
-        //     .update_mode = UPDATE_MODE_PARTIAL,
-        .waveform_mode = WAVEFORM_MODE_AUTO,
-        .temp = TEMP_USE_AMBIENT
+	.update_mode = UPDATE_MODE_FULL,
+	.update_marker = ++marker,
+	.waveform_mode = WAVEFORM_MODE_AUTO,
+	.temp = TEMP_USE_AMBIENT,
+	.flags = 0
   };
   (void)arg;
   TRACE("epaperUpdateFull()\n");  
@@ -186,6 +189,7 @@ void *epaperUpdateFull(void *arg)
 void *epaperUpdateLocal(void *arg)
 {
   int mode = 2;
+  static int marker = 0;
   struct fb_var_screeninfo vinfo;
   struct mxcfb_update_data data = {
     .update_region =
@@ -194,10 +198,11 @@ void *epaperUpdateLocal(void *arg)
           .width = 0,
           .height = 0
         },
-        //     .update_mode = UPDATE_MODE_FULL,
         .update_mode = UPDATE_MODE_PARTIAL,
-        .waveform_mode = WAVEFORM_MODE_AUTO,
-        .temp = TEMP_USE_AMBIENT
+	.update_marker = ++marker,
+	.waveform_mode = WAVEFORM_MODE_AUTO,
+	.temp = TEMP_USE_AMBIENT,
+	.flags = 0
   };
   (void)arg;
   TRACE("epaperUpdateLocal()\n");  
@@ -239,6 +244,7 @@ void *epaperUpdateLocal(void *arg)
 void *epaperUpdatePart(void *arg)
 {
   int mode = 1;
+  static int marker = 0;
   struct fb_var_screeninfo vinfo;
   struct mxcfb_update_data data = {
     .update_region =
@@ -247,10 +253,11 @@ void *epaperUpdatePart(void *arg)
           .width = 0,
           .height = 0
         },
-        //     .update_mode = UPDATE_MODE_FULL,
         .update_mode = UPDATE_MODE_PARTIAL,
-        .waveform_mode = WAVEFORM_MODE_AUTO,
-        .temp = TEMP_USE_AMBIENT
+	.update_marker = ++marker,
+	.waveform_mode = WAVEFORM_MODE_AUTO,
+	.temp = TEMP_USE_AMBIENT,
+	.flags = 0
   };
   (void)arg;
   TRACE("epaperUpdatePart()\n");  
