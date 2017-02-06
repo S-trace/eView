@@ -207,7 +207,9 @@ char *get_natural_time(int seconds) /* Возвращает строку в фо
 void xsystem(const char *command) /* Вывод на экран и запуск команды */
 {
   TRACE("Executing '%s'\n", command);
-  (void)system(command);
+  int result = system(command);
+  TRACE("%s returned %d", command, result);
+  (void) result;
 }
 
 void trim_line(char *input_line) /* Удаляет последний символ у строки */
