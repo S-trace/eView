@@ -956,7 +956,10 @@ void options_menu_create(void) //Создание меню опций в ФМ
     GtkWidget *backlight_frame = gtk_frame_new (BACKLIGHT);
 
     gtk_box_pack_start (GTK_BOX (menu_vbox), backlight_frame, FALSE, TRUE, 0);
-    backlight_scale = gtk_hscale_new_with_range ((gdouble)0, (gdouble)8, (gdouble)1);
+    if (hw_platform == HW_PLATFORM_KOBO)
+      backlight_scale = gtk_hscale_new_with_range ((gdouble)0, (gdouble)100, (gdouble)1);
+    else
+      backlight_scale = gtk_hscale_new_with_range ((gdouble)0, (gdouble)8, (gdouble)1);
     gtk_range_set_increments (GTK_RANGE(backlight_scale), (gdouble)1, (gdouble)1);
     (void)g_signal_connect(backlight_scale, "value-changed", G_CALLBACK(backlight_changed), NULL);
     gtk_range_set_value (GTK_RANGE(backlight_scale), (gdouble) backlight);
