@@ -533,7 +533,7 @@ void set_brightness(int value)
 void set_led_state (int state)
 {
   if ((LED_notify == TRUE) && (hardware_has_LED == TRUE))
-    write_int_to_file(LED_path, state);
+    write_int_to_file(LED_path, LED_state[state]);
 }
 
 void kobo_enter_sleep(int deep_sleep) {
