@@ -71,6 +71,7 @@ int enter_archive(const char *name, struct_panel *panel, int update_config)
         write_archive_stack("bottom_panel.archive_stack", &bottom_panel);
       (void)chdir(saved_work_dir); /* Переходим в каталог откуда нас дёрнули */
     }
+    panel->archive_list=archive_list_get(name);
     update(panel); /* Строим список */
     move_selection("0", panel); /* Переходим на первый же файл в списке */
     text=xconcat_path_file(panel->archive_stack[panel->archive_depth],panel->archive_cwd);
@@ -102,9 +103,9 @@ void leave_archive(struct_panel *panel)
   TRACE("Leaving archive '%s' to dir '%s'\n",panel->archive_stack[panel->archive_depth], panel->path);
 
   panel->archive_depth=panel->archive_depth-1;
+  archive_list_free(panel->archive_list);
   if (panel->archive_depth > 0) /* Если мы ешё не достигли ФС */
   {
-    archive_list_free(panel->archive_list);
     (void)remove(panel->archive_stack[panel->archive_depth+1]); /* То удаляем архив который покинули - он был вложеным! */
     enter_archive(panel->archive_stack[panel->archive_depth], panel, FALSE);
   }
