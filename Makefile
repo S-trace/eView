@@ -95,6 +95,14 @@ release:
 	lang=english make installer
 	mv $(name)$(version)_english-installer.sh $(name)$(version)/
 	make clean
+	lang=chinese make debug
+	mv $(name)$(version)_chinese.app $(name)$(version)/$(name)$(version)_chinese-debug.app
+	make clean
+	lang=chinese make arm
+	cp $(name)$(version)_chinese.app $(name)$(version)/
+	lang=chinese make installer
+	mv $(name)$(version)_chinese-installer.sh $(name)$(version)/
+	make clean
 	cp $(name)_remover.sh $(name)$(version)/
 	cp readme.txt $(name)$(version)/
 	cp S-trace-changelog.txt $(name)$(version)/
