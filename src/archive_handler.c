@@ -57,7 +57,8 @@ int enter_archive(const char *name, struct_panel *panel, int update_config)
     free (message);
     return FALSE;
   }
-  
+
+  int res = FALSE;
   if (archive_supported(name))
   {
     char *text;
@@ -77,9 +78,12 @@ int enter_archive(const char *name, struct_panel *panel, int update_config)
     text=xconcat_path_file(panel->archive_stack[panel->archive_depth],panel->archive_cwd);
     gtk_label_set_text (GTK_LABEL(panel->path_label), text); /* Пишем имя архива с путём в поле снизу */
     free(text);
+    res = TRUE;
+  } else {
+    TRACE("Archive is unsupported: %s", name);
   }
   free(saved_work_dir);
-  return TRUE;
+  return res;
 }
 
 void enter_subarchive(const char *name, struct_panel *panel) /* Вход во вложенный архив - принимает полный путь к архиву */
