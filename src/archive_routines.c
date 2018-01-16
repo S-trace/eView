@@ -84,7 +84,7 @@ int archive_supported(const char *archive_name)
  * @param items_type Type of items to list (AE_IFDIR or AE_IFREG)
  * @return newly-allocated NULL-terminated strverscmp-sorted array of newly-allocated strings 
  *         (directories have trailing '/', files - not)
- * All strings an array itself should be passed to free()
+ * All strings from array and then array itself should be passed to free()
  */
 char **archive_list_get(const char *archive)
 {
