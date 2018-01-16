@@ -90,23 +90,23 @@ char **archive_list_get(const char *archive)
 	size_t items = 0;
 	char **list = NULL;
 	size_t buffsize = 16384;
-	struct archive *arch = NULL;
+	struct archive *archive_s = NULL;
 	struct archive_entry *entry;
 	TRACE("%s caled with %s\n", __func__, archive);
 	list = calloc(items + 1, sizeof(*list));
 
-	if (!archive_open(&arch, archive, buffsize))
+	if (!archive_open(&archive_s, archive, buffsize))
 		return list;
 
 	do {
 		int res;
 		const char *pathname;
 		char **tmp = NULL;
-		res = archive_read_next_header(arch, &entry);
+		res = archive_read_next_header(archive_s, &entry);
 		if (res == ARCHIVE_EOF)
 			break;
 		if (res != ARCHIVE_OK) {
-			archive_read_free(arch);
+			archive_read_free(archive_s);
 			return list;
 		}
 		pathname = archive_entry_pathname(entry);
@@ -129,7 +129,7 @@ char **archive_list_get(const char *archive)
 	} while (TRUE);
 
 	qsort(list, items, sizeof(*list), strverscmp_qsort_wrapper);
-	archive_read_free(arch);
+	archive_read_free(archive_s);
 	return list;
 }
 
