@@ -54,7 +54,8 @@ int archive_open(struct archive **arch_out, const char *archive_name,
 
 	res = archive_read_open_filename(archive_s, archive_name, buffsize);
 	if (res != ARCHIVE_OK) {
-		TRACE("Unable to open archive '%s'\n", archive_name);
+		TRACE("Unable to open archive '%s': archive_errno=%d, archive_error_string='%s'\n",
+		      archive_name, archive_errno(archive_s), archive_error_string(archive_s));
 		return FALSE;
 	}
 	*arch_out = archive_s;
@@ -149,6 +150,7 @@ char **archive_list_get(const char *archive)
 		} else {
 			list[items] = strdup(pathname);
 		}
+		TRACE("Added '%s' (element %d) to archive list\n", list[items], (int)items);
 		++items;
 		tmp = realloc(list, (items + 1) * sizeof(*list));
 		if (tmp == NULL)
