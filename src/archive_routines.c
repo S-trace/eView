@@ -102,12 +102,42 @@ char **archive_list_get(const char *archive)
 		int res;
 		const char *pathname;
 		char **tmp = NULL;
+		int finished = FALSE;
+
 		res = archive_read_next_header(archive_s, &entry);
-		if (res == ARCHIVE_EOF)
+		switch (res) {
+			case ARCHIVE_OK:
+				// do nothing - all is fine
+				break;
+			case ARCHIVE_EOF:
+				TRACE("ARCHIVE_EOF (element %d)\n", (int)items);
+				finished = TRUE;
+				break;
+			case ARCHIVE_FATAL:
+				TRACE("archive_read_next_header() returned %d (ARCHIVE_FATAL) (element %d), "
+				      "archive_errno=%d, archive_error_string='%s'\n",
+				      res, (int)items, archive_errno(archive_s), archive_error_string(archive_s));
+				finished = TRUE;
+				break;
+			case ARCHIVE_RETRY:
+				TRACE("archive_read_next_header() returned %d (ARCHIVE_RETRY) (element %d), "
+				      "archive_errno=%d, archive_error_string='%s'\n",
+				      res, (int)items, archive_errno(archive_s), archive_error_string(archive_s));
+				continue;
+				break;
+			case ARCHIVE_WARN:
+				TRACE("archive_read_next_header() returned %d (ARCHIVE_RETRY) (element %d), "
+				      "archive_errno=%d, archive_error_string='%s' - trying to continue\n",
+				      res, (int)items, archive_errno(archive_s), archive_error_string(archive_s));
+				break;
+			default:
+				TRACE("archive_read_next_header() returned %d (unknown code) (element %d), "
+				      "archive_errno=%d, archive_error_string='%s' - trying to continue\n",
+				      res, (int)items, archive_errno(archive_s), archive_error_string(archive_s));
+				break;
+		}
+		if (finished) {
 			break;
-		if (res != ARCHIVE_OK) {
-			archive_read_free(archive_s);
-			return list;
 		}
 		pathname = archive_entry_pathname(entry);
 		if (archive_entry_filetype(entry) == AE_IFDIR
