@@ -1,7 +1,7 @@
 EXE = GTK_parts
 all:
 	cp installer.head.sh $(EXE).sh
-	tar -czf ./$(EXE).tar.gz etc home usr
+	tar -czf ./$(EXE).tar.gz etc usr
 	cat ./$(EXE).tar.gz >> $(EXE).sh
 	chmod +x $(EXE).sh
 clean:

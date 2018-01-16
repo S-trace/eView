@@ -33,7 +33,7 @@
 
 /* Максимальная глубина вложенных архивов */
 #define MAX_ARCHIVE_DEPTH 16
-#define NEEDED_GTK_PARTS_VERSION 3
+#define NEEDED_GTK_PARTS_VERSION 5
 #define FILE_COLUMN	((int) 0)
 #define SIZE_COLUMN     ((int) 1)
 #define PATHSIZE 256

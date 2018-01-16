@@ -1,5 +1,5 @@
 #!/bin/sh
-version=4
+version=5
 echo "Installing GTK_parts_V$version"
 echo "\$0 is '$0'"
 self_name=`readlink -f $0`
