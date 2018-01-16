@@ -1,0 +1,59 @@
+How to build and install:
+
+1. Initial environment setup (only once):
+1.1 Setting up toolchain:
+1.1.1 Download sibrary_toolchain.tbz2.zip from https://cloud.mail.ru/public/FggB/sUHShA95U
+1.1.2 Unzip sibrary_toolchain.tbz2 from this ZIP
+1.1.3 Unpack sibrary_toolchain.tbz2 to root directory of your system (/usr/local/ereader/ directory will appear)
+1.1.4 Add following 2 lines to ~/.bashrc :
+PATH=$PATH:/usr/local/ereader/eabi-glibc/bin
+export PATH
+
+1.2 Building and installing libarchive (only once):
+Execute following commands:
+git clone https://github.com/libarchive/libarchive/ --branch v3.3.2
+cd libarchive
+build/autogen.sh
+./configure --host=arm-ereader-linux-gnueabi --prefix=/usr/local/ereader/eabi-glibc/arm-ereader-linux-gnueabi/usr
+make
+sudo -s
+make install
+
+2. eView building:
+NOTE: You can replace english to another supported lang (russian, english and chinese are supported for now)
+
+2.1 For debugging on PC:
+2.1.1 Execute following commands to build binary:
+make clean
+lang=english make
+2.1.2 Start built binary:
+./eView064t2_english.app
+
+2.2 For debugging on device:
+2.2.1 Execute following commands to build installer:
+make clean
+lang=english make debug installer
+
+2.3 For using on device:
+2.3.1 Execute following commands to build installer:
+make clean
+lang=english make installer
+
+3. Preparing target device (only once):
+3.1 Installing GTK_parts:
+3.1.1 Copy GTK_parts/GTK_parts.sh to device
+3.1.2 Find GTK_parts.sh in file manager on device
+3.1.3 Start it
+
+4. Installing eView on target device:
+4.1 Copy eView064t2_english-installer.sh to device
+4.2 Find eView064t2_english-installer.sh in file manager on device
+4.3 Start it
+4.4 Reboot target device (if installed first time)
+4.5 eView should be accessible from menu now
+
+5. Uninstalling eView from target device:
+5.1 Copy eView_remover.sh to device
+5.2 Find eView_remover.sh in file manager on device
+5.3 Start it
+5.4 Reboot target device
