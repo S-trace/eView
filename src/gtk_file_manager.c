@@ -477,11 +477,15 @@ void init (void)
   detect_hardware();
   #ifdef debug
   set_led_state (LED_state[LED_ON]);
-  xsystem("uname -a"); // Проверка машины:
+  xsystem("uname -a"); // Get uname to log file:
   // GTK Ritmix RBK700HD:
   // Linux sibrary 2.6.24.2-Boeye #26 PREEMPT Sat Oct 22 11:30:10 CST 2011 armv5tejl unknown
   // Qt GMini M6HD:
   // Linux boeye 2.6.24.2-Boeye #346 PREEMPT Tue Jul 17 13:50:49 CST 2012 armv5tejl GNU/Linux
+  // Qt Kobo Aura H2O 3.19.5761:
+  // Linux (none) 2.6.35.3-850-gbc67621+ #3028 PREEMPT Tue Mar 10 11:02:15 CST 2015 armv7l GNU/Linux
+  // Qt Kobo Aura H2O 4.6.10075:
+  // Linux (none) 2.6.35.3-850-gbc67621+ #3032 PREEMPT Mon Jan 9 13:37:40 CST 2017 armv7l armv7l armv7l GNU/Linux
   #endif
   if (hw_platform != HW_PLATFORM_KOBO)
   {
