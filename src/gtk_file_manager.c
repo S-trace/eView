@@ -452,11 +452,19 @@ void init (void)
 
   #ifndef __amd64
   #ifdef debug
-  const char *name="/media/mmcblk0p1/eView_debug_log.txt";
-  TRACE("Trying to open '%s' for writing log\n", name);
-  int file_descriptor=creat(name,O_CREAT|O_SYNC|O_TRUNC);
+  const char *name = NULL;
+  struct stat info; /* Used to check if log directory exist */
+  if(stat ("/media/mmcblk0p1/", &info) != 0 && info.st_mode & S_IFDIR )
+    name="/media/mmcblk0p1/eView_debug_log.txt";
+  else if(stat ("/mnt/onboard/", &info) != 0 && info.st_mode & S_IFDIR )
+    name="/mnt/onboard/eView_debug_log.txt";
+  int file_descriptor = -1;
+  if (name) {
+    TRACE("Trying to open '%s' for writing log\n", name);
+    file_descriptor=creat(name,O_CREAT|O_SYNC|O_TRUNC);
+  }
   if (file_descriptor < 0)
-    TRACE("UNABLE TO OPEN %s FILE FOR WRITING!\n", name);
+    TRACE("UNABLE TO OPEN '%s' FILE FOR WRITING!\n", name);
   else
   {
     TRACE("'%s' opened for writing log as %d fd, will now write it into this file!\n", name, file_descriptor);
