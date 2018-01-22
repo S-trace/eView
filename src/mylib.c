@@ -820,10 +820,11 @@ char *xconcat_path_file(const char *path,const char *filename)
 
   if (!path)
     path = "";
-  if (path[strlen(path)-1] == '/')
+  if (path[strlen(path)-1] == '/') {
     asprintf(&buffer, "%s%s", path, filename);
-  else
+  } else {
     asprintf(&buffer, "%s%s%s", path, "/", filename);
+  }
   return buffer;
 }
 

@@ -44,6 +44,18 @@
 #define TRACE( fmt, args... ) do {} while (0)
 #endif
 
+#define ABORT(fmt, args... ) \
+do { \
+  printf("%s:%d %s() " fmt , __FILE__, __LINE__, __func__, ##args); \
+  fflush(stdout); \
+  shutdown(EXIT_FAILURE); \
+} while (0)
+
+#define asprintf(args...) \
+if (asprintf(args) < 0) { \
+  ABORT("asprintf() call failed (out of memory?)"); \
+}
+
 enum {
   KILOBYTE = 1024,
   MEGABYTE = (KILOBYTE*1024),
